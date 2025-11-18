@@ -1,0 +1,82 @@
+﻿import { ReactNode, HTMLAttributes } from "react";
+
+// Props for Table
+interface TableProps extends HTMLAttributes<HTMLTableElement> {
+  children: ReactNode; // Table content (thead, tbody, etc.)
+}
+
+// Props for TableHeader
+interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> {
+  children: ReactNode; // Header row(s)
+}
+
+// Props for TableBody
+interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {
+  children: ReactNode; // Body row(s)
+}
+
+// Props for TableRow
+interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
+  children: ReactNode; // Cells (th or td)
+}
+
+// Props for TableCell
+interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
+  children: ReactNode; // Cell content
+  isHeader?: boolean; // If true, renders as <th>, otherwise <td>
+  colSpan?: number; // allow spanning columns
+}
+
+// Table Component
+const Table: React.FC<TableProps> = ({ children, className, ...rest }) => {
+  return (
+    <table className={`min-w-full  ${className ?? ""}`} {...rest}>
+      {children}
+    </table>
+  );
+};
+
+// TableHeader Component
+const TableHeader: React.FC<TableHeaderProps> = ({ children, className, ...rest }) => {
+  return (
+    <thead className={className} {...rest}>
+      {children}
+    </thead>
+  );
+};
+
+// TableBody Component
+const TableBody: React.FC<TableBodyProps> = ({ children, className, ...rest }) => {
+  return (
+    <tbody className={className} {...rest}>
+      {children}
+    </tbody>
+  );
+};
+
+// TableRow Component
+const TableRow: React.FC<TableRowProps> = ({ children, className, ...rest }) => {
+  return (
+    <tr className={className} {...rest}>
+      {children}
+    </tr>
+  );
+};
+
+// TableCell Component
+const TableCell: React.FC<TableCellProps> = ({
+  children,
+  isHeader = false,
+  className,
+  colSpan,
+  ...rest
+}) => {
+  const CellTag = (isHeader ? "th" : "td") as "th" | "td";
+  return (
+    <CellTag className={` ${className ?? ""}`} colSpan={colSpan} {...rest}>
+      {children}
+    </CellTag>
+  );
+};
+
+export { Table, TableHeader, TableBody, TableRow, TableCell };
