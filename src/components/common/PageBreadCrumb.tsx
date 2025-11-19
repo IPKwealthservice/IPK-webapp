@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 
 type BreadcrumbItem = {
@@ -46,7 +47,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, items = [] }) =>
   );
 };
 
-function ChevronIcon() {
+const ChevronIcon = memo(function ChevronIcon() {
   return (
     <svg
       className="stroke-current"
@@ -66,6 +67,6 @@ function ChevronIcon() {
       />
     </svg>
   );
-}
+});
 
-export default PageBreadcrumb;
+export default memo(PageBreadcrumb);

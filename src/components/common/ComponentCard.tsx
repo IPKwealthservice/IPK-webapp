@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface ComponentCardProps {
   title: string;
   children: React.ReactNode;
@@ -35,4 +37,4 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   );
 };
 
-export default ComponentCard;
+export default memo(ComponentCard);
