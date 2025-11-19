@@ -25,7 +25,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 // Note: Use specific field mutations supported by the API schema
-import { UPDATE_LEAD_BIO, UPDATE_LEAD_REMARK } from "./gql/view_lead.gql";
 import LeadStatusBadge from "@/components/sales/myleads/LeadStatusBadge";
 import { leadOptions, valueToLabel } from "@/components/lead/types";
 import {
@@ -75,8 +74,6 @@ type ContactGridField = {
 
 export default function LeadProfileHeader({ lead, loading, canEditProfile, onProfileRefresh }: Props) {
   const [isEditing, setIsEditing] = useState(false);
-  const [mutateBio, { loading: savingBio }] = useMutation(UPDATE_LEAD_BIO);
-  const [mutateRemark, { loading: savingRemark }] = useMutation(UPDATE_LEAD_REMARK);
   const [mutAddPhone, { loading: addingPhone }] = useMutation(ADD_LEAD_PHONE);
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
@@ -86,10 +83,10 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   // Pipeline stage hint logic
   const displayStatus = lead.status === "ASSIGNED" ? "PENDING" : lead.status;
   // Header Status badge must reflect the Stage Filter (RM intent)
-  const headerStatus = (lead.stageFilter as any) ?? null;
+  const headerStatus = (lead.stageFilter as string | null | undefined) ?? null;
   const stageDisplay = resolveStageDisplay({
-    rawStage: (lead.clientStageRaw as any) ?? undefined,
-    normalizedStage: (lead.clientStage as any) ?? undefined,
+    rawStage: (lead.clientStageRaw as string | null | undefined) ?? undefined,
+    normalizedStage: (lead.clientStage as string | null | undefined) ?? undefined,
     status: displayStatus as string,
   });
 
@@ -201,8 +198,11 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const hasNextFollowUp = Boolean(lead.nextActionDueAt);
 
   // Date / Aging
+  // Entered on = createdAt (system record creation)
   const enteredOnRaw = lead.createdAt ?? null;
-  const agingSourceRaw = lead.approachAt?.trim() ? lead.approachAt : enteredOnRaw;
+  // Lead captured on = approachAt (when marketing user saw/registered)
+  const leadCapturedOnRaw = lead.approachAt ?? null;
+  const agingSourceRaw = lead.updatedAt?.trim() ? lead.updatedAt : enteredOnRaw;
   const agingDaysNum = useMemo(() => {
     if (agingSourceRaw) {
       try {
@@ -223,7 +223,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     };
     pushDate(lead.lastContactedAt);
     pushDate(lead.lastSeenAt);
-    pushDate(lead.approachAt);
+    pushDate(lead.updatedAt);
     if (Array.isArray(lead.events)) {
       lead.events.forEach((ev) => pushDate(ev.occurredAt));
     }
@@ -232,7 +232,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     }
     if (candidates.length === 0) return null;
     return new Date(Math.max(...candidates)).toISOString();
-  }, [lead.events, lead.lastContactedAt, lead.lastSeenAt, lead.approachAt, lead.remarks]);
+  }, [lead.events, lead.lastContactedAt, lead.lastSeenAt, lead.updatedAt, lead.remarks]);
   const lastContactRaw = lead.lastContactedAt ?? lastActivityAt;
   const lastSeenRaw = lead.lastSeenAt ?? lastActivityAt;
 
@@ -308,6 +308,15 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   /**
    * Prepare initial values for the edit modal.
    */
+  const coerceClientTypes = (value?: string | string[] | null) => {
+    if (!value) return undefined;
+    const list = Array.isArray(value) ? value : String(value).split(/[,;]/u);
+    const parsed = list
+      .map((entry) => String(entry ?? "").trim())
+      .filter((entry) => entry.length > 0);
+    return parsed.length ? parsed : undefined;
+  };
+
   const modalInitialValues = useMemo((): LeadEditModalValues => {
     // Determine a primary phone and WhatsApp phone from the phones array
     let primaryPhone: string | undefined;
@@ -324,11 +333,13 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       primaryPhone = lead.phone ?? lead.mobile ?? undefined;
     }
     return {
+      id: lead.id,
       leadCode: lead.leadCode ?? "",
       leadSource: lead.leadSource ?? "",
       firstName: lead.firstName ?? "",
       lastName: lead.lastName ?? "",
       fullName: lead.name ?? "",
+      leadId: lead.id,
       email: lead.email ?? "",
       primaryPhone: primaryPhone ?? "",
       whatsappPhone: whatsappPhone ?? "",
@@ -358,6 +369,9 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       age: lead.age ?? null,
       referralCode: lead.referralCode ?? "",
       bioText: lead.bioText ?? "",
+      clientStage: lead.clientStage ?? "",
+      stageFilter: lead.stageFilter ?? "",
+      clientTypes: coerceClientTypes(lead.clientTypes ?? undefined),
     } as LeadEditModalValues;
   }, [lead]);
 
@@ -384,42 +398,13 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
 
   /**
    * Submit handler for the edit modal.
+   * Ensures updated lead data is reflected in the header.
    */
-  const handleModalSubmit = async (values: LeadEditModalValues) => {
-    const ops: Promise<any>[] = [];
-
-    // Remark
-    const nextRemark = String(values.remark ?? "").trim();
-    const currRemark = String(lead.remark ?? "").trim();
-    if (nextRemark !== currRemark) {
-      ops.push(
-        mutateRemark({ variables: { input: { leadId: lead.id, remark: nextRemark } } })
-      );
-    }
-
-    // Bio text
-    const nextBio = String(values.bioText ?? "").trim();
-    const currBio = String(lead.bioText ?? "").trim();
-    if (nextBio !== currBio) {
-      ops.push(
-        mutateBio({ variables: { input: { leadId: lead.id, bioText: nextBio } } })
-      );
-    }
-
-    if (ops.length === 0) {
-      toast.info("Nothing to update");
-      setIsEditing(false);
-      return;
-    }
-
-    try {
-      await Promise.all(ops);
-      toast.success("Profile updated");
-      setIsEditing(false);
+  const handleModalSubmit = async () => {
+    // Small delay to ensure backend has processed the mutation
+    setTimeout(() => {
       onProfileRefresh?.();
-    } catch (error: any) {
-      toast.error(error?.message ?? "Unable to update lead");
-    }
+    }, 300);
   };
 
   // Add-phone local form state
@@ -621,7 +606,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                 {stageDisplay.label}
               </span>
             </div>
-            <div className="mt-3 flex flex-col items-end gap-2 lg:items-end">
+            <div className="mt-3 flex flex-col items-end gap-3 lg:items-end">
               <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3.5 py-1.5 text-sm font-semibold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200">
                 <Clock3 className="h-4 w-4" />
                 <span className="text-xs uppercase">Aging</span>
@@ -633,6 +618,14 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                   {enteredOnRaw ? formatDateDisplay(enteredOnRaw) : "Not set"}
                 </div>
               </div>
+              {leadCapturedOnRaw && (
+                <div className="text-right text-xs text-gray-500 dark:text-white/60">
+                  <div className="uppercase tracking-wide">Lead captured on</div>
+                  <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                    {formatDateDisplay(leadCapturedOnRaw)}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -664,7 +657,6 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
         isOpen={isEditing}
         onClose={handleModalClose}
         initial={modalInitialValues}
-        saving={savingBio || savingRemark}
         onSubmit={handleModalSubmit}
         title="Edit lead details"
       />

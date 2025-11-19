@@ -15,6 +15,7 @@ import {
   titleCaseWords,
   LEAD_PIPELINE_STAGES,
   STAGE_FILTER_OPTIONS,
+  clientTypeOptions,
 } from "@/components/sales/editLead/types/editmodel";
 
 import type { LeadShape } from "../../ui/lead/Validators";
@@ -41,6 +42,8 @@ export type LeadEditModalValues = Partial<LeadShape & OptionalExtras> & {
     startedAt?: string | Date;
     endedAt?: string | Date;
   }>;
+  id?: string;
+  leadId?: string;
 };
 
 type LeadEditModalProps = {
@@ -54,6 +57,29 @@ type LeadEditModalProps = {
 
 const INPUT =
   "mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/40";
+
+const normalizeClientTypesForState = (value?: string | string[] | null): string[] | undefined => {
+  if (!value) return undefined;
+  const entries = Array.isArray(value) ? value : [value];
+  const normalized: string[] = [];
+  for (const entry of entries) {
+    String(entry ?? "")
+      .split(/[,;]/u)
+      .forEach((part) => {
+        const trimmed = part.trim();
+        if (trimmed) normalized.push(trimmed);
+      });
+  }
+  return normalized.length ? normalized : undefined;
+};
+
+const formatClientTypesForPayload = (value?: string | string[] | null): string | null => {
+  const entries = Array.isArray(value) ? value : value ? [value] : [];
+  const cleaned = entries
+    .map((entry) => String(entry ?? "").trim())
+    .filter((entry) => entry.length > 0);
+  return cleaned.length ? cleaned.join(", ") : null;
+};
 
 export default function LeadEditModal({
   isOpen,
@@ -109,6 +135,7 @@ export default function LeadEditModal({
         },
       ];
     }
+    next.clientTypes = normalizeClientTypesForState(next.clientTypes);
     setForm(next);
     setErrors({});
     setTimeout(() => firstRef.current?.focus(), 0);
@@ -116,6 +143,25 @@ export default function LeadEditModal({
 
   const handle = (k: keyof LeadEditModalValues, v: unknown) => {
     setForm((prev) => ({ ...(prev ?? {}), [k]: v }));
+  };
+
+  const toggleClientType = (value: string) => {
+    setForm((prev) => {
+      const normalized = String(value ?? "").trim();
+      if (!normalized) return prev ?? {};
+      const current = Array.isArray(prev?.clientTypes)
+        ? [...prev.clientTypes]
+        : prev?.clientTypes
+        ? [prev.clientTypes]
+        : [];
+
+      const exists = current.includes(normalized);
+      const nextList = exists
+        ? current.filter((item) => item !== normalized)
+        : [...current, normalized];
+
+      return { ...(prev ?? {}), clientTypes: nextList.length ? nextList : undefined };
+    });
   };
 
   const stageOptions = useMemo(() => {
@@ -222,6 +268,7 @@ export default function LeadEditModal({
         referralName: normalize((form as any).referralName) ?? undefined,
         leadSource: normalize((form as any).leadSource) ?? undefined,
         stageFilter: normalize((form as any).stageFilter) ?? undefined,
+        clientTypes: formatClientTypesForPayload((form as any).clientTypes) ?? undefined,
       };
       Object.keys(input).forEach((k) => input[k] === undefined && delete input[k]);
       if (!input.leadId) throw new Error("Missing leadId for update");
@@ -240,11 +287,14 @@ export default function LeadEditModal({
       const nextBio = String(payload.bioText ?? "").trim();
       const prevBio = String((initial as any)?.bioText ?? "").trim();
       if (nextBio !== prevBio) {
+        // Capture bio updated timestamp
+        const bioUpdatedAt = new Date().toISOString();
         await mutBio({ variables: { input: { leadId, bioText: nextBio } } });
-        toast.info("BIO_UPDATED");
+        // Store bio update timestamp in local state/cache for UI reflection
+        toast.info(`Bio updated at ${new Date(bioUpdatedAt).toLocaleString()}`);
       }
 
-      toast.success("Lead updated");
+      toast.success("✓ Lead details updated successfully. Refreshing...");
       await onSubmit?.(payload);
       onClose();
     } catch (err: any) {
@@ -271,10 +321,14 @@ export default function LeadEditModal({
           <div className="grid gap-4 rounded-2xl border border-gray-100 p-4 dark:border-white/10 sm:grid-cols-2">
             <div className="grid grid-cols-2 gap-3">
               <Field label="First name">
-                <input className={INPUT} value={String(form.firstName ?? "")} onChange={(e) => handle("firstName", e.target.value)} placeholder="Optional" />
+                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
+                  {String(form.firstName ?? "")}
+                </div>
               </Field>
               <Field label="Last name">
-                <input className={INPUT} value={String(form.lastName ?? "")} onChange={(e) => handle("lastName", e.target.value)} placeholder="Optional" />
+                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
+                  {String(form.lastName ?? "")}
+                </div>
               </Field>
             </div>
 
@@ -284,14 +338,9 @@ export default function LeadEditModal({
                 <input className={INPUT} value={String((form as any).email ?? "")} onChange={(e) => (handle as any)("email", e.target.value)} placeholder="email@example.com" />
               </Field>
               <Field label="Phone">
-                <input
-                  className={INPUT}
-                  value={String((form as any).phone ?? "")}
-                  onChange={(e) => (handle as any)("phone", e.target.value)}
-                  placeholder="10-digit mobile"
-                  disabled={!isAdmin}
-                  title={isAdmin ? "Primary phone" : "Primary phone can be edited by admin only"}
-                />
+                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
+                  {String((form as any).phone ?? "")}
+                </div>
               </Field>
             </div>
 
@@ -393,6 +442,32 @@ export default function LeadEditModal({
               </Field>
             </div>
 
+            <Field label="Client type">
+              <div className="flex flex-wrap gap-2">
+                {clientTypeOptions.map((type) => {
+                  const isActive = Array.isArray(form.clientTypes)
+                    ? form.clientTypes.includes(type)
+                    : false;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => toggleClientType(type)}
+                      aria-pressed={isActive}
+                      className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-300 ${
+                        isActive
+                          ? "border-emerald-400 bg-emerald-500/10 text-emerald-700 dark:border-emerald-300 dark:bg-emerald-400/20 dark:text-emerald-50"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300 dark:border-white/10 dark:text-white/60 dark:hover:border-white/30"
+                      }`}
+                    >
+                      {titleCaseWords(type)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Select one or more categories.</p>
+            </Field>
+
             {/* Referral + source */}
             <div className="grid grid-cols-3 gap-3">
               <Field label="Referral code">
@@ -402,12 +477,9 @@ export default function LeadEditModal({
                 <input className={INPUT} value={String((form as any).referralName ?? "")} onChange={(e) => (handle as any)("referralName", e.target.value)} />
               </Field>
               <Field label="Lead source">
-                <select className={INPUT} value={String((form as any).leadSource ?? "")} onChange={(e) => (handle as any)("leadSource", e.target.value)}>
-                  <option value="">Select source</option>
-                  {leadOptions.map((o: any) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
+                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
+                  {leadSourceLabel}
+                </div>
               </Field>
             </div>
 
@@ -449,10 +521,14 @@ export default function LeadEditModal({
           </div>
 
           <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-4 text-xs text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-100">
-            <p className="font-semibold">Heads up before saving</p>
+            <p className="font-semibold">Fields you can update</p>
             <ul className="list-disc space-y-1 pl-5">
-              <li>You can update profile, opportunity, stage and lead status here.</li>
-              <li>Lead code remains read-only.</li>
+              <li>Contact: Email only (Phone, Name, Lead Source are read-only after registration)</li>
+              <li>Profile: Age, Gender, Location, Profession, Designation, Company</li>
+              <li>Opportunity: Product, Investment Range, SIP Amount</li>
+              <li>Client Info: Type, Referral details</li>
+              <li>Bio: Any updates here will be timestamped automatically</li>
+              <li>Pipeline Stage & Lead Status for RM workflow</li>
             </ul>
           </div>
         </div>
@@ -463,15 +539,19 @@ export default function LeadEditModal({
           </Button>
           <Button size="sm" type="submit" disabled={isSaving}>
             {isSaving ? (
-              <span className="inline-flex items-center gap-2">please wait updating</span>
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Saving...
+              </span>
             ) : (
               "Confirm & Save"
             )}
           </Button>
         </div>
         {isSaving && (
-          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-3xl bg-white/70 text-sm font-semibold text-gray-700 backdrop-blur dark:bg-gray-900/70 dark:text-white">
-            please wait updating
+          <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl bg-white/70 backdrop-blur dark:bg-gray-900/70">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-emerald-500 dark:border-gray-600 dark:border-t-emerald-400" />
+            <p className="mt-3 text-sm font-semibold text-gray-700 dark:text-white">Updating lead details...</p>
           </div>
         )}
       </form>

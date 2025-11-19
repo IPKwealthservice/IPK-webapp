@@ -127,7 +127,7 @@ export const CHANGE_STAGE = gql`
     changeStage(input: $input) {
       id
       clientStage
-      approachAt
+      nextActionDueAt
       lastSeenAt
       leadCode
       updatedAt

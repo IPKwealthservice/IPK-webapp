@@ -27,7 +27,8 @@ export default function BioCard({
     } as any;
     try {
       await mutate({ variables: { input: payload } });
-      toast.success("Bio updated");
+      const now = new Date().toLocaleString();
+      toast.success(`✓ Bio updated at ${now}`);
       setEditing(false);
       onUpdated?.();
     } catch (e: any) {

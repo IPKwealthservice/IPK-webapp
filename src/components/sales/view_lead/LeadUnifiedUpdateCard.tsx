@@ -13,7 +13,7 @@ import {
 import { UPDATE_LEAD_DETAILS } from '@/components/sales/editLead/update_gql/update_lead.gql';
 import { shouldAutoOpenLead } from './autoStatus';
 
-import type { LeadStage, LeadStatus } from '@/components/sales/myleads/interface/type';
+import type { LeadStage, LeadStatus, Lead } from '@/components/sales/myleads/interface/type';
 
 type Props = {
   leadId: string;
@@ -111,6 +111,25 @@ export default function LeadUnifiedUpdateCard({
         );
       }
 
+      // Update nextActionDueAt when follow-up date is set
+      if (nextFollowUpAt) {
+        ops.push(
+          mutUpdateDetails({
+            variables: { input: { leadId, nextActionDueAt: nextFollowUpAt } },
+            update(cache, result) {
+              const payload = (result?.data as any)?.updateLeadDetails;
+              if (!payload?.id) return;
+              cache.modify({
+                id: cache.identify({ __typename: 'IpkLeaddEntity', id: payload.id }),
+                fields: {
+                  nextActionDueAt: () => nextFollowUpAt,
+                },
+              });
+            },
+          })
+        );
+      }
+
       // stage change (always)
       ops.push(
         mutStage({
@@ -177,7 +196,10 @@ export default function LeadUnifiedUpdateCard({
       }
 
       await Promise.all(ops);
-      toast.success('Saved. Timeline and remark updated.');
+      const successMsg = nextFollowUpAt 
+        ? `✓ Saved. Next follow-up: ${new Date(nextFollowUpAt).toLocaleString()}`
+        : 'Saved. Timeline and remark updated.';
+      toast.success(successMsg);
       setNotes('');
       onSaved?.();
     } catch (e: any) {

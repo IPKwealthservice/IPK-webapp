@@ -28,6 +28,7 @@ mutation UpdateLeadDetails($input: UpdateLeadDetailsInput!) {
     clientStage
     age
     bioText
+    nextActionDueAt
   }
 }
 `;

@@ -22,7 +22,7 @@ import LeadTable from "@/pages/Tables/BasicTables";
 // Sales (RM)
 import SalesRMDashboard from "@/pages/Dashboard/salesHome";
 import SalesEvent from "@/pages/Sales/Event_sales/Event_Rm";
-import CallConnectPage from "@/pages/Sales/Call/CallConnectPage";
+// import CallConnectPage from "@/pages/Sales/Call/CallConnectPage";
 import LeadStagesPage from "@/pages/Sales/LeadStagesPage";
 import ViewLeadPage from "@/pages/Sales/ViewLeadPage";
 import LeadProfileLanding from "@/pages/Sales/LeadProfileLanding";
@@ -34,7 +34,7 @@ import Unauthorized from "@/pages/OtherPage/Unauthorized";
 import NotFound from "@/pages/OtherPage/NotFound";
 import UserProfiles from "@/pages/UserProfiles";
 import Blank from "@/pages/Blank";
-import ChatPage from "@/pages/Sales/Support/ChatPage";
+// import ChatPage from "@/pages/Sales/Support/ChatPage";
 
 type Role = "ADMIN" | "RM" | "STAFF" | "MARKETING" | "ANALYST";
 
@@ -103,8 +103,8 @@ export default function App() {
               <Route path="sales/leads" element={<LeadProfileLanding />} />
               <Route path="sales/leads/:id" element={<ViewLeadPage />} />
               <Route path="sales/events" element={<SalesEvent />} />
-              <Route path="sales/call" element={<CallConnectPage />} />
-              <Route path="sales/chat" element={<ChatPage />} />
+              {/* <Route path="sales/call" element={<CallConnectPage />} /> */}
+              {/* <Route path="sales/chat" element={<ChatPage />} /> */}
             </Route>
 
             {/* Common */}

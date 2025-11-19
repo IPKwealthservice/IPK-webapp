@@ -60,15 +60,15 @@ const salesNav: NavItem[] = [
       { name: 'Lead Profile', path: '/sales/leads' },
     ],
   },
-  {
-    icon: <CalenderIcon />,
-    name: 'Engagement',
-    subItems: [
-      { name: 'Events', path: '/sales/events' },
-      { name: 'Calls', path: '/sales/call' },
-      { name: 'Chat', path: '/sales/chat' },
-    ],
-  },
+  // {
+  //   icon: <CalenderIcon />,
+  //   name: 'Engagement',
+  //   subItems: [
+  //     { name: 'Events', path: '/sales/events' },
+  //     { name: 'Calls', path: '/sales/call' },
+  //     { name: 'Chat', path: '/sales/chat' },
+  //   ],
+  // },
 ];
 
 const adminNav: NavItem[] = [
