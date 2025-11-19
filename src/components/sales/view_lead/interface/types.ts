@@ -1,3 +1,6 @@
+import type { LeadStage, LeadStatus } from "@/components/sales/myleads/interface/type";
+
+
 export type LeadEventType =
   | "NOTE"
   | "CALL"
@@ -67,7 +70,6 @@ export type InteractionOutcome =
   | "WRONG_NUMBER"
   | string;
 
-import type { LeadStage, LeadStatus } from "@/components/sales/myleads/interface/type";
 
 /* ------------------------------- Phones ---------------------------------- */
 export type LeadPhone = {

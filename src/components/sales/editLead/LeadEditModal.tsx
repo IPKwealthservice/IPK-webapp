@@ -7,13 +7,15 @@ import { toast } from "react-toastify";
 import { UPDATE_LEAD_DETAILS } from "../editLead/update_gql/update_lead.gql";
 import { useAuth } from "@/context/AuthContex";
 import { UPDATE_LEAD_BIO, CHANGE_STAGE } from "@/components/sales/view_lead/gql/view_lead.gql";
+import { valueToLabel } from "@/components/lead/types";
 import {
   genderOptions,
   professionOptions,
   leadOptions,
-  valueToLabel,
   titleCaseWords,
-} from "@/components/lead/types";
+  LEAD_PIPELINE_STAGES,
+  STAGE_FILTER_OPTIONS,
+} from "@/components/sales/editLead/types/editmodel";
 
 import type { LeadShape } from "../../ui/lead/Validators";
 
@@ -67,8 +69,8 @@ export default function LeadEditModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const firstRef = useRef<HTMLInputElement | null>(null);
   const [mutUpdate, { loading: mutating }] = useMutation(UPDATE_LEAD_DETAILS);
-  const [mutBio] = useMutation(UPDATE_LEAD_BIO);
-  const [mutStage] = useMutation(CHANGE_STAGE);
+  const [mutBio, { loading: bioSaving }] = useMutation(UPDATE_LEAD_BIO);
+  const [mutStage, { loading: stageUpdating }] = useMutation(CHANGE_STAGE);
 
   const leadIdFromUrl = useMemo(() => {
     try {
@@ -112,9 +114,18 @@ export default function LeadEditModal({
     setTimeout(() => firstRef.current?.focus(), 0);
   }, [isOpen, initial]);
 
-  const handle = (k: keyof LeadEditModalValues, v: any) => {
+  const handle = (k: keyof LeadEditModalValues, v: unknown) => {
     setForm((prev) => ({ ...(prev ?? {}), [k]: v }));
   };
+
+  const stageOptions = useMemo(() => {
+    const currentStage = String((form as any).clientStage ?? (initial as any)?.clientStage ?? "").toUpperCase();
+    return !currentStage || currentStage === "NEW_LEAD" || currentStage === "FIRST_TALK_DONE"
+      ? LEAD_PIPELINE_STAGES
+      : LEAD_PIPELINE_STAGES.filter((s) => s !== "NEW_LEAD" && s !== "FIRST_TALK_DONE");
+  }, [form.clientStage, initial]);
+
+  const isSaving = saving || mutating || stageUpdating || bioSaving;
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -230,6 +241,7 @@ export default function LeadEditModal({
       const prevBio = String((initial as any)?.bioText ?? "").trim();
       if (nextBio !== prevBio) {
         await mutBio({ variables: { input: { leadId, bioText: nextBio } } });
+        toast.info("BIO_UPDATED");
       }
 
       toast.success("Lead updated");
@@ -257,16 +269,6 @@ export default function LeadEditModal({
           </div>
 
           <div className="grid gap-4 rounded-2xl border border-gray-100 p-4 dark:border-white/10 sm:grid-cols-2">
-            <Field label="Full name" error={errors.name}>
-              <input
-                ref={firstRef}
-                className={INPUT}
-                value={String((form as any).name ?? "")}
-                onChange={(e) => (handle as any)("name", e.target.value)}
-                placeholder="Enter full name"
-              />
-            </Field>
-
             <div className="grid grid-cols-2 gap-3">
               <Field label="First name">
                 <input className={INPUT} value={String(form.firstName ?? "")} onChange={(e) => handle("firstName", e.target.value)} placeholder="Optional" />
@@ -412,38 +414,24 @@ export default function LeadEditModal({
             {/* Stage controls */}
             <div className="grid grid-cols-2 gap-3">
               <Field label="Pipeline stage">
-                {(() => {
-                  const allStages = [
-                    'NEW_LEAD','FIRST_TALK_DONE','FOLLOWING_UP','CLIENT_INTERESTED','ACCOUNT_OPENED','NO_RESPONSE_DORMANT','NOT_INTERESTED_DORMANT','RISKY_CLIENT_DORMANT','HIBERNATED',
-                  ];
-                  const currentStage = String((form as any).clientStage ?? (initial as any)?.clientStage ?? "").toUpperCase();
-                  const stageOptions =
-                    !currentStage || currentStage === 'NEW_LEAD' || currentStage === 'FIRST_TALK_DONE'
-                      ? allStages
-                      : allStages.filter(
-                          (s) =>
-                            s.toUpperCase() !== 'NEW_LEAD' &&
-                            s.toUpperCase() !== 'FIRST_TALK_DONE',
-                        );
-                  return (
-                    <select
-                      className={INPUT}
-                      value={String((form as any).clientStage ?? "")}
-                      onChange={(e) => (handle as any)("clientStage", e.target.value)}
-                    >
-                      {stageOptions.map((s) => (
-                        <option key={s} value={s}>
-                          {s.replace(/_/g, " ")}
-                        </option>
-                      ))}
-                    </select>
-                  );
-                })()}
+                <select
+                  className={INPUT}
+                  value={String((form as any).clientStage ?? "")}
+                  onChange={(e) => (handle as any)("clientStage", e.target.value)}
+                >
+                  {stageOptions.map((s) => (
+                    <option key={s} value={s}>
+                      {s.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
               </Field>
               <Field label="Lead status (Stage filter)">
                 <select className={INPUT} value={String((form as any).stageFilter ?? "")} onChange={(e) => (handle as any)("stageFilter", e.target.value)}>
-                  {['FUTURE_INTERESTED','HIGH_PRIORITY','LOW_PRIORITY','NEED_CLARIFICATION','NOT_ELIGIBLE','NOT_INTERESTED','ON_PROCESS'].map((s) => (
-                    <option key={s} value={s}>{s.replace(/_/g,' ')}</option>
+                  {STAGE_FILTER_OPTIONS.map((s) => (
+                    <option key={s} value={s}>
+                      {s.replace(/_/g, " ")}
+                    </option>
                   ))}
                 </select>
               </Field>
@@ -470,17 +458,22 @@ export default function LeadEditModal({
         </div>
 
         <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-gray-100 bg-white/80 px-6 py-3 backdrop-blur dark:border-white/10 dark:bg-gray-900/70">
-          <Button size="sm" variant="outline" onClick={onClose} disabled={saving}>
+          <Button size="sm" variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button size="sm" type="submit" disabled={saving || mutating}>
-            {saving || mutating ? (
+          <Button size="sm" type="submit" disabled={isSaving}>
+            {isSaving ? (
               <span className="inline-flex items-center gap-2">please wait updating</span>
             ) : (
               "Confirm & Save"
             )}
           </Button>
         </div>
+        {isSaving && (
+          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-3xl bg-white/70 text-sm font-semibold text-gray-700 backdrop-blur dark:bg-gray-900/70 dark:text-white">
+            please wait updating
+          </div>
+        )}
       </form>
     </Modal>
   );
