@@ -9,18 +9,24 @@ import {
   ADD_LEAD_NOTE,
   UPDATE_LEAD_REMARK,
   UPDATE_LEAD_STATUS,
-} from './gql/view_lead.gql';
+} from '../gql/view_lead.gql';
+import {
+  RECORD_STAGE_CHANGE,
+  RECORD_STATUS_FILTER_CHANGE,
+  UPDATE_LEAD_REMARK_WITH_INTERACTION,
+} from '../gql/leadInteraction.gql';
 import { UPDATE_LEAD_DETAILS } from '@/components/sales/editLead/update_gql/update_lead.gql';
-import { shouldAutoOpenLead } from './autoStatus';
+import { shouldAutoOpenLead } from '../autoStatus';
+import { useAuth } from '@/context/AuthContex';
 
-import type { LeadStage, LeadStatus, Lead } from '@/components/sales/myleads/interface/type';
+import { STATUS_OPTIONS,LeadStageFilter, LeadStatus, LeadStage, STAGE_OPTIONS } from '../update_card/interface';
 
 type Props = {
   leadId: string;
   currentStatus: LeadStatus | string;
   currentStage?: LeadStage | string | null;
   /** Pipeline status (PENDING/OPEN/...) for automation rules */
-  pipelineStatus?: LeadStatus | string | null;
+  pipelineStatus?: LeadStageFilter | string | null;
   onSaved?: () => void;
 };
 
@@ -28,20 +34,6 @@ const CARD = 'rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:bor
 const INPUT = 'rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-zinc-900 outline-none dark:border-white/10 dark:bg-white/5 dark:text-white';
 const BTN = 'rounded-xl bg-emerald-600 text-white px-4 py-2 border border-emerald-600 disabled:bg-zinc-300 disabled:text-white/70';
 
-// Replace legacy status options with Stage Filter options for the Sales flow
-const STATUS_OPTIONS: Array<string> = [
-  'FUTURE_INTERESTED',
-  'HIGH_PRIORITY',
-  'LOW_PRIORITY',
-  'NEED_CLARIFICATION',
-  'NOT_ELIGIBLE',
-  'NOT_INTERESTED',
-  'ON_PROCESS',
-];
-const STAGE_OPTIONS: Array<LeadStage | string> = [
-  'NEW_LEAD','FIRST_TALK_DONE','FOLLOWING_UP','CLIENT_INTERESTED','ACCOUNT_OPENED','NO_RESPONSE_DORMANT','NOT_INTERESTED_DORMANT','RISKY_CLIENT_DORMANT','HIBERNATED',
-];
-// REMOVED: CHANNEL_OPTIONS and OUTCOME_OPTIONS
 
 export default function LeadUnifiedUpdateCard({
   leadId,
@@ -50,6 +42,7 @@ export default function LeadUnifiedUpdateCard({
   pipelineStatus,
   onSaved,
 }: Props) {
+  const { user } = useAuth();
   const [status, setStatus] = useState<string>(String(currentStatus ?? 'OPEN'));
   const [stage, setStage] = useState<string>(String(currentStage ?? 'NEW_LEAD'));
   const [followUp, setFollowUp] = useState<string>('');
@@ -64,6 +57,9 @@ export default function LeadUnifiedUpdateCard({
   const [mutInteraction] = useMutation(CREATE_LEAD_EVENT);
   const [mutNote] = useMutation(ADD_LEAD_NOTE);
   const [mutRemark] = useMutation(UPDATE_LEAD_REMARK);
+  const [mutRecordStageChange] = useMutation(RECORD_STAGE_CHANGE);
+  const [mutRecordStatusFilterChange] = useMutation(RECORD_STATUS_FILTER_CHANGE);
+  const [mutRemarkWithInteraction] = useMutation(UPDATE_LEAD_REMARK_WITH_INTERACTION);
 
   const nextFollowUpAt = useMemo(() => {
     if (!followUp) return null;
@@ -92,36 +88,24 @@ export default function LeadUnifiedUpdateCard({
     const ops: Promise<any>[] = [];
     setSaving(true);
     try {
-      // Stage filter change (shown as Status in UI)
+      // Stage filter change (shown as Status in UI) - with interaction tracking
       if (String(status) !== String(currentStatus)) {
         ops.push(
-          mutUpdateDetails({
-            variables: { input: { leadId, stageFilter: status } },
+          mutRecordStatusFilterChange({
+            variables: {
+              leadId,
+              from: String(currentStatus),
+              to: status,
+              note: notes || undefined,
+              nextActionDueAt: nextFollowUpAt || undefined,
+            },
             update(cache, result) {
-              const payload = (result?.data as any)?.updateLeadDetails;
+              const payload = (result?.data as any)?.recordStatusFilterChange;
               if (!payload?.id) return;
               cache.modify({
-                id: cache.identify({ __typename: 'IpkLeaddEntity', id: payload.id }),
+                id: cache.identify({ __typename: 'IpkLeaddEntity', id: leadId }),
                 fields: {
                   stageFilter: () => status,
-                },
-              });
-            },
-          })
-        );
-      }
-
-      // Update nextActionDueAt when follow-up date is set
-      if (nextFollowUpAt) {
-        ops.push(
-          mutUpdateDetails({
-            variables: { input: { leadId, nextActionDueAt: nextFollowUpAt } },
-            update(cache, result) {
-              const payload = (result?.data as any)?.updateLeadDetails;
-              if (!payload?.id) return;
-              cache.modify({
-                id: cache.identify({ __typename: 'IpkLeaddEntity', id: payload.id }),
-                fields: {
                   nextActionDueAt: () => nextFollowUpAt,
                 },
               });
@@ -130,21 +114,45 @@ export default function LeadUnifiedUpdateCard({
         );
       }
 
-      // stage change (always)
-      ops.push(
-        mutStage({
-          variables: {
-            input: {
+      // Pipeline stage change - with interaction tracking
+      if (String(stage) !== String(currentStage)) {
+        ops.push(
+          mutRecordStageChange({
+            variables: {
               leadId,
-              stage,
-              note: notes || null,
-              channel: 'CALL', // Hardcoded default as field is removed
-              nextFollowUpAt: nextFollowUpAt ?? null,
-              productExplained,
+              from: String(currentStage),
+              to: stage,
+              note: notes || undefined,
+              nextActionDueAt: nextFollowUpAt || undefined,
             },
-          },
-        })
-      );
+            update(cache, result) {
+              const payload = (result?.data as any)?.recordStageChange;
+              if (!payload?.id) return;
+              cache.modify({
+                id: cache.identify({ __typename: 'IpkLeaddEntity', id: leadId }),
+                fields: {
+                  clientStage: () => stage,
+                  nextActionDueAt: () => nextFollowUpAt,
+                },
+              });
+            },
+          })
+        );
+      }
+
+      // Remark/Notes with interaction tracking
+      if (notes.trim()) {
+        ops.push(
+          mutRemarkWithInteraction({
+            variables: {
+              leadId,
+              text: notes,
+              nextActionDueAt: nextFollowUpAt || undefined,
+              createInteractionEvent: true,
+            },
+          })
+        );
+      }
 
       // Auto-open rule: when first talk is done on a pending lead,
       // quietly flip pipeline status from PENDING -> OPEN so
@@ -191,8 +199,18 @@ export default function LeadUnifiedUpdateCard({
             },
           })
         );
-        // Mirror the text into the simple remark field
-        ops.push(mutRemark({ variables: { input: { leadId, remark: notes } } }));
+        // Mirror the text into the simple remark field with author info
+        ops.push(
+          mutRemark({
+            variables: {
+              input: {
+                leadId,
+                remark: notes,
+                ...(user?.id && user?.name ? { authorId: user.id, authorName: user.name } : {}),
+              },
+            },
+          })
+        );
       }
 
       await Promise.all(ops);
@@ -276,7 +294,7 @@ export default function LeadUnifiedUpdateCard({
 
         {/* Status */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500">Lead status</label>
+          <label className="mb-1 block text-xs font-medium text-gray-500">LeadStage Filter</label>
           <div className="relative">
             <select className={`${INPUT} w-full appearance-none pr-8`} value={status} onChange={(e) => setStatus(e.target.value)}>
               {STATUS_OPTIONS.map((s) => (
@@ -296,9 +314,7 @@ export default function LeadUnifiedUpdateCard({
           </div>
         </div>
 
-        {/* REMOVED: Channel */}
 
-        {/* REMOVED: Outcome */}
 
         {/* Notes */}
         <div>

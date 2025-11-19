@@ -188,8 +188,11 @@ export const UPDATE_LEAD_REMARK = gql`
     updateLeadRemark(input: $input) {
       id
       updatedAt
+      remarks { text author createdAt }
+      events { ...LeadEventParts }
     }
   }
+  ${FRAG_LEAD_EVENT}
 `;
 
 /** First contact form submission (server persists structured JSON in remark) */

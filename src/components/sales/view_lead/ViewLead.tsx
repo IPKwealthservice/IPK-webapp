@@ -16,7 +16,7 @@ import { useAuth } from "@/context/AuthContex";
   } from "./gql/view_lead.gql";
 
 import LeadProfileHeader from "./LeadProfileHeader";
-import LeadUnifiedUpdateCard from "./LeadUnifiedUpdateCard";
+import LeadUnifiedUpdateCard from "./update_card/LeadUnifiedUpdateCard";
 import TimelineList from "./TimelineList";
 import { pickLeadStage, pickLeadStatus } from "./interface/utils";
 import { shouldAutoOpenLead } from "./autoStatus";
@@ -209,7 +209,15 @@ export default function ViewLead() {
       });
       // Keep the Latest remark in sync with the newest note
       try {
-        await mutUpdateRemark({ variables: { input: { leadId, remark: text } } });
+        await mutUpdateRemark({
+          variables: {
+            input: {
+              leadId,
+              remark: text,
+              ...(user?.id && user?.name ? { authorId: user.id, authorName: user.name } : {}),
+            },
+          },
+        });
       } catch (_) {
         // non-blocking; ignore failures
       }
