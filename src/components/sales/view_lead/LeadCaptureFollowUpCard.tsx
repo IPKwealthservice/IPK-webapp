@@ -18,7 +18,7 @@ import {
   isValidFollowUpDate,
   convertFollowUpToInput,
 } from "./followUpUtils";
-import type { LeadTimingInfo, FollowUpFormState } from "./followUpTypes";
+import type { LeadTimingInfo, FollowUpFormState } from "../view_lead/gql/";
 
 type Props = {
   timingInfo: LeadTimingInfo;

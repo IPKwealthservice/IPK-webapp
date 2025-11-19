@@ -15,6 +15,7 @@ import {
   RECORD_STATUS_FILTER_CHANGE,
   UPDATE_LEAD_REMARK_WITH_INTERACTION,
 } from '../gql/leadInteraction.gql';
+import { UPDATE_NEXT_ACTION_DUE } from '@/components/sales/view_lead/gql/followUp.gql';
 import { UPDATE_LEAD_DETAILS } from '@/components/sales/editLead/update_gql/update_lead.gql';
 import { shouldAutoOpenLead } from '../autoStatus';
 import { useAuth } from '@/context/AuthContex';
@@ -59,6 +60,7 @@ export default function LeadUnifiedUpdateCard({
   const [mutRemark] = useMutation(UPDATE_LEAD_REMARK);
   const [mutRecordStageChange] = useMutation(RECORD_STAGE_CHANGE);
   const [mutRecordStatusFilterChange] = useMutation(RECORD_STATUS_FILTER_CHANGE);
+  const [mutUpdateNextAction] = useMutation(UPDATE_NEXT_ACTION_DUE);
   const [mutRemarkWithInteraction] = useMutation(UPDATE_LEAD_REMARK_WITH_INTERACTION);
 
   const nextFollowUpAt = useMemo(() => {
@@ -88,8 +90,13 @@ export default function LeadUnifiedUpdateCard({
     const ops: Promise<any>[] = [];
     setSaving(true);
     try {
+      const stageChanged = String(stage) !== String(currentStage);
+      const statusChanged = String(status) !== String(currentStatus);
+      const hasNotes = Boolean(notes.trim());
+      const shouldUpdateNextActionDirectly =
+        !!nextFollowUpAt && !stageChanged && !statusChanged && !hasNotes;
       // Stage filter change (shown as Status in UI) - with interaction tracking
-      if (String(status) !== String(currentStatus)) {
+      if (statusChanged) {
         ops.push(
           mutRecordStatusFilterChange({
             variables: {
@@ -115,7 +122,7 @@ export default function LeadUnifiedUpdateCard({
       }
 
       // Pipeline stage change - with interaction tracking
-      if (String(stage) !== String(currentStage)) {
+      if (stageChanged) {
         ops.push(
           mutRecordStageChange({
             variables: {
@@ -141,7 +148,7 @@ export default function LeadUnifiedUpdateCard({
       }
 
       // Remark/Notes with interaction tracking
-      if (notes.trim()) {
+      if (hasNotes) {
         ops.push(
           mutRemarkWithInteraction({
             variables: {
@@ -151,6 +158,30 @@ export default function LeadUnifiedUpdateCard({
               createInteractionEvent: true,
             },
           })
+        );
+      }
+
+      if (shouldUpdateNextActionDirectly) {
+        ops.push(
+          mutUpdateNextAction({
+            variables: {
+              input: {
+                leadId,
+                nextActionDueAt: nextFollowUpAt,
+              },
+            },
+            update(cache, result) {
+              const payload = (result?.data as any)?.updateNextActionDue;
+              const targetId = payload?.id ?? leadId;
+              if (!targetId) return;
+              cache.modify({
+                id: cache.identify({ __typename: 'IpkLeaddEntity', id: targetId }),
+                fields: {
+                  nextActionDueAt: () => payload?.nextActionDueAt,
+                },
+              });
+            },
+          }),
         );
       }
 

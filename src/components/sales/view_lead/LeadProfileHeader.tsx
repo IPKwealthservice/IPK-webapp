@@ -380,13 +380,11 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const bioModal = useModal(false);
   const addPhoneModal = useModal(false);
 
-  if (loading) {
-    return (
-      <div className="flex h-32 items-center justify-center text-sm text-gray-400 dark:text-white/40">
-        Loading lead profile...
-      </div>
-    );
-  }
+  // Add-phone local form state
+  const [newPhone, setNewPhone] = useState<string>("");
+  const [newLabel, setNewLabel] = useState<string>("MOBILE");
+  const [newIsWa, setNewIsWa] = useState<boolean>(false);
+  const [newMakePrimary, setNewMakePrimary] = useState<boolean>(false);
 
   /** handle opening the edit modal */
   const handleEditClick = () => {
@@ -406,12 +404,6 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       onProfileRefresh?.();
     }, 300);
   };
-
-  // Add-phone local form state
-  const [newPhone, setNewPhone] = useState<string>("");
-  const [newLabel, setNewLabel] = useState<string>("MOBILE");
-  const [newIsWa, setNewIsWa] = useState<boolean>(false);
-  const [newMakePrimary, setNewMakePrimary] = useState<boolean>(false);
 
   const handleAddPhone = async () => {
     const number = newPhone.trim();
@@ -482,6 +474,14 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     }
     return (lead.remark ?? "").toString();
   }, [lead.remarks, lead.remark]);
+
+  if (loading) {
+    return (
+      <div className="flex h-32 items-center justify-center text-sm text-gray-400 dark:text-white/40">
+        Loading lead profile...
+      </div>
+    );
+  }
 
   return (
     <>
