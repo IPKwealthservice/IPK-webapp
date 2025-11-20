@@ -4,9 +4,17 @@ import Button from "../../ui/button/Button";
 import { useMutation } from "@apollo/client";
 import Label from "../../form/Label";
 import { toast } from "react-toastify";
+import { formatDistanceToNow } from "date-fns";
+import { Edit3, NotebookPen, Clock3, UserRound, BriefcaseBusiness, Flag } from "lucide-react";
+
 import { UPDATE_LEAD_DETAILS } from "../editLead/update_gql/update_lead.gql";
 import { useAuth } from "@/context/AuthContex";
-import { UPDATE_LEAD_BIO, CHANGE_STAGE } from "@/components/sales/view_lead/gql/view_lead.gql";
+import {
+  UPDATE_LEAD_BIO,
+  CHANGE_STAGE,
+  UPDATE_LEAD_REMARK,
+} from "@/components/sales/view_lead/gql/view_lead.gql";
+import { UPDATE_LEAD_REMARK_WITH_INTERACTION } from "@/components/sales/view_lead/gql/leadInteraction.gql";
 import { valueToLabel } from "@/components/lead/types";
 import {
   genderOptions,
@@ -90,6 +98,11 @@ export default function LeadEditModal({
   const [mutUpdate, { loading: mutating }] = useMutation(UPDATE_LEAD_DETAILS);
   const [mutBio, { loading: bioSaving }] = useMutation(UPDATE_LEAD_BIO);
   const [mutStage, { loading: stageUpdating }] = useMutation(CHANGE_STAGE);
+  const [mutRemark, { loading: remarkUpdating }] = useMutation(UPDATE_LEAD_REMARK);
+  const [mutRemarkWithInteraction, { loading: remarkTimelineUpdating }] = useMutation(
+    UPDATE_LEAD_REMARK_WITH_INTERACTION
+  );
+  const [remarkDraft, setRemarkDraft] = useState("");
 
   const leadIdFromUrl = useMemo(() => {
     try {
@@ -114,6 +127,29 @@ export default function LeadEditModal({
     return valueToLabel(raw, leadOptions) || raw;
   }, [form.leadSource, form.leadSourceOther, form.referralName, initial.leadSourceOther, initial.referralName]);
 
+  const latestRemark = useMemo(() => {
+    const list = Array.isArray((initial as any)?.remarks) ? [...((initial as any).remarks as any[])] : [];
+    list.sort((a, b) => Date.parse(String(b?.createdAt || "")) - Date.parse(String(a?.createdAt || "")));
+    if (list.length > 0) return list[0];
+
+    const fallbackText = (initial as any)?.remark;
+    if (fallbackText) {
+      return {
+        text: fallbackText,
+        author: (initial as any)?.remarks?.[0]?.author ?? (initial as any)?.updatedBy ?? "Unknown",
+        createdAt: (initial as any)?.updatedAt ?? new Date().toISOString(),
+      };
+    }
+    return null;
+  }, [initial]);
+
+  const latestRemarkRelative = useMemo(() => {
+    if (!latestRemark?.createdAt) return null;
+    const ts = Date.parse(latestRemark.createdAt);
+    if (!Number.isFinite(ts)) return null;
+    return formatDistanceToNow(new Date(ts), { addSuffix: true });
+  }, [latestRemark]);
+
   useEffect(() => {
     if (!isOpen) return;
     const next: LeadEditModalValues = { ...(initial || {}) };
@@ -130,6 +166,7 @@ export default function LeadEditModal({
     }
     setForm(next);
     setErrors({});
+    setRemarkDraft("");
     setTimeout(() => firstRef.current?.focus(), 0);
   }, [isOpen, initial]);
 
@@ -144,7 +181,7 @@ export default function LeadEditModal({
       : LEAD_PIPELINE_STAGES.filter((s) => s !== "NEW_LEAD" && s !== "FIRST_TALK_DONE");
   }, [form.clientStage, initial]);
 
-  const isSaving = saving || mutating || stageUpdating || bioSaving;
+  const isSaving = saving || mutating || stageUpdating || bioSaving || remarkUpdating || remarkTimelineUpdating;
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -265,8 +302,32 @@ export default function LeadEditModal({
         toast.info(`Bio updated at ${new Date(bioUpdatedAt).toLocaleString()}`);
       }
 
+      const trimmedRemark = remarkDraft.trim();
+      if (trimmedRemark && leadId) {
+        await Promise.all([
+          mutRemarkWithInteraction({
+            variables: {
+              leadId,
+              text: trimmedRemark,
+              nextActionDueAt: payload.nextActionDueAt ?? undefined,
+              createInteractionEvent: true,
+            },
+          }),
+          mutRemark({
+            variables: {
+              input: {
+                leadId,
+                remark: trimmedRemark,
+                ...(user?.id && user?.name ? { authorId: user.id, authorName: user.name } : {}),
+              },
+            },
+          }),
+        ]);
+      }
+
       toast.success("Lead details updated successfully. Refreshing...");
       await onSubmit?.(payload);
+      setRemarkDraft("");
       onClose();
     } catch (err: any) {
       toast.error(err?.message || "Failed to update lead");
@@ -278,25 +339,41 @@ export default function LeadEditModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-screen-lg w-full p-4">
       <form onSubmit={submit} className="relative flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-gray-900">
-        <div className="sticky top-0 z-10 flex flex-col gap-1 border-b border-gray-100 bg-white/90 px-6 py-4 backdrop-blur dark:border-white/10 dark:bg-gray-900/80">
-          <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">{title}</h4>
-          <p className="text-sm text-gray-500 dark:text-white/50">Update contact, profiling and opportunity details.</p>
+        <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50/90 via-white/90 to-white/90 px-6 py-4 backdrop-blur dark:border-white/10 dark:from-indigo-500/10 dark:via-gray-900/80 dark:to-gray-900/80">
+          <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-600 shadow-sm dark:bg-indigo-500/30 dark:text-white">
+            <Edit3 className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90">{title}</h4>
+            <p className="text-sm text-gray-500 dark:text-white/50">
+              Update contact, profiling and opportunity details. Notes saved here also appear in the Activity Timeline.
+            </p>
+          </div>
+          <div className="hidden md:flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-white/70">
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            Changes auto-sync
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 max-h-[70vh] space-y-6">
-          <div className="grid gap-3 rounded-2xl border border-gray-100 bg-white/70 p-3 dark:border-white/10 dark:bg-white/[0.04] sm:grid-cols-2">
+        <div className="flex-1 overflow-y-auto px-6 py-4 max-h-[72vh] space-y-5">
+          <div className="grid gap-3 rounded-3xl border border-gray-100 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:grid-cols-2">
             <InfoTile label="Lead code" value={String((form as any).leadCode ?? "Not generated")} />
             <InfoTile label="Lead source" value={leadSourceLabel} />
           </div>
 
-          <div className="grid gap-4 rounded-2xl border border-gray-100 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="grid grid-cols-2 gap-3">
+          <SectionCard
+            title="Identity & Contact"
+            description="Keep the core contact information up to date."
+            icon={<UserRound className="h-4 w-4" />}
+          >
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Field label="First name" error={errors.name}>
                 <input
                   className={INPUT}
                   value={String(form.firstName ?? "")}
                   onChange={(e) => handle("firstName", e.target.value)}
                   placeholder="First name"
+                  ref={firstRef}
                 />
               </Field>
               <Field label="Last name">
@@ -309,7 +386,7 @@ export default function LeadEditModal({
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Field label="Email">
                 <input
                   className={INPUT}
@@ -319,11 +396,16 @@ export default function LeadEditModal({
                 />
               </Field>
               <Field label="Location">
-                <input className={INPUT} value={String(form.location ?? "")} onChange={(e) => handle("location", e.target.value)} placeholder="City / Area" />
+                <input
+                  className={INPUT}
+                  value={String(form.location ?? "")}
+                  onChange={(e) => handle("location", e.target.value)}
+                  placeholder="City / Area"
+                />
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Field label="Gender">
                 <select className={INPUT} value={String(form.gender ?? "")} onChange={(e) => handle("gender", e.target.value)}>
                   <option value="">Select gender</option>
@@ -344,8 +426,14 @@ export default function LeadEditModal({
                 />
               </Field>
             </div>
+          </SectionCard>
 
-            <div className="grid grid-cols-3 gap-3">
+          <SectionCard
+            title="Professional Snapshot"
+            description="Capture what the lead does so every RM has context."
+            icon={<BriefcaseBusiness className="h-4 w-4" />}
+          >
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               <Field label="Profession">
                 <select
                   className={INPUT}
@@ -402,12 +490,22 @@ export default function LeadEditModal({
               </Field>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               <Field label="Product">
-                <input className={INPUT} value={String((form as any).product ?? "")} onChange={(e) => (handle as any)("product", e.target.value)} placeholder="e.g. SIP" />
+                <input
+                  className={INPUT}
+                  value={String((form as any).product ?? "")}
+                  onChange={(e) => (handle as any)("product", e.target.value)}
+                  placeholder="e.g. SIP"
+                />
               </Field>
               <Field label="Investment range">
-                <input className={INPUT} value={String((form as any).investmentRange ?? "")} onChange={(e) => (handle as any)("investmentRange", e.target.value)} placeholder="e.g. 1L-5L" />
+                <input
+                  className={INPUT}
+                  value={String((form as any).investmentRange ?? "")}
+                  onChange={(e) => (handle as any)("investmentRange", e.target.value)}
+                  placeholder="e.g. 1L-5L"
+                />
               </Field>
               <Field label="SIP amount">
                 <input
@@ -419,22 +517,37 @@ export default function LeadEditModal({
                 />
               </Field>
             </div>
+          </SectionCard>
 
-            <div className="grid grid-cols-3 gap-3">
+          <SectionCard
+            title="Opportunity & Pipeline"
+            description="Control referral context, stage and follow-ups."
+            icon={<Flag className="h-4 w-4" />}
+          >
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               <Field label="Referral code">
-                <input className={INPUT} value={String((form as any).referralCode ?? "")} onChange={(e) => (handle as any)("referralCode", e.target.value)} />
+                <input
+                  className={INPUT}
+                  value={String((form as any).referralCode ?? "")}
+                  onChange={(e) => (handle as any)("referralCode", e.target.value)}
+                />
               </Field>
               <Field label="Referral name">
-                <input className={INPUT} value={String((form as any).referralName ?? "")} onChange={(e) => (handle as any)("referralName", e.target.value)} />
+                <input
+                  className={INPUT}
+                  value={String((form as any).referralName ?? "")}
+                  onChange={(e) => (handle as any)("referralName", e.target.value)}
+                />
               </Field>
               <Field label="Lead source">
-                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
-                  {leadSourceLabel}
+                <div className={INPUT + " flex items-center justify-between bg-gray-50 font-medium dark:bg-white/[0.03]"}>
+                  <span>{leadSourceLabel}</span>
+                  <span className="text-[11px] text-gray-400">Read-only</span>
                 </div>
               </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Field label="Pipeline stage">
                 <select
                   className={INPUT}
@@ -462,24 +575,83 @@ export default function LeadEditModal({
             </div>
 
             <Field label="Next action">
-              <input
-                type="datetime-local"
-                className={INPUT}
-                value={formatForDatetimeLocal((form as any).nextActionDueAt ?? null)}
-                onChange={(e) => handle("nextActionDueAt", toIsoString(e.target.value))}
+              <div className="relative">
+                <input
+                  type="datetime-local"
+                  className={INPUT + " pr-10"}
+                  value={formatForDatetimeLocal((form as any).nextActionDueAt ?? null)}
+                  onChange={(e) => handle("nextActionDueAt", toIsoString(e.target.value))}
+                />
+                <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              </div>
+            </Field>
+          </SectionCard>
+
+          <SectionCard
+            title="Notes & History"
+            description="Every remark added here is tracked with author and timestamp in the Activity Timeline."
+            icon={<NotebookPen className="h-4 w-4" />}
+          >
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div>
+                <Label className="text-xs font-semibold text-gray-600 dark:text-white/70">Add a new remark</Label>
+                <textarea
+                  rows={4}
+                  className={INPUT + " mt-2 min-h-[120px] resize-none"}
+                  value={remarkDraft}
+                  onChange={(e) => setRemarkDraft(e.target.value)}
+                  placeholder="Capture objections, commitments, or next steps. This will be logged to the timeline."
+                />
+                <p className="mt-2 text-xs text-gray-500 dark:text-white/60">
+                  Saved with your name ({user?.name ?? "current user"}) and visible on lead history.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gradient-to-br from-emerald-50/60 to-white p-4 text-sm dark:border-white/10 dark:from-emerald-500/5 dark:to-white/5">
+                <div className="flex items-center justify-between text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                  <div className="flex items-center gap-2">
+                    <NotebookPen className="h-4 w-4" />
+                    <span>Last saved remark</span>
+                  </div>
+                  {latestRemarkRelative && (
+                    <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-white/10 dark:text-white">
+                      {latestRemarkRelative}
+                    </span>
+                  )}
+                </div>
+                {latestRemark ? (
+                  <>
+                    <p className="mt-3 rounded-xl border border-emerald-100 bg-white/80 p-3 text-gray-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+                      {latestRemark.text}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-white/60">
+                      <span className="font-semibold text-gray-700 dark:text-white">
+                        {latestRemark.author || "Unknown"}
+                      </span>
+                      {latestRemark?.createdAt && (
+                        <>
+                          <span aria-hidden="true" className="text-gray-400">•</span>
+                          <span>{new Date(latestRemark.createdAt).toLocaleString()}</span>
+                        </>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-3 text-gray-500 dark:text-white/70">No remarks have been saved yet.</p>
+                )}
+              </div>
+            </div>
+
+            <Field label="Biography (optional)">
+              <textarea
+                rows={3}
+                className={INPUT + " resize-none"}
+                value={String(form.bioText ?? "")}
+                onChange={(e) => handle("bioText", e.target.value)}
+                placeholder="Short biography or notes about the lead..."
               />
             </Field>
-          </div>
-
-          <Field label="Biography (optional)">
-            <textarea
-              rows={3}
-              className={INPUT + " resize-none"}
-              value={String(form.bioText ?? "")}
-              onChange={(e) => handle("bioText", e.target.value)}
-              placeholder="Short biography or notes about the lead..."
-            />
-          </Field>
+          </SectionCard>
         </div>
         <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-gray-100 bg-white/80 px-6 py-3 backdrop-blur dark:border-white/10 dark:bg-gray-900/70">
           <Button size="sm" variant="outline" onClick={onClose} disabled={isSaving}>
@@ -523,5 +695,34 @@ function InfoTile({ label, value }: { label: string; value: string }) {
       <p className="font-semibold uppercase tracking-wide">{label}</p>
       <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{value}</p>
     </div>
+  );
+}
+
+function SectionCard({
+  title,
+  description,
+  children,
+  icon,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-3xl border border-gray-100 bg-white/70 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+      <div className="mb-4 flex items-start gap-3">
+        {icon && (
+          <div className="rounded-2xl bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-200">
+            {icon}
+          </div>
+        )}
+        <div>
+          <h3 className="text-base font-semibold text-gray-800 dark:text-white">{title}</h3>
+          {description && <p className="text-xs text-gray-500 dark:text-white/60">{description}</p>}
+        </div>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
   );
 }
