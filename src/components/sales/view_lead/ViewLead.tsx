@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContex";
     UPDATE_LEAD_REMARK,
   } from "./gql/view_lead.gql";
 
-import LeadProfileHeader from "./LeadProfileHeader";
+import LeadProfileHeader from "./leadProfileheader/LeadProfileHeader";
 import LeadUnifiedUpdateCard from "./update_card/LeadUnifiedUpdateCard";
 import TimelineList from "./TimelineList";
 import { pickLeadStage, pickLeadStatus } from "./interface/utils";

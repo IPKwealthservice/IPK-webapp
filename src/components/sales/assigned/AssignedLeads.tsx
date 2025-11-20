@@ -208,7 +208,7 @@ export default function AssignedLeads({
               <TableCell isHeader className="px-6 py-3">Mobile No</TableCell>
               <TableCell isHeader className="px-6 py-3">Stage</TableCell>
               <TableCell isHeader className="px-6 py-3">Status</TableCell>
-              <TableCell isHeader className="px-6 py-3">Last contact</TableCell>
+              {/* <TableCell isHeader className="px-6 py-3">Last contact</TableCell> */}
               <TableCell isHeader className="px-6 py-3 text-center">View more</TableCell>
               <TableCell isHeader className="px-6 py-3 text-right">Actions</TableCell>
             </TableRow>

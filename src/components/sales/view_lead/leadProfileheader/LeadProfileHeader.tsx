@@ -1,50 +1,36 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "@apollo/client";
 import { toast } from "react-toastify";
-import {
-  CheckCircle2,
-  Clock3,
-  Mail,
-  Phone,
-  MessageCircle,
-  RefreshCcw,
-  PencilLine,
-  Briefcase, // Keep for occupation logic
-  CircleDollarSign,
-  MapPin, // Keep for location logic
-  Package,
-  Calendar,
-  Building, // Keep for occupation logic
-  User,
-  Code,
-  Copy, // Keep for lead code copy
-  PhoneCall,
-  CalendarClock,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { CheckCircle2, Clock3, RefreshCcw, PencilLine } from "lucide-react";
 
 // Note: Use specific field mutations supported by the API schema
 import LeadStatusBadge from "@/components/sales/myleads/LeadStatusBadge";
-import { leadOptions, valueToLabel } from "@/components/lead/types";
+import {
+  leadOptions,
+  valueToLabel,
+  productOptions,
+  investmentOptions,
+  professionOptions,
+} from "@/components/lead/types";
 import {
   initials,
   resolveStageDisplay,
   formatDateDisplay,
   formatAgingDays,
-  formatInvestmentRange,
   formatSipAmount,
   humanize,
-} from "./interface/utils";
+} from "../interface/utils";
 import { parseISO, differenceInCalendarDays, isValid as isValidDate } from "date-fns";
-import type { LeadProfile, LeadPhone } from "./interface/types";
-import type { LeadEditModalValues } from "../editLead/LeadEditModal";
-import LeadEditModal from "../editLead/LeadEditModal";
+import type { LeadProfile, LeadPhone } from "../interface/types";
+import type { LeadEditModalValues } from "../../editLead/LeadEditModal";
+import LeadEditModal from "../../editLead/LeadEditModal";
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/context/AuthContex";
-import { ADD_LEAD_PHONE } from "./gql/view_lead.gql";
-
+import { ADD_LEAD_PHONE } from "../gql/view_lead.gql";
+import { InfoTile } from "./InfoTile";
+import { HoverPreviewCard, RemarkBioModal } from "./HoverRemark";
 /**
  * LeadProfileHeader component displays a lead summary and exposes an edit button.
  *
@@ -61,15 +47,6 @@ type Props = {
   onProfileRefresh?: () => void;
   /** optional flag; accepted for compatibility */
   isAdmin?: boolean;
-};
-
-// Type for the new center-column grid
-type ContactGridField = {
-  key: string;
-  icon: LucideIcon;
-  label: string;
-  value: ReactNode;
-  muted?: boolean;
 };
 
 export default function LeadProfileHeader({ lead, loading, canEditProfile, onProfileRefresh }: Props) {
@@ -108,13 +85,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const hasInvestmentRange = Boolean(investmentRangeRaw);
   const sipAmountValue =
     typeof lead.sipAmount === "number" && Number.isFinite(lead.sipAmount) ? lead.sipAmount : null;
-  const hasSipAmount = sipAmountValue !== null;
   const sipDisplay = formatSipAmount(sipAmountValue);
-  const investmentValue = hasInvestmentRange
-    ? formatInvestmentRange(investmentRangeRaw)
-    : hasSipAmount
-    ? sipDisplay
-    : "Not captured";
 
   // Gender
   const genderDisplay = genderRaw ? humanize(genderRaw) : "Not set";
@@ -125,6 +96,23 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const ageNumber = Number(ageRaw);
   const hasValidAge = hasAgeField && Number.isFinite(ageNumber) && ageNumber > 0;
   const ageDisplay = hasValidAge ? String(Math.round(ageNumber)) : "Not set";
+
+  const displayName =
+    lead.name?.trim() ||
+    `${(lead.firstName ?? "").trim()} ${(lead.lastName ?? "").trim()}`.trim() ||
+    "Unnamed lead";
+
+  const professionRaw = (occ0?.profession as string) ?? lead.profession ?? "";
+  const occupationDisplay =
+    valueToLabel(professionRaw || undefined, professionOptions) ||
+    (professionRaw ? humanize(professionRaw) : "Not set");
+
+  const productDisplay =
+    valueToLabel(product || undefined, productOptions) || "Not specified";
+  const investmentLabel =
+    valueToLabel(investmentRangeRaw || undefined, investmentOptions) || "";
+  const investmentDisplay =
+    investmentLabel || (hasInvestmentRange ? investmentRangeRaw : "Not captured");
 
   // Contact Info
   const rawPrimaryPhone =
@@ -167,34 +155,27 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       isPrimary: meta.isPrimary,
     }));
   }, [lead.phones, rawPrimaryPhone]);
-  const hasPhoneNumbers = normalizedPhones.length > 0;
   const fallbackPhone = rawPrimaryPhone ? String(rawPrimaryPhone).trim() : "";
-  const phoneDisplay = (normalizedPhones[0]?.number ?? fallbackPhone) || "Not provided";
-
-  const phoneListMarkup =
-    hasPhoneNumbers && (
-      <div className="flex flex-wrap gap-2">
-        {normalizedPhones.map((phone) => (
-          <span
-            key={phone.number}
-            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-semibold text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80"
-          >
-            <PhoneCall className="h-3 w-3 text-emerald-600" aria-hidden="true" />
-            <span>{phone.number}</span>
-            {phone.label && (
-              <span className="rounded-full bg-emerald-100 px-2 py-[2px] text-[10px] font-semibold text-emerald-600 dark:bg-emerald-50/20 dark:text-emerald-200">
-                {phone.label}
-              </span>
-            )}
-            {phone.isWhatsapp && (
-              <MessageCircle className="h-3 w-3 text-emerald-600" aria-label="WhatsApp" />
-            )}
-          </span>
-        ))}
-      </div>
-    );
-  const phoneListValue = hasPhoneNumbers ? phoneListMarkup : "Not provided";
-  const nextFollowUpDisplay = lead.nextActionDueAt ? formatDateDisplay(lead.nextActionDueAt) : "Not scheduled";
+  const primaryPhoneEntry =
+    normalizedPhones.find((phone) => phone.isPrimary) ?? normalizedPhones[0];
+  const primaryPhoneNumber =
+    (primaryPhoneEntry?.number ?? fallbackPhone).trim();
+  const primaryPhoneDisplay = primaryPhoneNumber || "Not provided";
+  const formatPhoneLabel = (phone: { label?: string | null; isWhatsapp?: boolean }) => {
+    if (phone.isWhatsapp) return "WhatsApp";
+    if (phone.label) return humanize(phone.label);
+    return "Mobile";
+  };
+  const alternativePhones = normalizedPhones
+    .filter((phone) => phone.number && phone.number !== primaryPhoneEntry?.number)
+    .map((phone) => ({
+      number: phone.number,
+      label: formatPhoneLabel(phone),
+    }));
+  const leadSourceDisplay = valueToLabel(lead.leadSource ?? undefined, leadOptions) || "Not set";
+  const nextFollowUpDisplay = lead.nextActionDueAt
+    ? formatDateDisplay(lead.nextActionDueAt)
+    : "Not scheduled";
   const hasNextFollowUp = Boolean(lead.nextActionDueAt);
 
   // Date / Aging
@@ -239,71 +220,8 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   /**
    * Data for the center "CONTACT & DETAILS" grid
    */
-  const contactDetailsGrid = useMemo((): ContactGridField[] => {
-    return [
-      {
-        key: "email",
-        icon: Mail,
-        label: "Email",
-        value: emailDisplay,
-        muted: !lead.email,
-      },
-      {
-        key: "product",
-        icon: Package,
-        label: "Product",
-        value: product || "Not specified",
-        muted: !product,
-      },
-      {
-        key: "investment",
-        icon: CircleDollarSign,
-        label: "Investment / SIP",
-        value: investmentValue,
-        muted: !(hasInvestmentRange || hasSipAmount),
-      },
-      {
-        key: "phones",
-        icon: Phone,
-        label: "Phones",
-        value: phoneListValue,
-        muted: !hasPhoneNumbers,
-      },
-      {
-        key: "nextFollowUp",
-        icon: CalendarClock,
-        label: "Next follow-up",
-        value: nextFollowUpDisplay,
-        muted: !hasNextFollowUp,
-      },
-      {
-        key: "lastContact",
-        icon: PhoneCall,
-        label: "Last Contact",
-        value: lastContactRaw ? formatDateDisplay(lastContactRaw) : "Not captured",
-        muted: !lastContactRaw,
-      },
-      {
-        key: "lastSeen",
-        icon: Calendar,
-        label: "Last Seen",
-        value: lastSeenRaw ? formatDateDisplay(lastSeenRaw) : "Not captured",
-        muted: !lastSeenRaw,
-      },
-    ];
-  }, [
-    emailDisplay,
-    product,
-    investmentValue,
-    hasInvestmentRange,
-    hasSipAmount,
-    phoneListValue,
-    hasPhoneNumbers,
-    nextFollowUpDisplay,
-    hasNextFollowUp,
-    lastContactRaw,
-    lastSeenRaw,
-  ]);
+  const enteredOnDisplay = enteredOnRaw ? formatDateDisplay(enteredOnRaw) : "Not set";
+  const lastContactDisplay = lastContactRaw ? formatDateDisplay(lastContactRaw) : "Not set";
 
   /**
    * Prepare initial values for the edit modal.
@@ -332,6 +250,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     if (!primaryPhone) {
       primaryPhone = lead.phone ?? lead.mobile ?? undefined;
     }
+    const selectedPhone = primaryPhone ?? lead.phone ?? "";
     return {
       id: lead.id,
       leadCode: lead.leadCode ?? "",
@@ -343,6 +262,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       email: lead.email ?? "",
       primaryPhone: primaryPhone ?? "",
       whatsappPhone: whatsappPhone ?? "",
+      phone: selectedPhone,
       location: lead.location ?? "",
       // For edit modal, pass both legacy and new occupation shape (modal normalizes to occupations[])
       profession: (occ0?.profession as any) ?? (lead.profession as any) ?? "",
@@ -372,6 +292,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       clientStage: lead.clientStage ?? "",
       stageFilter: lead.stageFilter ?? "",
       clientTypes: coerceClientTypes(lead.clientTypes ?? undefined),
+      nextActionDueAt: lead.nextActionDueAt ?? undefined,
     } as LeadEditModalValues;
   }, [lead]);
 
@@ -399,10 +320,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
    * Ensures updated lead data is reflected in the header.
    */
   const handleModalSubmit = async () => {
-    // Small delay to ensure backend has processed the mutation
-    setTimeout(() => {
-      onProfileRefresh?.();
-    }, 300);
+    await onProfileRefresh?.();
   };
 
   const handleAddPhone = async () => {
@@ -487,145 +405,182 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     <>
       <div className="card rounded-2xl shadow-lg">
         {/* NEW 3-COLUMN LAYOUT */}
-        <div className="grid grid-cols-1 items-start gap-6 p-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-12">
           {/* Col 1: Profile */}
-          <div className="flex items-center gap-4 lg:col-span-5">
-            {/* Avatar + Edit */}
-            <div className="relative flex-shrink-0">
-              <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500/10 text-lg font-semibold text-emerald-700 transition-colors dark:bg-emerald-400/20 dark:text-emerald-100">
-                {initials(lead.name)}
-              </div>
-              {canEditProfile && (
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  disabled={loading}
-                  aria-label="Edit lead details"
-                  title="Edit lead details"
-                  className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white shadow-lg transition-transform hover:scale-105 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-75 dark:border-gray-800"
-                >
-                  <PencilLine className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Name, Code, Referral */}
-            <div className="flex-grow">
-              <h1 className="text-3xl font-bold capitalize text-gray-900 dark:text-white">
-                {lead.name ?? "Unnamed lead"}
-              </h1>
-              <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                {lead.leadCode ?? "No code"}
-              </p>
-              <div
-                className={`mt-2 inline-flex items-center gap-2 text-base font-medium ${
-                  hasReferral ? "text-gray-700 dark:text-gray-200" : "text-gray-400 dark:text-white/50"
-                }`}
-              >
-                <User className="h-4 w-4" />
-                <span>Referred by: {referralPrimary}</span>
-              </div>
-              {/* Info: Age, Gender, Add Phone */}
-              <div className="mt-4 flex flex-wrap items-center gap-4">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-xs font-semibold uppercase text-emerald-600 dark:text-emerald-400">AGE</span>
-                  <span className="text-base font-semibold text-gray-800 dark:text-white">{ageDisplay}</span>
+          <div className="space-y-4 lg:col-span-4">
+            <div className="flex items-start gap-4">
+              <div className="relative flex-shrink-0">
+                <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500/10 text-lg font-semibold text-emerald-700 transition-colors dark:bg-emerald-400/20 dark:text-emerald-100">
+                  {initials(lead.name)}
                 </div>
-                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-xs font-semibold uppercase text-emerald-600 dark:text-emerald-400">GENDER</span>
-                  <span className="text-base font-semibold text-gray-800 dark:text-white">{genderDisplay}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => addPhoneModal.openModal()}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-emerald-300 dark:border-white/20 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10"
-                  title="Add another phone"
-                >
-                  <PhoneCall className="h-3.5 w-3.5" />
-                  Add Phone
-                </button>
+                {canEditProfile && (
+                  <button
+                    type="button"
+                    onClick={handleEditClick}
+                    disabled={loading}
+                    aria-label="Edit lead details"
+                    title="Edit lead details"
+                    className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white shadow-lg transition-transform hover:scale-105 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-75 dark:border-gray-800"
+                  >
+                    <PencilLine className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div className="flex-grow">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                  Lead code
+                </p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {lead.leadCode ?? "No code"}
+                </p>
+                <p className="text-lg font-semibold capitalize text-gray-800 dark:text-white/90">
+                  {displayName}
+                </p>
               </div>
             </div>
-          </div>
-
-          {/* Col 2: Contact & Details */}
-          <div className="lg:col-span-4 lg:border-l lg:pl-6 border-gray-200 dark:border-white/10">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-white/60">
-              Contact & Details
-            </h3>
-            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6">
-            {contactDetailsGrid.map((field) => {
-              const valueTitle = typeof field.value === "string" ? field.value : undefined;
-              return (
-                <div key={field.key} className="flex items-start gap-3">
-                  <field.icon
-                    className={`h-5 w-5 flex-shrink-0 ${
-                      field.muted ? "text-gray-400 dark:text-white/40" : "text-emerald-500 dark:text-emerald-400"
-                    }`}
-                  />
-                  <div>
-                    <div className="text-sm font-medium text-gray-500 dark:text-white/60">{field.label}</div>
-                    <div
-                      className={`mt-0.5 truncate text-base font-bold ${
-                        field.muted ? "text-gray-400 dark:text-white/40" : "text-gray-900 dark:text-white"
-                      }`}
-                      title={valueTitle}
-                    >
-                      {field.value}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-              {/* This fills the 6th grid slot if contactDetailsGrid has 5 items */}
-              <div></div>
+            <div className="space-y-2 text-sm text-gray-500 dark:text-white/60">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-600 dark:text-gray-400">Mobile No</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {primaryPhoneDisplay}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Gender</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">{genderDisplay}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Age</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">{ageDisplay}</span>
+              </div>
             </div>
-          </div>
-
-          {/* Col 3: Status & Key Dates */}
-          <div className="lg:col-span-3 lg:text-right lg:border-l lg:pl-6 border-gray-200 dark:border-white/10">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-white/60">
-              Contact
-            </h3>
-            <div
-              className="mt-2 text-4xl font-extrabold text-gray-900 dark:text-white"
-              title="Primary phone"
+            <button
+              type="button"
+              onClick={addPhoneModal.openModal}
+              disabled={!canEditProfile}
+              className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-emerald-200"
             >
-              {phoneDisplay}
-            </div>
+              Add phone
+            </button>
+          </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-2 lg:justify-end">
-              <LeadStatusBadge status={headerStatus} size="lg" />
-              <span
-                className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ${stageDisplay.pillClass}`}
-              >
-                <StageIcon
-                  state={stageDisplay.state}
-                  className="h-4 w-4"
-                />
-                {stageDisplay.label}
-              </span>
+          {/* Col 2: Contact & Profile */}
+          <div className="space-y-4 lg:col-span-5">
+            <div className="rounded-2xl border border-gray-100 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <InfoTile label="Email" value={emailDisplay} />
+                <InfoTile label="Location" value={lead.location ?? "Not set"} />
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <InfoTile label="Occupation" value={occupationDisplay} />
+                <InfoTile label="Product" value={productDisplay} />
+                <InfoTile label="Investment range" value={investmentDisplay} />
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <InfoTile label="SIP amount" value={sipDisplay} />
+                <div className="hidden sm:block" aria-hidden="true" />
+              </div>
             </div>
-            <div className="mt-3 flex flex-col items-end gap-3 lg:items-end">
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3.5 py-1.5 text-sm font-semibold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200">
-                <Clock3 className="h-4 w-4" />
-                <span className="text-xs uppercase">Aging</span>
-                <span>{agingDisplay}</span>
-              </div>
-              <div className="text-right text-xs text-gray-500 dark:text-white/60">
-                <div className="uppercase tracking-wide">Entered on</div>
-                <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {enteredOnRaw ? formatDateDisplay(enteredOnRaw) : "Not set"}
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-white/70 p-4 text-sm text-gray-500 dark:border-white/10 dark:bg-white/5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                Alternative mobile numbers
+              </p>
+              {alternativePhones.length ? (
+                <div className="mt-3 space-y-2 text-sm font-semibold text-gray-900 dark:text-white">
+                  {alternativePhones.map((phone) => (
+                    <div key={phone.number} className="flex items-center justify-between gap-4">
+                      <span>{phone.label}</span>
+                      <span className="text-right">{phone.number}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              {leadCapturedOnRaw && (
-                <div className="text-right text-xs text-gray-500 dark:text-white/60">
-                  <div className="uppercase tracking-wide">Lead captured on</div>
-                  <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                    {formatDateDisplay(leadCapturedOnRaw)}
-                  </div>
-                </div>
+              ) : (
+                <p className="mt-3 text-sm text-gray-400">Not provided</p>
               )}
+            </div>
+          </div>
+
+          {/* Col 3: Lead meta */}
+          <div className="space-y-4 lg:col-span-3">
+            <div className="rounded-2xl border border-gray-100 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                    Lead source
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {leadSourceDisplay}
+                  </p>
+                </div>
+                <LeadStatusBadge status={headerStatus} size="md" />
+              </div>
+              <div className="mt-3 space-y-2 text-sm text-gray-500">
+                <div className="flex justify-between">
+                  <span>Referral name</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {referralName || "Not set"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Referral code</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {referralCode || "Not set"}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 space-y-2 text-xs text-gray-500">
+                <div className="flex justify-between">
+                  <span>Entered on</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {enteredOnDisplay}
+                  </span>
+                </div>
+                {leadCapturedOnRaw && (
+                  <div className="flex justify-between">
+                    <span>Captured on</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {formatDateDisplay(leadCapturedOnRaw)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 flex flex-col gap-2 text-xs text-gray-500">
+                <div className="flex justify-between">
+                  <span>Aging days</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {agingDisplay}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Last contact</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {lastContactDisplay}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 space-y-2 text-xs text-gray-500">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Pipeline stage</span>
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${stageDisplay.pillClass}`}
+                  >
+                    <StageIcon state={stageDisplay.state} className="h-4 w-4" />
+                    {stageDisplay.label}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Stage filter</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {headerStatus ? humanize(headerStatus) : "Not set"}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 flex justify-between text-xs text-gray-500">
+                <span>Next follow-up</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {nextFollowUpDisplay}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -726,89 +681,4 @@ function StageIcon({ state, className }: { state: string; className:string }) {
     return <RefreshCcw className={className} />;
   }
   return <CheckCircle2 className={className} />;
-}
-
-/* ------------------------------ Local UI --------------------------------- */
-
-/**
- * Hover preview card for Remark and Bio.
- * (Updated sizes)
- */
-function HoverPreviewCard({
-  label,
-  text,
-  onViewMore,
-}: {
-  label: string;
-  text: string;
-  onViewMore: () => void;
-}) {
-  const preview = (text || "").trim();
-  const empty = preview.length === 0;
-  const [hover, setHover] = useState(false);
-  return (
-    <motion.div
-      className="relative rounded-2xl border border-gray-100 bg-white p-4 text-sm dark:border-white/10 dark:bg-white/[0.03]"
-      whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(0,0,0,0.08)" }}
-      onHoverStart={() => setHover(true)}
-      onHoverEnd={() => setHover(false)}
-      transition={{ type: "spring", stiffness: 250, damping: 20 }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-white/60">{label}</div>
-        <button
-          type="button"
-          onClick={onViewMore}
-          className="inline-flex items-center rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 dark:border-white/10 dark:text-gray-200 dark:hover:border-emerald-300"
-        >
-          View
-        </button>
-      </div>
-      <div className={`mt-2 line-clamp-2 whitespace-pre-wrap text-base ${empty ? "text-gray-400 dark:text-white/40" : "text-gray-800 dark:text-white/80"}`}>
-        {empty ? "—" : preview}
-      </div>
-      {/* Hover popover (Framer Motion) */}
-      <AnimatePresence>
-        {!empty && hover && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: -4, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="pointer-events-none absolute inset-x-4 -bottom-2 z-20 origin-top rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 shadow-2xl dark:border-white/10 dark:bg-gray-900 dark:text-white/80"
-          >
-            <div className="max-h-40 overflow-auto whitespace-pre-wrap">
-              {preview}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-/**
- * Modal for showing full Remark/Bio text.
- * (Updated sizes)
- */
-function RemarkBioModal({ title, isOpen, onClose, body }: { title: string; isOpen: boolean; onClose: () => void; body: string }) {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[720px] m-4">
-      <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-        <div className="mt-3 max-h-[60vh] overflow-auto whitespace-pre-wrap text-base text-gray-800 dark:text-white/80">
-          {body?.trim() ? body : "—"}
-        </div>
-        <div className="mt-5 flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/[0.06]"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
 }

@@ -240,15 +240,15 @@ export default function LeadMetaCard({ lead, loading, isAdmin, canEdit, onEditFi
       visible: showReferral,
       muted: !hasReferral,
     },
-    {
-      key: "lastContact",
-      icon: Clock,
-      label: "Last contact",
-      value: lead.lastContactedAt
-        ? `Last contact ${formatRelative(lead.lastContactedAt)}`
-        : "No contact logged",
-      muted: !lead.lastContactedAt,
-    },
+    // {
+    //   key: "lastContact",
+    //   icon: Clock,
+    //   label: "Last contact",
+    //   value: lead.lastContactedAt
+    //     ? `Last contact ${formatRelative(lead.lastContactedAt)}`
+    //     : "No contact logged",
+    //   muted: !lead.lastContactedAt,
+    // },
   ];
 
   return (

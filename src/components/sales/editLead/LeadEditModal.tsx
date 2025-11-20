@@ -15,7 +15,6 @@ import {
   titleCaseWords,
   LEAD_PIPELINE_STAGES,
   STAGE_FILTER_OPTIONS,
-  clientTypeOptions,
 } from "@/components/sales/editLead/types/editmodel";
 
 import type { LeadShape } from "../../ui/lead/Validators";
@@ -35,6 +34,7 @@ export type LeadEditModalValues = Partial<LeadShape & OptionalExtras> & {
   leadCode?: string | null;
   clientStage?: string | null;
   stageFilter?: string | null;
+  nextActionDueAt?: string | null;
   occupations?: Array<{
     profession?: string;
     companyName?: string;
@@ -58,27 +58,20 @@ type LeadEditModalProps = {
 const INPUT =
   "mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/40";
 
-const normalizeClientTypesForState = (value?: string | string[] | null): string[] | undefined => {
-  if (!value) return undefined;
-  const entries = Array.isArray(value) ? value : [value];
-  const normalized: string[] = [];
-  for (const entry of entries) {
-    String(entry ?? "")
-      .split(/[,;]/u)
-      .forEach((part) => {
-        const trimmed = part.trim();
-        if (trimmed) normalized.push(trimmed);
-      });
-  }
-  return normalized.length ? normalized : undefined;
+const formatForDatetimeLocal = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  const localDate = new Date(date.getTime() - offsetMs);
+  return localDate.toISOString().slice(0, 16);
 };
 
-const formatClientTypesForPayload = (value?: string | string[] | null): string | null => {
-  const entries = Array.isArray(value) ? value : value ? [value] : [];
-  const cleaned = entries
-    .map((entry) => String(entry ?? "").trim())
-    .filter((entry) => entry.length > 0);
-  return cleaned.length ? cleaned.join(", ") : null;
+const toIsoString = (value?: string | null) => {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toISOString();
 };
 
 export default function LeadEditModal({
@@ -135,7 +128,6 @@ export default function LeadEditModal({
         },
       ];
     }
-    next.clientTypes = normalizeClientTypesForState(next.clientTypes);
     setForm(next);
     setErrors({});
     setTimeout(() => firstRef.current?.focus(), 0);
@@ -143,25 +135,6 @@ export default function LeadEditModal({
 
   const handle = (k: keyof LeadEditModalValues, v: unknown) => {
     setForm((prev) => ({ ...(prev ?? {}), [k]: v }));
-  };
-
-  const toggleClientType = (value: string) => {
-    setForm((prev) => {
-      const normalized = String(value ?? "").trim();
-      if (!normalized) return prev ?? {};
-      const current = Array.isArray(prev?.clientTypes)
-        ? [...prev.clientTypes]
-        : prev?.clientTypes
-        ? [prev.clientTypes]
-        : [];
-
-      const exists = current.includes(normalized);
-      const nextList = exists
-        ? current.filter((item) => item !== normalized)
-        : [...current, normalized];
-
-      return { ...(prev ?? {}), clientTypes: nextList.length ? nextList : undefined };
-    });
   };
 
   const stageOptions = useMemo(() => {
@@ -255,20 +228,18 @@ export default function LeadEditModal({
         occupations: payload.occupations,
         bioText: payload.bioText,
         email: normalize((form as any).email) ?? undefined,
-        phone: normalize((form as any).phone) ?? undefined,
         product: normalize((form as any).product) ?? undefined,
         investmentRange: normalize((form as any).investmentRange) ?? undefined,
         sipAmount: (() => {
-          const sv = String((form as any).sipAmount ?? '').trim();
+          const sv = String((form as any).sipAmount ?? "").trim();
           if (!sv) return undefined;
           const n = Number(sv);
           return Number.isFinite(n) ? n : undefined;
         })(),
         referralCode: normalize((form as any).referralCode) ?? undefined,
         referralName: normalize((form as any).referralName) ?? undefined,
-        leadSource: normalize((form as any).leadSource) ?? undefined,
         stageFilter: normalize((form as any).stageFilter) ?? undefined,
-        clientTypes: formatClientTypesForPayload((form as any).clientTypes) ?? undefined,
+        nextActionDueAt: toIsoString(String((form as any).nextActionDueAt ?? "")) ?? undefined,
       };
       Object.keys(input).forEach((k) => input[k] === undefined && delete input[k]);
       if (!input.leadId) throw new Error("Missing leadId for update");
@@ -294,7 +265,7 @@ export default function LeadEditModal({
         toast.info(`Bio updated at ${new Date(bioUpdatedAt).toLocaleString()}`);
       }
 
-      toast.success("✓ Lead details updated successfully. Refreshing...");
+      toast.success("Lead details updated successfully. Refreshing...");
       await onSubmit?.(payload);
       onClose();
     } catch (err: any) {
@@ -318,35 +289,39 @@ export default function LeadEditModal({
             <InfoTile label="Lead source" value={leadSourceLabel} />
           </div>
 
-          <div className="grid gap-4 rounded-2xl border border-gray-100 p-4 dark:border-white/10 sm:grid-cols-2">
+          <div className="grid gap-4 rounded-2xl border border-gray-100 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="First name">
-                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
-                  {String(form.firstName ?? "")}
-                </div>
+              <Field label="First name" error={errors.name}>
+                <input
+                  className={INPUT}
+                  value={String(form.firstName ?? "")}
+                  onChange={(e) => handle("firstName", e.target.value)}
+                  placeholder="First name"
+                />
               </Field>
               <Field label="Last name">
-                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
-                  {String(form.lastName ?? "")}
-                </div>
+                <input
+                  className={INPUT}
+                  value={String(form.lastName ?? "")}
+                  onChange={(e) => handle("lastName", e.target.value)}
+                  placeholder="Last name"
+                />
               </Field>
             </div>
 
-            {/* Contact */}
             <div className="grid grid-cols-2 gap-3">
               <Field label="Email">
-                <input className={INPUT} value={String((form as any).email ?? "")} onChange={(e) => (handle as any)("email", e.target.value)} placeholder="email@example.com" />
+                <input
+                  className={INPUT}
+                  value={String((form as any).email ?? "")}
+                  onChange={(e) => (handle as any)("email", e.target.value)}
+                  placeholder="email@example.com"
+                />
               </Field>
-              <Field label="Phone">
-                <div className={INPUT + " cursor-not-allowed bg-gray-50 dark:bg-white/[0.03]"}>
-                  {String((form as any).phone ?? "")}
-                </div>
+              <Field label="Location">
+                <input className={INPUT} value={String(form.location ?? "")} onChange={(e) => handle("location", e.target.value)} placeholder="City / Area" />
               </Field>
             </div>
-
-            <Field label="Location">
-              <input className={INPUT} value={String(form.location ?? "")} onChange={(e) => handle("location", e.target.value)} placeholder="City / Area" />
-            </Field>
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Gender">
@@ -359,8 +334,7 @@ export default function LeadEditModal({
                   ))}
                 </select>
               </Field>
-
-              <Field label="Age">
+              <Field label="Age" error={errors.age}>
                 <input
                   className={INPUT}
                   value={String(form.age ?? "")}
@@ -378,7 +352,6 @@ export default function LeadEditModal({
                   value={String((form.occupations?.[0]?.profession ?? form.profession) ?? "")}
                   onChange={(e) => {
                     const val = e.target.value;
-                    // update nested occupation[0]
                     setForm((prev) => {
                       const occ = [...(prev.occupations ?? [{}])];
                       if (!occ.length) occ.push({});
@@ -395,7 +368,7 @@ export default function LeadEditModal({
                   ))}
                 </select>
               </Field>
-              <Field label="Designation">
+              <Field label="Designation" error={errors.designation}>
                 <input
                   className={INPUT}
                   value={String((form.occupations?.[0]?.designation ?? form.designation) ?? "")}
@@ -411,7 +384,7 @@ export default function LeadEditModal({
                   placeholder="Optional"
                 />
               </Field>
-              <Field label="Company / Organisation">
+              <Field label="Company / Organisation" error={errors.companyName}>
                 <input
                   className={INPUT}
                   value={String((form.occupations?.[0]?.companyName ?? form.companyName) ?? "")}
@@ -429,7 +402,6 @@ export default function LeadEditModal({
               </Field>
             </div>
 
-            {/* Opportunity */}
             <div className="grid grid-cols-3 gap-3">
               <Field label="Product">
                 <input className={INPUT} value={String((form as any).product ?? "")} onChange={(e) => (handle as any)("product", e.target.value)} placeholder="e.g. SIP" />
@@ -438,37 +410,16 @@ export default function LeadEditModal({
                 <input className={INPUT} value={String((form as any).investmentRange ?? "")} onChange={(e) => (handle as any)("investmentRange", e.target.value)} placeholder="e.g. 1L-5L" />
               </Field>
               <Field label="SIP amount">
-                <input className={INPUT} value={String((form as any).sipAmount ?? "")} onChange={(e) => (handle as any)("sipAmount", e.target.value)} placeholder="e.g. 5000" inputMode="numeric" />
+                <input
+                  className={INPUT}
+                  value={String((form as any).sipAmount ?? "")}
+                  onChange={(e) => (handle as any)("sipAmount", e.target.value)}
+                  placeholder="e.g. 5000"
+                  inputMode="numeric"
+                />
               </Field>
             </div>
 
-            <Field label="Client type">
-              <div className="flex flex-wrap gap-2">
-                {clientTypeOptions.map((type) => {
-                  const isActive = Array.isArray(form.clientTypes)
-                    ? form.clientTypes.includes(type)
-                    : false;
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => toggleClientType(type)}
-                      aria-pressed={isActive}
-                      className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-300 ${
-                        isActive
-                          ? "border-emerald-400 bg-emerald-500/10 text-emerald-700 dark:border-emerald-300 dark:bg-emerald-400/20 dark:text-emerald-50"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300 dark:border-white/10 dark:text-white/60 dark:hover:border-white/30"
-                      }`}
-                    >
-                      {titleCaseWords(type)}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-1 text-xs text-gray-500">Select one or more categories.</p>
-            </Field>
-
-            {/* Referral + source */}
             <div className="grid grid-cols-3 gap-3">
               <Field label="Referral code">
                 <input className={INPUT} value={String((form as any).referralCode ?? "")} onChange={(e) => (handle as any)("referralCode", e.target.value)} />
@@ -483,7 +434,6 @@ export default function LeadEditModal({
               </Field>
             </div>
 
-            {/* Stage controls */}
             <div className="grid grid-cols-2 gap-3">
               <Field label="Pipeline stage">
                 <select
@@ -491,48 +441,46 @@ export default function LeadEditModal({
                   value={String((form as any).clientStage ?? "")}
                   onChange={(e) => (handle as any)("clientStage", e.target.value)}
                 >
+                  <option value="">Select pipeline stage</option>
                   {stageOptions.map((s) => (
                     <option key={s} value={s}>
-                      {s.replace(/_/g, " ")}
+                      {titleCaseWords(s)}
                     </option>
                   ))}
                 </select>
               </Field>
               <Field label="Lead status (Stage filter)">
                 <select className={INPUT} value={String((form as any).stageFilter ?? "")} onChange={(e) => (handle as any)("stageFilter", e.target.value)}>
+                  <option value="">Select lead status</option>
                   {STAGE_FILTER_OPTIONS.map((s) => (
                     <option key={s} value={s}>
-                      {s.replace(/_/g, " ")}
+                      {titleCaseWords(s)}
                     </option>
                   ))}
                 </select>
               </Field>
             </div>
 
-            <Field label="Biography (optional)">
-              <textarea
-                rows={3}
-                className={INPUT + " resize-none"}
-                value={String(form.bioText ?? "")}
-                onChange={(e) => handle("bioText", e.target.value)}
-                placeholder="Short biography or notes about the lead..."
+            <Field label="Next action">
+              <input
+                type="datetime-local"
+                className={INPUT}
+                value={formatForDatetimeLocal((form as any).nextActionDueAt ?? null)}
+                onChange={(e) => handle("nextActionDueAt", toIsoString(e.target.value))}
               />
             </Field>
           </div>
 
-          <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-4 text-xs text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-100">
-            <p className="font-semibold">Fields you can update</p>
-            <ul className="list-disc space-y-1 pl-5">
-              <li>Contact: Email only (Phone, Name, Lead Source are read-only after registration)</li>
-              <li>Profile: Age, Gender, Location, Profession, Designation, Company</li>
-              <li>Opportunity: Product, Investment Range, SIP Amount</li>
-              <li>Client Info: Type, Referral details</li>
-              <li>Bio: Any updates here will be timestamped automatically</li>
-              <li>Pipeline Stage & Lead Status for RM workflow</li>
-            </ul>
-          </div>
+          <Field label="Biography (optional)">
+            <textarea
+              rows={3}
+              className={INPUT + " resize-none"}
+              value={String(form.bioText ?? "")}
+              onChange={(e) => handle("bioText", e.target.value)}
+              placeholder="Short biography or notes about the lead..."
+            />
+          </Field>
         </div>
-
         <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-gray-100 bg-white/80 px-6 py-3 backdrop-blur dark:border-white/10 dark:bg-gray-900/70">
           <Button size="sm" variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
