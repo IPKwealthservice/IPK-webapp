@@ -16,13 +16,12 @@ import {
   getFollowUpUrgencyClass,
   isFollowUpOverdue,
   isValidFollowUpDate,
-  convertFollowUpToInput,
-} from "./followUpUtils";
-import type { LeadTimingInfo, FollowUpFormState } from "../view_lead/gql/";
+} from "./interface/followUpUtils";
+import type { LeadTimingInfo, FollowUpFormState } from "./interface/followUpTypes";
 
 type Props = {
   timingInfo: LeadTimingInfo;
-  onFollowUpSaved?: (nextActionDueAt: string) => void | Promise<void>;
+  onFollowUpSaved?: (nextActionDueAtIso: string) => void | Promise<void>;
   disabled?: boolean;
   loading?: boolean;
 };
@@ -77,7 +76,8 @@ export function LeadCaptureFollowUpCard({ timingInfo, onFollowUpSaved, disabled 
 
     setIsSaving(true);
     try {
-      await onFollowUpSaved?.(formState.nextActionDueAt);
+      const isoNextAction = new Date(formState.nextActionDueAt).toISOString();
+      await onFollowUpSaved?.(isoNextAction);
       toast.success("Follow-up scheduled successfully");
       followUpModal.closeModal();
     } catch (err: any) {

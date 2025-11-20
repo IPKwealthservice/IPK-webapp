@@ -246,7 +246,7 @@ export default function LeadUnifiedUpdateCard({
 
       await Promise.all(ops);
       const successMsg = nextFollowUpAt 
-        ? `✓ Saved. Next follow-up: ${new Date(nextFollowUpAt).toLocaleString()}`
+        ? `Saved. Next follow-up: ${new Date(nextFollowUpAt).toLocaleString()}`
         : 'Saved. Timeline and remark updated.';
       toast.success(successMsg);
       setNotes('');

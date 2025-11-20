@@ -1,30 +1,37 @@
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { format } from "date-fns";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { Loader2, AlertCircle, Users } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { useAuth } from "@/context/AuthContex";
-  import {
-    LEAD_DETAIL_WITH_TIMELINE,
-    UPDATE_LEAD_STATUS,
-    CHANGE_STAGE,
-    CREATE_LEAD_EVENT,
-    RM_FIRST_CONTACT,
-    UPDATE_LEAD_REMARK,
-  } from "./gql/view_lead.gql";
+import {
+  LEAD_DETAIL_WITH_TIMELINE,
+  UPDATE_LEAD_STATUS,
+  CHANGE_STAGE,
+  CREATE_LEAD_EVENT,
+  RM_FIRST_CONTACT,
+  UPDATE_LEAD_REMARK,
+} from "./gql/view_lead.gql";
+import { LEAD_INTERACTION_HISTORY } from "./gql/leadInteraction.gql";
 
 import LeadProfileHeader from "./leadProfileheader/LeadProfileHeader";
 import LeadUnifiedUpdateCard from "./update_card/LeadUnifiedUpdateCard";
 import TimelineList from "./TimelineList";
+import LeadRemarkHistory from "./LeadRemarkHistory";
 import { pickLeadStage, pickLeadStatus } from "./interface/utils";
 import { shouldAutoOpenLead } from "./autoStatus";
 import type { LeadEvent, LeadProfile } from "./interface/types";
+import type {
+  LeadInteractionHistory as LeadInteractionHistoryType,
+  RemarkEntry,
+} from "./interface/leadInteraction";
 import RmLeadsDrawer from "./RmLeadsDrawer";
 
 type LeadDetailResp = { leadDetailWithTimeline: LeadProfile };
 type LeadDetailVars = { leadId: string; eventsLimit?: number };
+type InteractionHistoryResp = { leadInteractionHistory: LeadInteractionHistoryType };
+type InteractionHistoryVars = { leadId: string; limit?: number; offset?: number };
 
 export default function ViewLead() {
   const navigate = useNavigate();
@@ -46,6 +53,15 @@ export default function ViewLead() {
     LEAD_DETAIL_WITH_TIMELINE,
     { variables: { leadId, eventsLimit: 100 }, skip: !leadId, fetchPolicy: "cache-and-network" }
   );
+  const {
+    data: interactionHistoryData,
+    loading: loadingInteractionHistory,
+    refetch: refetchInteractionHistory,
+  } = useQuery<InteractionHistoryResp, InteractionHistoryVars>(LEAD_INTERACTION_HISTORY, {
+    variables: { leadId, limit: 100, offset: 0 },
+    skip: !leadId,
+    fetchPolicy: "cache-and-network",
+  });
 
   const [mutUpdateStatus] = useMutation(UPDATE_LEAD_STATUS);
   const [mutChangeStage] = useMutation(CHANGE_STAGE);
@@ -59,6 +75,47 @@ export default function ViewLead() {
     () => (lead?.events ?? []).slice().sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt)),
     [lead?.events]
   );
+  const remarkHistory = useMemo<RemarkEntry[]>(() => {
+    const fromQuery = interactionHistoryData?.leadInteractionHistory?.remarkHistory ?? [];
+    if (fromQuery.length > 0) return fromQuery;
+
+    const fromHistory: RemarkEntry[] = Array.isArray(lead?.history)
+      ? lead.history
+          .filter((entry) => (entry?.type ?? "").toUpperCase() === "REMARK_UPDATED" && entry?.text)
+          .map((entry, idx) => {
+            const createdAt = entry?.at ?? (entry as any)?.createdAt ?? new Date().toISOString();
+            const author =
+              entry?.authorName ??
+              (entry as any)?.byName ??
+              (entry as any)?.author ??
+              (entry as any)?.by ??
+              "Unknown";
+            return {
+              id: entry?.id ?? `timeline-remark-${idx}`,
+              text: entry?.text ?? "",
+              author,
+              authorId: entry?.authorId ?? ((entry as any)?.by as string | undefined),
+              createdAt,
+              updatedAt: (entry as any)?.updatedAt ?? createdAt,
+              associatedInteractionId: entry?.id ?? undefined,
+            };
+          })
+      : [];
+    if (fromHistory.length > 0) return fromHistory;
+
+    const fromLeadRemarks: RemarkEntry[] =
+      Array.isArray(lead?.remarks) && lead.remarks.length > 0
+        ? lead.remarks.map((remark, idx) => ({
+            id: `lead-remark-${idx}`,
+            text: remark?.text ?? "",
+            author: remark?.author ?? "Unknown",
+            createdAt: remark?.createdAt ?? new Date().toISOString(),
+            updatedAt: remark?.createdAt ?? undefined,
+          }))
+        : [];
+
+    return fromLeadRemarks;
+  }, [interactionHistoryData?.leadInteractionHistory?.remarkHistory, lead?.history, lead?.remarks]);
 
   const [statusValue, setStatusValue] = useState<string | undefined>(lead?.status as string | undefined);
   const [stageValue, setStageValue] = useState<string | undefined>(lead?.clientStage as string | undefined);
@@ -67,6 +124,14 @@ export default function ViewLead() {
     setStatusValue(lead?.status as string | undefined);
     setStageValue(lead?.clientStage as string | undefined);
   }, [lead?.status, lead?.clientStage]);
+
+  const refetchAll = useCallback(async () => {
+    const runs = [refetch()];
+    if (leadId) {
+      runs.push(refetchInteractionHistory());
+    }
+    await Promise.all(runs);
+  }, [leadId, refetch, refetchInteractionHistory]);
 
   const handleStatusChange = async (next: string) => {
     if (!leadId) return;
@@ -87,7 +152,7 @@ export default function ViewLead() {
         },
       });
       toast.success("Status updated");
-      await refetch();
+      await refetchAll();
     } catch (e: any) {
       toast.error(e.message || "Failed to update status");
     }
@@ -151,7 +216,7 @@ export default function ViewLead() {
       }
 
       toast.success("Stage updated");
-      await refetch();
+      await refetchAll();
     } catch (e: any) {
       toast.error(e.message || "Failed to update stage");
     }
@@ -228,7 +293,7 @@ export default function ViewLead() {
       setChannel("");
       setOutcome("");
       setReactivateToStage(null);
-      await refetch();
+      await refetchAll();
     } catch (e: any) {
       toast.error(e.message || "Failed to log event");
     }
@@ -252,7 +317,9 @@ export default function ViewLead() {
         </div>
         <div className="mt-2 text-xs opacity-80">{error.message}</div>
         <button
-          onClick={() => refetch()}
+          onClick={() => {
+            void refetchAll();
+          }}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white"
         >
           Retry
@@ -272,7 +339,7 @@ export default function ViewLead() {
         loading={loading}
         isAdmin={isAdmin}
         canEditProfile={canEditProfile}
-        onProfileRefresh={() => refetch()}
+        onProfileRefresh={refetchAll}
       />
 
       <div className="flex flex-col gap-6 lg:gap-8">
@@ -283,11 +350,17 @@ export default function ViewLead() {
               currentStatus={(lead.stageFilter as any) ?? (pickLeadStatus<string>(lead.status) as any)}
               currentStage={pickLeadStage(lead.clientStage as any) as any}
               pipelineStatus={lead.status as any}
-              onSaved={() => refetch()}
+              onSaved={refetchAll}
             />
           </div>
-          <div className="h-full min-h-0">
+          <div className="h-full min-h-0 space-y-6">
             <TimelineList events={events} />
+            <LeadRemarkHistory
+              remarks={remarkHistory}
+              isLoading={loadingInteractionHistory}
+              title="Lead Interaction History"
+              subtitle="Lead notes and remarks with editors and timestamps"
+            />
           </div>
         </div>
       </div>

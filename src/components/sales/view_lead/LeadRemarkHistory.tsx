@@ -7,12 +7,16 @@ type Props = {
   remarks: RemarkEntry[];
   isLoading?: boolean;
   onRemarkClick?: (remark: RemarkEntry) => void;
+  title?: string;
+  subtitle?: string;
 };
 
 export default function LeadRemarkHistory({
   remarks,
   isLoading = false,
   onRemarkClick,
+  title = 'Remark History',
+  subtitle = 'Complete audit trail of all saved remarks with author information',
 }: Props) {
   // Sort remarks by date (newest first)
   const sortedRemarks = useMemo(() => {
@@ -25,7 +29,7 @@ export default function LeadRemarkHistory({
     return (
       <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
         <h2 className="text-base font-semibold text-gray-800 dark:text-white">
-          Remark History
+          {title}
         </h2>
         <div className="mt-4 space-y-4">
           {[1, 2, 3].map((i) => (
@@ -43,11 +47,11 @@ export default function LeadRemarkHistory({
           <div className="flex items-center gap-2">
             <BookMarked className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             <h2 className="text-base font-semibold text-gray-800 dark:text-white">
-              Remark History
+              {title}
             </h2>
           </div>
           <p className="text-xs text-gray-500 dark:text-white/60 mt-1">
-            Complete audit trail of all saved remarks with author information
+            {subtitle}
           </p>
         </div>
         <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
