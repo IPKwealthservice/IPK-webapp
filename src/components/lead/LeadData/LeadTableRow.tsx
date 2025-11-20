@@ -75,9 +75,6 @@ export function LeadTableRow({
       <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
         {row.phone ?? "—"}
       </TableCell>
-      <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
-        {row.source ?? "—"}
-      </TableCell>
 
       {showAdvancedCols && (
         <TableCell className="px-5 py-4 text-sm">
@@ -101,6 +98,10 @@ export function LeadTableRow({
           )}
         </TableCell>
       )}
+
+      <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
+        {row.source ?? "—"}
+      </TableCell>
 
       <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
         {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "—"}
