@@ -41,8 +41,8 @@ export default function RecentClients() {
             <TableRow>
               <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Lead Code</TableCell>
               <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Name</TableCell>
-              <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Lead Source</TableCell>
               <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Client Type</TableCell>
+              <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Lead Source</TableCell>
               <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Entered Date</TableCell>
             </TableRow>
           </TableHeader>
@@ -52,12 +52,12 @@ export default function RecentClients() {
               <TableRow key={row.leadCode}>
                 <TableCell className="py-3 text-gray-700 dark:text-white/80">{row.leadCode}</TableCell>
                 <TableCell className="py-3 text-gray-700 dark:text-white/80">{row.name}</TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">{row.leadSource}</TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                   <Badge size="sm" color={row.clientType === "SIP" ? "success" : row.clientType === "IAP" ? "primary" : "warning"}>
                     {row.clientType}
                   </Badge>
                 </TableCell>
+                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">{row.leadSource}</TableCell>
                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">{row.enteredDate}</TableCell>
               </TableRow>
             ))}

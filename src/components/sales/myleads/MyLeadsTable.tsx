@@ -57,9 +57,6 @@ export default function MyLeadsTable({ rows = [] }: { rows?: LeadRow[] }) {
                 Name
               </TableCell>
               <TableCell isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                Lead Source
-              </TableCell>
-              <TableCell isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
                 Product
               </TableCell>
               <TableCell isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
@@ -67,6 +64,9 @@ export default function MyLeadsTable({ rows = [] }: { rows?: LeadRow[] }) {
               </TableCell>
               <TableCell isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
                 Status
+              </TableCell>
+              <TableCell isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
+                Lead Source
               </TableCell>
               <TableCell isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
                 Created At
@@ -84,9 +84,6 @@ export default function MyLeadsTable({ rows = [] }: { rows?: LeadRow[] }) {
                   {r.name}
                 </TableCell>
                 <TableCell className="py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
-                  {humanize(r.leadSource || "") || "-"}
-                </TableCell>
-                <TableCell className="py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
                   {humanize(r.product || "") || "-"}
                 </TableCell>
                 <TableCell className="py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
@@ -94,6 +91,9 @@ export default function MyLeadsTable({ rows = [] }: { rows?: LeadRow[] }) {
                 </TableCell>
                 <TableCell className="py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
                   <LeadStatusBadge status={r.status || "PENDING"} />
+                </TableCell>
+                <TableCell className="py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
+                  {humanize(r.leadSource || "") || "-"}
                 </TableCell>
                 <TableCell className="py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
                   {fmtDate(r.createdAt)}
