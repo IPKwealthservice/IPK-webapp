@@ -209,26 +209,20 @@ export const RECORD_STATUS_FILTER_CHANGE = gql`
  * Update remark and create interaction history entry
  */
 export const UPDATE_LEAD_REMARK_WITH_INTERACTION = gql`
-  mutation UpdateLeadRemarkWithInteraction(
-    $leadId: ID!
-    $text: String!
-    $nextActionDueAt: String
-    $createInteractionEvent: Boolean = true
-  ) {
-    updateLeadRemarkWithInteraction(
-      input: {
-        leadId: $leadId
-        text: $text
-        nextActionDueAt: $nextActionDueAt
-        createInteractionEvent: $createInteractionEvent
-      }
-    ) {
+  mutation UpdateLeadRemarkWithInteraction($input: UpdateLeadRemarkInput!) {
+    updateLeadRemark(input: $input) {
       id
-      text
-      author
-      authorId
-      createdAt
-      associatedInteractionId
+      remarks {
+        text
+        author
+        createdAt
+      }
+      remark {
+        text
+        byName
+        by
+        at
+      }
     }
   }
 `;

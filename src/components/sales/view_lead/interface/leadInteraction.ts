@@ -1,4 +1,4 @@
-import type { LeadStage, LeadStageFilter } from "@/components/sales/myleads/interface/type";
+import type { LeadStageFilter } from "@/components/sales/myleads/interface/type";
 
 /**
  * ClientStage: Pipeline progression stages
@@ -43,38 +43,20 @@ export type LeadInteraction = {
   id: string;
   leadId: string;
   type: LeadInteractionType | string;
-  
-  // Timeline entry
   occurredAt: string;
-  
-  // Author tracking
   authorId: string;
   authorName?: string | null;
   authorEmail?: string | null;
-  
-  // Text content (note, remark, summary)
   text?: string | null;
-  
-  // Pipeline change tracking
   pipelineStageFrom?: ClientStage | null;
   pipelineStageTo?: ClientStage | null;
-  
-  // Lead filter/status change tracking
   statusFilterFrom?: LeadStageFilter | string | null;
   statusFilterTo?: LeadStageFilter | string | null;
-  
-  // Next action scheduling
   nextActionDueAt?: string | null;
-  
-  // Channel-based interaction details
   channel?: "PHONE" | "MEETING" | "WHATSAPP" | "EMAIL" | string | null;
   outcome?: string | null;
-  
-  // Additional metadata
   tags?: string[] | null;
   meta?: Record<string, unknown> | null;
-  
-  // Timestamps
   createdAt: string;
   updatedAt: string;
 };
@@ -112,22 +94,13 @@ export type LeadInteractionInput = {
   leadId: string;
   type: LeadInteractionType | string;
   text?: string;
-  
-  // Pipeline stage change
   pipelineStageFrom?: ClientStage | null;
   pipelineStageTo?: ClientStage | null;
-  
-  // Lead status filter change
   statusFilterFrom?: LeadStageFilter | string | null;
   statusFilterTo?: LeadStageFilter | string | null;
-  
-  // Next follow-up scheduling
   nextActionDueAt?: string | null;
-  
-  // Interaction details
   channel?: string | null;
   outcome?: string | null;
-  
   occurredAt?: string;
   tags?: string[] | null;
   meta?: Record<string, unknown>;
@@ -159,8 +132,6 @@ export type ActivityTimelineData = {
   };
   icon: string;
   badgeClass: string;
-  
-  // Content
   summary?: string;
   details?: {
     from?: string;

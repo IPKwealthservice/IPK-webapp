@@ -10,7 +10,6 @@ import {
   UPDATE_LEAD_STATUS,
   CHANGE_STAGE,
   CREATE_LEAD_EVENT,
-  RM_FIRST_CONTACT,
   UPDATE_LEAD_REMARK,
 } from "./gql/view_lead.gql";
 import { LEAD_INTERACTION_HISTORY } from "./gql/leadInteraction.gql";
@@ -65,8 +64,7 @@ export default function ViewLead() {
 
   const [mutUpdateStatus] = useMutation(UPDATE_LEAD_STATUS);
   const [mutChangeStage] = useMutation(CHANGE_STAGE);
-  const [mutCreateEvent, { loading: creatingEvent }] = useMutation(CREATE_LEAD_EVENT);
-  const [mutRmFirstContact] = useMutation(RM_FIRST_CONTACT);
+  const [mutCreateEvent] = useMutation(CREATE_LEAD_EVENT);
   const [mutUpdateRemark] = useMutation(UPDATE_LEAD_REMARK);
 
   const lead = data?.leadDetailWithTimeline;
@@ -253,16 +251,14 @@ export default function ViewLead() {
       .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
   }, [interactionEvents, remarkEvents, lead?.events]);
 
-  const [statusValue, setStatusValue] = useState<string | undefined>(lead?.status as string | undefined);
   const [stageValue, setStageValue] = useState<string | undefined>(lead?.clientStage as string | undefined);
 
   useEffect(() => {
-    setStatusValue(lead?.status as string | undefined);
     setStageValue(lead?.clientStage as string | undefined);
-  }, [lead?.status, lead?.clientStage]);
+  }, [lead?.clientStage]);
 
   const refetchAll = useCallback(async () => {
-    const runs = [refetch()];
+    const runs: Promise<unknown>[] = [refetch()];
     if (leadId) {
       runs.push(refetchInteractionHistory());
     }
@@ -289,8 +285,8 @@ export default function ViewLead() {
       });
       toast.success("Status updated");
       await refetchAll();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to update status");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to update status");
     }
   };
 
@@ -364,7 +360,6 @@ export default function ViewLead() {
   const [channel, setChannel] = useState<string>("");
   const [outcome, setOutcome] = useState<string>("");
   const [reactivateToStage, setReactivateToStage] = useState<string | null>(null);
-  const [updatingProgress, setUpdatingProgress] = useState(false);
   const [isRmDrawerOpen, setRmDrawerOpen] = useState(false);
 
   const handleCreateEventEnhanced = async () => {
@@ -486,7 +481,7 @@ export default function ViewLead() {
     <>
     <div className="space-y-6">
       <LeadProfileHeader
-        lead={lead as any}
+        lead={lead}
         loading={loading}
         isAdmin={isAdmin}
         canEditProfile={canEditProfile}
@@ -502,16 +497,17 @@ export default function ViewLead() {
               currentStage={pickLeadStage(lead.clientStage as any) as any}
               pipelineStatus={lead.status as any}
               onSaved={refetchAll}
+              onStatusChange={handleStatusChange}
             />
           </div>
           <div className="h-full min-h-0 space-y-6">
-            <TimelineList events={events} />
             <LeadRemarkHistory
               remarks={remarkHistory}
               isLoading={loadingInteractionHistory}
               title="Lead Interaction History"
               subtitle="Lead notes and remarks with editors and timestamps"
             />
+            <TimelineList events={events} />
           </div>
         </div>
       </div>

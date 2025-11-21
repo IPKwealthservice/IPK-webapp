@@ -335,20 +335,22 @@ export default function LeadEditModal({
 
       const trimmedRemark = remarkDraft.trim();
       if (trimmedRemark && leadId) {
-        const nowIso = new Date().toISOString();
         const authorName = user?.name ?? "Unknown";
         const authorId = user?.id ?? null;
+        const nowIso = new Date().toISOString();
 
         try {
-          console.log("Saving remark:", { leadId, text: trimmedRemark, authorName, authorId });
+          console.log("Saving remark:", { leadId, remark: trimmedRemark, authorName, authorId });
 
           // Primary mutation: Update remark with interaction tracking
           const remarkResult = await mutRemarkWithInteraction({
             variables: {
-              leadId,
-              text: trimmedRemark,
-              nextActionDueAt: input.nextActionDueAt ?? undefined,
-              createInteractionEvent: true,
+              input: {
+                leadId,
+                remark: trimmedRemark,
+                nextActionDueAt: input.nextActionDueAt ?? undefined,
+                createInteractionEvent: true,
+              },
             },
             refetchQueries: [
               "LeadInteractionHistory",

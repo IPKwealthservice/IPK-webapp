@@ -3,7 +3,6 @@ import { useMutation } from "@apollo/client";
 import { toast } from "react-toastify";
 import { CheckCircle2, Clock3, RefreshCcw, PencilLine } from "lucide-react";
 
-// Note: Use specific field mutations supported by the API schema
 import LeadStatusBadge from "@/components/sales/myleads/LeadStatusBadge";
 import {
   leadOptions,
@@ -29,36 +28,31 @@ import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/context/AuthContex";
 import { ADD_LEAD_PHONE } from "../gql/view_lead.gql";
 import { HoverPreviewCard, RemarkBioModal } from "./HoverRemark";
-/**
- * LeadProfileHeader component displays a lead summary and exposes an edit button.
- *
- * It now renders a single-card header matching the new UI specification,
- * organizing data into three columns: Profile, Contact Details, and Status.
- */
 
 type Props = {
   lead: LeadProfile;
   loading: boolean;
-  /** determines if the user can click the Edit button */
   canEditProfile: boolean;
-  /** callback invoked after a successful update to refresh parent data */
   onProfileRefresh?: () => void;
-  /** optional flag; accepted for compatibility */
   isAdmin?: boolean;
 };
 
-export default function LeadProfileHeader({ lead, loading, canEditProfile, onProfileRefresh }: Props) {
+export default function LeadProfileHeader({
+  lead,
+  loading,
+  canEditProfile,
+  onProfileRefresh,
+}: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [mutAddPhone, { loading: addingPhone }] = useMutation(ADD_LEAD_PHONE);
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
 
-  // --- Data Computations (largely unchanged) ---
+  // ---- DATA COMPUTATIONS ----
 
-  // Pipeline stage hint logic
   const displayStatus = lead.status === "ASSIGNED" ? "PENDING" : lead.status;
-  // Header Status badge must reflect the Stage Filter (RM intent)
   const headerStatus = (lead.stageFilter as string | null | undefined) ?? null;
+
   const stageDisplay = resolveStageDisplay({
     rawStage: (lead.clientStageRaw as string | null | undefined) ?? undefined,
     normalizedStage: (lead.clientStage as string | null | undefined) ?? undefined,
@@ -67,27 +61,39 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
 
   const normalizeText = (value?: string | null) => (value ?? "").toString().trim();
 
-  // Occupation data (needed for modal)
-  const occ0 = Array.isArray(lead.occupations) && lead.occupations.length > 0 ? lead.occupations[0] : undefined;
+  const occ0 =
+    Array.isArray(lead.occupations) && lead.occupations.length > 0
+      ? lead.occupations[0]
+      : undefined;
 
-  // Various text fields
-  const product = normalizeText(lead.product);
+  const productRaw = normalizeText(lead.product);
   const genderRaw = normalizeText(lead.gender);
   const referralName = normalizeText(lead.referralName);
   const referralCode = normalizeText(lead.referralCode);
   const investmentRangeRaw = normalizeText(lead.investmentRange);
   const isReferralSource = normalizeText(lead.leadSource).toLowerCase() === "referral";
 
-  // Investment / SIP
+  // Product logic
+  const productDisplay =
+    valueToLabel(productRaw || undefined, productOptions) || "Not specified";
+
+  const isSIP = productRaw.toUpperCase() === "SIP";
+  const isIAP = productRaw.toUpperCase() === "IAP";
+
+  const investmentLabel =
+    valueToLabel(investmentRangeRaw || undefined, investmentOptions) || "";
   const hasInvestmentRange = Boolean(investmentRangeRaw);
+  const investmentDisplay =
+    investmentLabel || (hasInvestmentRange ? investmentRangeRaw : "Not captured");
+
   const sipAmountValue =
-    typeof lead.sipAmount === "number" && Number.isFinite(lead.sipAmount) ? lead.sipAmount : null;
+    typeof lead.sipAmount === "number" && Number.isFinite(lead.sipAmount)
+      ? lead.sipAmount
+      : null;
   const sipDisplay = formatSipAmount(sipAmountValue);
 
-  // Gender
   const genderDisplay = genderRaw ? humanize(genderRaw) : "Not set";
 
-  // Age
   const ageRaw = lead.age as any;
   const hasAgeField = typeof ageRaw !== "undefined";
   const ageNumber = Number(ageRaw);
@@ -103,18 +109,15 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const occupationDisplay =
     valueToLabel(professionRaw || undefined, professionOptions) ||
     (professionRaw ? humanize(professionRaw) : "Not set");
-  
-  const designationDisplay = String((occ0?.designation ?? lead.designation ?? "Not set"));
-  const companyNameDisplay = String((occ0?.companyName ?? lead.companyName ?? "Not set"));
 
-  const productDisplay =
-    valueToLabel(product || undefined, productOptions) || "Not specified";
-  const investmentLabel =
-    valueToLabel(investmentRangeRaw || undefined, investmentOptions) || "";
-  const investmentDisplay =
-    investmentLabel || (hasInvestmentRange ? investmentRangeRaw : "Not captured");
+  const designationDisplay = String(
+    (occ0?.designation ?? lead.designation ?? "Not set") || "Not set",
+  );
+  const companyNameDisplay = String(
+    (occ0?.companyName ?? lead.companyName ?? "Not set") || "Not set",
+  );
 
-  // Contact Info
+  // Contact info
   const rawPrimaryPhone =
     lead.mobile ?? lead.phone ?? lead.phoneNormalized ?? null;
   const emailDisplay = lead.email?.trim() || "Not provided";
@@ -124,6 +127,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       string,
       { label?: string | null; isWhatsapp?: boolean; isPrimary?: boolean }
     >();
+
     const add = (
       value?: string | null,
       meta?: { label?: string | null; isWhatsapp?: boolean; isPrimary?: boolean },
@@ -138,7 +142,9 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
         isPrimary: meta?.isPrimary ?? existing?.isPrimary ?? false,
       });
     };
+
     add(rawPrimaryPhone, { isPrimary: true });
+
     if (Array.isArray(lead.phones)) {
       lead.phones.forEach((phone) =>
         add(phone.number, {
@@ -148,6 +154,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
         }),
       );
     }
+
     return Array.from(entries).map(([number, meta]) => ({
       number,
       label: meta.label,
@@ -155,76 +162,84 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       isPrimary: meta.isPrimary,
     }));
   }, [lead.phones, rawPrimaryPhone]);
+
   const fallbackPhone = rawPrimaryPhone ? String(rawPrimaryPhone).trim() : "";
   const primaryPhoneEntry =
     normalizedPhones.find((phone) => phone.isPrimary) ?? normalizedPhones[0];
-  const primaryPhoneNumber =
-    (primaryPhoneEntry?.number ?? fallbackPhone).trim();
+  const primaryPhoneNumber = (primaryPhoneEntry?.number ?? fallbackPhone).trim();
   const primaryPhoneDisplay = primaryPhoneNumber || "Not provided";
+
   const formatPhoneLabel = (phone: { label?: string | null; isWhatsapp?: boolean }) => {
     if (phone.isWhatsapp) return "WhatsApp";
     if (phone.label) return humanize(phone.label);
     return "Mobile";
   };
+
   const alternativePhones = normalizedPhones
     .filter((phone) => phone.number && phone.number !== primaryPhoneEntry?.number)
     .map((phone) => ({
       number: phone.number,
       label: formatPhoneLabel(phone),
     }));
-  const leadSourceDisplay = valueToLabel(lead.leadSource ?? undefined, leadOptions) || "Not set";
+
+  const leadSourceDisplay =
+    valueToLabel(lead.leadSource ?? undefined, leadOptions) || "Not set";
+
   const nextFollowUpDisplay = lead.nextActionDueAt
     ? formatDateDisplay(lead.nextActionDueAt)
     : "Not scheduled";
 
-  // Date / Aging
-  // Entered on = createdAt (system record creation)
+  // Dates / aging
   const enteredOnRaw = lead.createdAt ?? null;
-  // Lead captured on = approachAt (when marketing user saw/registered)
   const leadCapturedOnRaw = lead.approachAt ?? null;
+
   const agingSourceRaw = lead.updatedAt?.trim() ? lead.updatedAt : enteredOnRaw;
   const agingDaysNum = useMemo(() => {
     if (agingSourceRaw) {
       try {
         const d = parseISO(agingSourceRaw);
-        if (isValidDate(d)) return Math.max(0, differenceInCalendarDays(new Date(), d));
-      } catch {}
+        if (isValidDate(d)) {
+          return Math.max(0, differenceInCalendarDays(new Date(), d));
+        }
+      } catch {
+        // ignore
+      }
     }
     return null;
   }, [agingSourceRaw]);
+
   const agingDisplay = formatAgingDays(agingDaysNum ?? undefined);
 
   const lastActivityAt = useMemo(() => {
     const candidates: number[] = [];
+
     const pushDate = (value?: string | null) => {
       if (!value) return;
       const ts = Date.parse(value);
       if (Number.isFinite(ts)) candidates.push(ts);
     };
+
     pushDate(lead.lastContactedAt);
     pushDate(lead.lastSeenAt);
     pushDate(lead.updatedAt);
+
     if (Array.isArray(lead.events)) {
       lead.events.forEach((ev) => pushDate(ev.occurredAt));
     }
     if (Array.isArray(lead.remarks)) {
       lead.remarks.forEach((remark) => pushDate(remark.createdAt));
     }
+
     if (candidates.length === 0) return null;
     return new Date(Math.max(...candidates)).toISOString();
   }, [lead.events, lead.lastContactedAt, lead.lastSeenAt, lead.updatedAt, lead.remarks]);
-  const lastContactRaw = lead.lastContactedAt ?? lastActivityAt;
-  const lastSeenRaw = lead.lastSeenAt ?? lastActivityAt;
 
-  /**
-   * Data for the center "CONTACT & DETAILS" grid
-   */
+  const lastContactRaw = lead.lastContactedAt ?? lastActivityAt;
   const enteredOnDisplay = enteredOnRaw ? formatDateDisplay(enteredOnRaw) : "Not set";
   const lastContactDisplay = lastContactRaw ? formatDateDisplay(lastContactRaw) : "Not set";
 
-  /**
-   * Prepare initial values for the edit modal.
-   */
+  // ---- EDIT MODAL INITIAL VALUES ----
+
   const coerceClientTypes = (value?: string | string[] | null) => {
     if (!value) return undefined;
     const list = Array.isArray(value) ? value : String(value).split(/[,;]/u);
@@ -235,9 +250,9 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   };
 
   const modalInitialValues = useMemo((): LeadEditModalValues => {
-    // Determine a primary phone and WhatsApp phone from the phones array
     let primaryPhone: string | undefined;
     let whatsappPhone: string | undefined;
+
     if (Array.isArray(lead.phones) && lead.phones.length > 0) {
       const list = lead.phones as any[];
       const primary = list.find((p: any) => Boolean(p.isPrimary));
@@ -245,11 +260,13 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       primaryPhone = primary?.number ?? undefined;
       whatsappPhone = whatsapp?.number ?? undefined;
     }
-    // fallback to root phone if needed
+
     if (!primaryPhone) {
       primaryPhone = lead.phone ?? lead.mobile ?? undefined;
     }
+
     const selectedPhone = primaryPhone ?? lead.phone ?? "";
+
     return {
       id: lead.id,
       leadCode: lead.leadCode ?? "",
@@ -263,7 +280,6 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       whatsappPhone: whatsappPhone ?? "",
       phone: selectedPhone,
       location: lead.location ?? "",
-      // For edit modal, pass both legacy and new occupation shape (modal normalizes to occupations[])
       profession: (occ0?.profession as any) ?? (lead.profession as any) ?? "",
       designation: (occ0?.designation as any) ?? lead.designation ?? "",
       companyName: (occ0?.companyName as any) ?? lead.companyName ?? "",
@@ -280,7 +296,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
         : undefined,
       product: lead.product ?? "",
       investmentRange: lead.investmentRange ?? "",
-      sipAmount: (typeof lead.sipAmount === 'number' ? lead.sipAmount : ""),
+      sipAmount: typeof lead.sipAmount === "number" ? lead.sipAmount : "",
       gender: (lead.gender ?? "").toUpperCase(),
       remark: lead.remark ?? "",
       remarks: Array.isArray(lead.remarks)
@@ -300,20 +316,17 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       clientTypes: coerceClientTypes(lead.clientTypes ?? undefined),
       nextActionDueAt: lead.nextActionDueAt ?? undefined,
     } as LeadEditModalValues;
-  }, [lead]);
+  }, [lead, occ0]);
 
-  // Modals
-  const remarkModal = useModal(false); // Remark modal is no longer used here, but keeping for bio
+  const remarkModal = useModal(false);
   const bioModal = useModal(false);
   const addPhoneModal = useModal(false);
 
-  // Add-phone local form state
   const [newPhone, setNewPhone] = useState<string>("");
   const [newLabel, setNewLabel] = useState<string>("MOBILE");
   const [newIsWa, setNewIsWa] = useState<boolean>(false);
   const [newMakePrimary, setNewMakePrimary] = useState<boolean>(false);
 
-  /** handle opening the edit modal */
   const handleEditClick = () => {
     if (!canEditProfile) return;
     setIsEditing(true);
@@ -321,10 +334,6 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
 
   const handleModalClose = () => setIsEditing(false);
 
-  /**
-   * Submit handler for the edit modal.
-   * Ensures updated lead data is reflected in the header.
-   */
   const handleModalSubmit = async () => {
     await onProfileRefresh?.();
   };
@@ -358,9 +367,6 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     }
   };
 
-  // Remark/Bio text logic (unchanged)
-  // Note: latestRemarkText is no longer used in this component,
-  // but remark data is still needed for the edit modal
   const latestRemarkText = useMemo(() => {
     const list = Array.isArray(lead.remarks) ? lead.remarks : [];
     const ts = (s?: string | null) => {
@@ -369,14 +375,18 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     };
     if (list && list.length > 0) {
       const sorted = list.slice().sort((a, b) => ts(b.createdAt) - ts(a.createdAt));
-      return (sorted[0]?.text ?? '').toString();
+      return (sorted[0]?.text ?? "").toString();
     }
     const raw: any = (lead as any).remark;
-    if (raw && typeof raw === 'object') {
-      if (typeof raw.text === 'string') return raw.text;
-      try { return JSON.stringify(raw, null, 2); } catch { return String(raw); }
+    if (raw && typeof raw === "object") {
+      if (typeof raw.text === "string") return raw.text;
+      try {
+        return JSON.stringify(raw, null, 2);
+      } catch {
+        return String(raw);
+      }
     }
-    return (raw ?? '').toString();
+    return (raw ?? "").toString();
   }, [lead.remarks, lead.remark]);
 
   const remarksModalBody = useMemo(() => {
@@ -410,112 +420,145 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   return (
     <>
       <div className="card rounded-2xl shadow-lg">
-        {/* NEW 3-COLUMN LAYOUT */}
-        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-12">
+        {/* 3 equal columns so gaps are symmetric */}
+        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-3">
           {/* Col 1: Profile */}
-          <div className="space-y-4 lg:col-span-4">
-            <div className="flex items-start gap-4">
-              <div className="relative flex-shrink-0">
-                <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500/10 text-lg font-semibold text-emerald-700 transition-colors dark:bg-emerald-400/20 dark:text-emerald-100">
-                  {initials(lead.name)}
+          <div className="lg:col-span-1">
+            <div className="flex h-full flex-col gap-4 rounded-2xl border border-gray-100 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="flex items-start gap-4">
+                <div className="relative flex-shrink-0">
+                  <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500/10 text-lg font-semibold text-emerald-700 transition-colors dark:bg-emerald-400/20 dark:text-emerald-100">
+                    {initials(lead.name)}
+                  </div>
+                  {canEditProfile && (
+                    <button
+                      type="button"
+                      onClick={handleEditClick}
+                      disabled={loading}
+                      aria-label="Edit lead details"
+                      title="Edit lead details"
+                      className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white shadow-lg transition-transform hover:scale-105 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-75 dark:border-gray-800"
+                    >
+                      <PencilLine className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                {canEditProfile && (
-                  <button
-                    type="button"
-                    onClick={handleEditClick}
-                    disabled={loading}
-                    aria-label="Edit lead details"
-                    title="Edit lead details"
-                    className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white shadow-lg transition-transform hover:scale-105 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-75 dark:border-gray-800"
-                  >
-                    <PencilLine className="h-4 w-4" />
-                  </button>
-                )}
+                <div className="flex-grow">
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {displayName}
+                  </p>
+                  <p className="text-sm font-medium text-gray-500 dark:text-white/70">
+                    {lead.leadCode ?? "No code"}
+                  </p>
+                </div>
               </div>
-              <div className="flex-grow">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
-                  Lead code
-                </p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {lead.leadCode ?? "No code"}
-                </p>
-                <p className="text-2xl font-semibold capitalize text-gray-800 dark:text-white/90">
-                  {displayName}
-                </p>
+
+              <div className="space-y-2 text-sm text-gray-500 dark:text-white/60">
+                <div className="flex items-center gap-3">
+                  <span className="w-24 flex-shrink-0 font-semibold text-gray-600 dark:text-gray-400">
+                    Mobile
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {primaryPhoneDisplay}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-24 flex-shrink-0">Gender</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {genderDisplay}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-24 flex-shrink-0">Age</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {ageDisplay}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={addPhoneModal.openModal}
+                  disabled={!canEditProfile}
+                  className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-emerald-200"
+                >
+                  Add phone
+                </button>
               </div>
             </div>
-            <div className="space-y-2 text-sm text-gray-500 dark:text-white/60">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold text-gray-600 dark:text-gray-400">Mobile No</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {primaryPhoneDisplay}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span>Gender</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">{genderDisplay}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span>Age</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">{ageDisplay}</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={addPhoneModal.openModal}
-              disabled={!canEditProfile}
-              className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-emerald-200"
-            >
-              Add phone
-            </button>
           </div>
 
-          {/* Col 2: Contact & Profile */}
-          <div className="space-y-4 lg:col-span-5">
-            <div className="rounded-2xl border border-gray-100 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
-              <div className="flex flex-col gap-3">
+          {/* Col 2: Contact & details */}
+          <div className="space-y-4 lg:col-span-1">
+            {/* Email + Product card */}
+            <div className="rounded-2xl bg-white/70 p-4 dark:bg-white/[0.03]">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Email</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{emailDisplay}</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                    Email
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">
+                    {emailDisplay}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Location</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{lead.location ?? "Not set"}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Profession</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{occupationDisplay}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Designation</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{designationDisplay}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Company Name</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{companyNameDisplay}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Product</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{productDisplay}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Investment range</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{investmentDisplay}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">SIP amount</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{sipDisplay}</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                    Location
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">
+                    {lead.location ?? "Not set"}
+                  </span>
                 </div>
               </div>
+
+              {/* Product + conditional fields */}
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                    Product
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">
+                    {productDisplay}
+                  </span>
+                </div>
+
+                {isIAP && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                      Investment range
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">
+                      {investmentDisplay}
+                    </span>
+                  </div>
+                )}
+
+                {isSIP && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                      SIP amount
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">
+                      {sipDisplay}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white/70 p-4 text-sm text-gray-500 dark:border-white/10 dark:bg-white/5">
+
+            {/* Alt numbers */}
+            <div className="rounded-2xl bg-white/70 p-4 text-sm text-gray-500 dark:bg-white/5">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
                 Alternative mobile numbers
               </p>
               {alternativePhones.length ? (
                 <div className="mt-3 space-y-2 text-sm font-semibold text-gray-900 dark:text-white">
                   {alternativePhones.map((phone) => (
-                    <div key={phone.number} className="flex items-center justify-between gap-4">
+                    <div
+                      key={phone.number}
+                      className="flex items-center justify-between gap-4"
+                    >
                       <span>{phone.label}</span>
                       <span className="text-right">{phone.number}</span>
                     </div>
@@ -525,10 +568,37 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                 <p className="mt-3 text-sm text-gray-400">Not provided</p>
               )}
             </div>
+
+            {/* Occupation moved below alt numbers */}
+            <div className="rounded-2xl bg-white/70 p-4 text-xs dark:bg-white/[0.03]">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                Occupation
+              </p>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div>
+                  <p className="text-[11px] text-gray-500 dark:text-white/60">Profession</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {occupationDisplay}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 dark:text-white/60">Designation</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {designationDisplay}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 dark:text-white/60">Company name</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {companyNameDisplay}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Col 3: Lead meta */}
-          <div className="space-y-4 lg:col-span-3">
+          <div className="space-y-4 lg:col-span-1">
             <div className="rounded-2xl border border-gray-100 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -541,6 +611,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                 </div>
                 <LeadStatusBadge status={headerStatus} size="md" />
               </div>
+
               {isReferralSource && (
                 <div className="mt-3 space-y-2 text-sm text-gray-500">
                   <div className="flex justify-between">
@@ -557,56 +628,60 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                   </div>
                 </div>
               )}
-              <div className="mt-3 space-y-2 text-xs text-gray-500">
-                <div className="flex justify-between">
+
+              <div className="mt-3 space-y-3 text-sm text-gray-500">
+                <div className="flex items-center justify-between gap-6">
                   <span>Lead Gen.on</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">
                     {enteredOnDisplay}
                   </span>
                 </div>
                 {leadCapturedOnRaw && (
-                  <div className="flex justify-between">
+                  <div className="flex items-center justify-between gap-6">
                     <span>Lead Appr.on</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-base font-semibold text-gray-900 dark:text-white">
                       {formatDateDisplay(leadCapturedOnRaw)}
                     </span>
                   </div>
                 )}
               </div>
-              <div className="mt-3 flex flex-col gap-2 text-xs text-gray-500">
-                <div className="flex justify-between">
+
+              <div className="mt-3 flex flex-col gap-3 text-sm text-gray-500">
+                <div className="flex items-center justify-between gap-6">
                   <span>Aging days</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">
                     {agingDisplay}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex items-center justify-between gap-6">
                   <span>Last contact</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">
                     {lastContactDisplay}
                   </span>
                 </div>
               </div>
-              <div className="mt-3 space-y-2 text-xs text-gray-500">
-                <div className="flex items-center justify-between gap-3">
+
+              <div className="mt-3 space-y-3 text-sm text-gray-500">
+                <div className="flex items-center justify-between gap-6">
                   <span>Stage</span>
                   <span
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${stageDisplay.pillClass}`}
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-base font-semibold ${stageDisplay.pillClass}`}
                   >
                     <StageIcon state={stageDisplay.state} className="h-4 w-4" />
                     {stageDisplay.label}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex items-center justify-between gap-6">
                   <span>Status</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">
                     {headerStatus ? humanize(headerStatus) : "Not set"}
                   </span>
                 </div>
               </div>
-              <div className="mt-3 flex justify-between text-xs text-gray-500">
+
+              <div className="mt-3 flex items-center justify-between gap-6 text-sm text-gray-500">
                 <span>Next follow-up</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                <span className="text-base font-semibold text-gray-900 dark:text-white">
                   {nextFollowUpDisplay}
                 </span>
               </div>
@@ -614,7 +689,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
           </div>
         </div>
 
-        {/* Bio row (Remark card removed) */}
+        {/* Bio row */}
         <div className="border-t border-gray-100 bg-gray-50/50 p-4 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
           <HoverPreviewCard
             label="Bio"
@@ -624,7 +699,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
         </div>
       </div>
 
-      {/* --- MODALS (Unchanged logic, updated sizes) --- */}
+      {/* MODALS */}
       <RemarkBioModal
         title="Lead remark"
         isOpen={remarkModal.isOpen}
@@ -645,8 +720,11 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
         title="Edit lead details"
       />
 
-      {/* Add Phone Modal */}
-      <Modal isOpen={addPhoneModal.isOpen} onClose={addPhoneModal.closeModal} className="max-w-[560px] m-4">
+      <Modal
+        isOpen={addPhoneModal.isOpen}
+        onClose={addPhoneModal.closeModal}
+        className="m-4 max-w-[560px]"
+      >
         <div className="space-y-3 p-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add phone</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -662,7 +740,11 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
             </div>
             <div>
               <label className="form-label">Label</label>
-              <select value={newLabel} onChange={(e) => setNewLabel(e.target.value)} className="form-select">
+              <select
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                className="form-select"
+              >
                 <option value="MOBILE">Mobile</option>
                 <option value="HOME">Home</option>
                 <option value="WORK">Work</option>
@@ -673,7 +755,11 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
           </div>
           <div className="flex items-center gap-4">
             <label className="inline-flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={newIsWa} onChange={(e) => setNewIsWa(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={newIsWa}
+                onChange={(e) => setNewIsWa(e.target.checked)}
+              />
               Whatsapp
             </label>
             <label className="inline-flex items-center gap-2 text-sm opacity-100">
@@ -687,8 +773,19 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
             </label>
           </div>
           <div className="flex items-center justify-end gap-2 pt-2">
-            <button type="button" onClick={addPhoneModal.closeModal} className="btn btn-secondary">Cancel</button>
-            <button type="button" onClick={handleAddPhone} disabled={addingPhone} className="btn btn-success">
+            <button
+              type="button"
+              onClick={addPhoneModal.closeModal}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleAddPhone}
+              disabled={addingPhone}
+              className="btn btn-success"
+            >
               {addingPhone ? "Saving..." : "Add phone"}
             </button>
           </div>
@@ -698,16 +795,8 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   );
 }
 
-/**
- * Helper icon for the stage badge.
- * (Slightly modified to not rely on props)
- */
-function StageIcon({ state, className }: { state: string; className:string }) {
-  if (state === "pending") {
-    return <Clock3 className={className} />;
-  }
-  if (state === "revisit") {
-    return <RefreshCcw className={className} />;
-  }
+function StageIcon({ state, className }: { state: string; className: string }) {
+  if (state === "pending") return <Clock3 className={className} />;
+  if (state === "revisit") return <RefreshCcw className={className} />;
   return <CheckCircle2 className={className} />;
 }
