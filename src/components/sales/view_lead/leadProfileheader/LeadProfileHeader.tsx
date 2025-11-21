@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "@apollo/client";
 import { toast } from "react-toastify";
 import { CheckCircle2, Clock3, RefreshCcw, PencilLine } from "lucide-react";
@@ -22,14 +21,13 @@ import {
   humanize,
 } from "../interface/utils";
 import { parseISO, differenceInCalendarDays, isValid as isValidDate } from "date-fns";
-import type { LeadProfile, LeadPhone } from "../interface/types";
+import type { LeadProfile } from "../interface/types";
 import type { LeadEditModalValues } from "../../editLead/LeadEditModal";
 import LeadEditModal from "../../editLead/LeadEditModal";
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/context/AuthContex";
 import { ADD_LEAD_PHONE } from "../gql/view_lead.gql";
-import { InfoTile } from "./InfoTile";
 import { HoverPreviewCard, RemarkBioModal } from "./HoverRemark";
 /**
  * LeadProfileHeader component displays a lead summary and exposes an edit button.
@@ -78,8 +76,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const referralName = normalizeText(lead.referralName);
   const referralCode = normalizeText(lead.referralCode);
   const investmentRangeRaw = normalizeText(lead.investmentRange);
-  const referralPrimary = referralName || referralCode || "Not specified";
-  const hasReferral = Boolean(referralName || referralCode);
+  const isReferralSource = normalizeText(lead.leadSource).toLowerCase() === "referral";
 
   // Investment / SIP
   const hasInvestmentRange = Boolean(investmentRangeRaw);
@@ -106,6 +103,9 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const occupationDisplay =
     valueToLabel(professionRaw || undefined, professionOptions) ||
     (professionRaw ? humanize(professionRaw) : "Not set");
+  
+  const designationDisplay = (occ0?.designation as string) ?? lead.designation ?? "Not set";
+  const companyNameDisplay = (occ0?.companyName as string) ?? lead.companyName ?? "Not set";
 
   const productDisplay =
     valueToLabel(product || undefined, productOptions) || "Not specified";
@@ -176,7 +176,6 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
   const nextFollowUpDisplay = lead.nextActionDueAt
     ? formatDateDisplay(lead.nextActionDueAt)
     : "Not scheduled";
-  const hasNextFollowUp = Boolean(lead.nextActionDueAt);
 
   // Date / Aging
   // Entered on = createdAt (system record creation)
@@ -437,26 +436,26 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
                   Lead code
                 </p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">
                   {lead.leadCode ?? "No code"}
                 </p>
-                <p className="text-lg font-semibold capitalize text-gray-800 dark:text-white/90">
+                <p className="text-2xl font-semibold capitalize text-gray-800 dark:text-white/90">
                   {displayName}
                 </p>
               </div>
             </div>
             <div className="space-y-2 text-sm text-gray-500 dark:text-white/60">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-gray-600 dark:text-gray-400">Mobile No</span>
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">
                   {primaryPhoneDisplay}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span>Gender</span>
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">{genderDisplay}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span>Age</span>
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">{ageDisplay}</span>
               </div>
@@ -474,18 +473,39 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
           {/* Col 2: Contact & Profile */}
           <div className="space-y-4 lg:col-span-5">
             <div className="rounded-2xl border border-gray-100 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <InfoTile label="Email" value={emailDisplay} />
-                <InfoTile label="Location" value={lead.location ?? "Not set"} />
-              </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <InfoTile label="Occupation" value={occupationDisplay} />
-                <InfoTile label="Product" value={productDisplay} />
-                <InfoTile label="Investment range" value={investmentDisplay} />
-              </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <InfoTile label="SIP amount" value={sipDisplay} />
-                <div className="hidden sm:block" aria-hidden="true" />
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Email</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{emailDisplay}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Location</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{lead.location ?? "Not set"}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Profession</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{occupationDisplay}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Designation</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{designationDisplay}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Company Name</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{companyNameDisplay}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Product</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{productDisplay}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">Investment range</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{investmentDisplay}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">SIP amount</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white text-right">{sipDisplay}</span>
+                </div>
               </div>
             </div>
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white/70 p-4 text-sm text-gray-500 dark:border-white/10 dark:bg-white/5">
@@ -521,20 +541,22 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                 </div>
                 <LeadStatusBadge status={headerStatus} size="md" />
               </div>
-              <div className="mt-3 space-y-2 text-sm text-gray-500">
-                <div className="flex justify-between">
-                  <span>Referral name</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {referralName || "Not set"}
-                  </span>
+              {isReferralSource && (
+                <div className="mt-3 space-y-2 text-sm text-gray-500">
+                  <div className="flex justify-between">
+                    <span>Referral name</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {referralName || "Not set"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Referral code</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {referralCode || "Not set"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Referral code</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {referralCode || "Not set"}
-                  </span>
-                </div>
-              </div>
+              )}
               <div className="mt-3 space-y-2 text-xs text-gray-500">
                 <div className="flex justify-between">
                   <span>Lead Gen.on</span>
