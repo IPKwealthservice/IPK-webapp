@@ -203,7 +203,7 @@ export default function LeadUnifiedUpdateCard({
         );
       }
 
-      // Note: When hasNotes is true, mutRemarkWithInteraction (lines 151-161) already handles
+      // Note: When hasNotes is true, mutRemarkWithInteraction (lines 143-151) already handles
       // creating both the remark entry AND the interaction timeline entry with proper history tracking.
       // We don't need to call mutInteraction and mutRemark separately here.
 
