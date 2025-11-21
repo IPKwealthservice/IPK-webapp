@@ -37,9 +37,6 @@ export const LeadTableHeader = memo(function LeadTableHeader({
         <TableCell isHeader className="px-5 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">
           Phone
         </TableCell>
-        <TableCell isHeader className="px-5 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">
-          Lead Source
-        </TableCell>
 
         {showAdvancedCols && (
           <TableCell
@@ -49,6 +46,10 @@ export const LeadTableHeader = memo(function LeadTableHeader({
             Assigned RM
           </TableCell>
         )}
+
+        <TableCell isHeader className="px-5 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">
+          Lead Source
+        </TableCell>
 
         <TableCell isHeader className="px-5 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">
           Lead Date
