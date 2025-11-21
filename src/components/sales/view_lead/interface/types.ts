@@ -10,11 +10,17 @@ export type LeadEventType =
   | "STATUS_CHANGE"
   | "STAGE_CHANGE"
   | "ASSIGNMENT"
+  | "REMARK_UPDATED"
+  | "BIO_UPDATED"
+  | "PHONE_ADDED"
+  | "PHONE_REMOVED"
+  | "PHONE_MARKED_PRIMARY"
   | string;
 
 export type TimelineEvent = {
   id: string;
   authorId?: string;
+  authorEmail?: string | null;
   type: LeadEventType;
   occurredAt: string;
   authorName?: string | null;
@@ -85,6 +91,9 @@ export type LeadPhone = {
 /* ------------------------------- Events ---------------------------------- */
 export type LeadEvent = {
   id: string;
+  authorId?: string | null;
+  authorName?: string | null;
+  authorEmail?: string | null;
   type:
     | "REVISIT"
     | "NOTE"
@@ -98,8 +107,10 @@ export type LeadEvent = {
     | "BIO_UPDATED"
     | "HISTORY_SNAPSHOT";
   text?: string | null;
+  note?: string | null;
   tags?: string[] | null;
   occurredAt: string;
+  followUpOn?: string | null;
   prev?: unknown;
   next?: unknown;
   meta?: Record<string, unknown> | null;

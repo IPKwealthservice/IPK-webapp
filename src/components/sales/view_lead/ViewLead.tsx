@@ -71,13 +71,33 @@ export default function ViewLead() {
 
   const lead = data?.leadDetailWithTimeline;
 
-  const events: LeadEvent[] = useMemo(
-    () => (lead?.events ?? []).slice().sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt)),
-    [lead?.events]
-  );
   const remarkHistory = useMemo<RemarkEntry[]>(() => {
-    const fromQuery = interactionHistoryData?.leadInteractionHistory?.remarkHistory ?? [];
-    if (fromQuery.length > 0) return fromQuery;
+    const fallbackAuthor = user?.name ?? "Unknown";
+    const fromQueryRaw = interactionHistoryData?.leadInteractionHistory?.remarkHistory ?? [];
+    const normalizedFromQuery = fromQueryRaw.map((entry, idx) => {
+      const createdAt =
+        entry.createdAt || (entry as any)?.at || (entry as any)?.occurredAt || new Date().toISOString();
+      const updatedAt = entry.updatedAt || (entry as any)?.updatedAt || createdAt;
+      const author =
+        entry.author ??
+        (entry as any)?.authorName ??
+        (entry as any)?.byName ??
+        fallbackAuthor;
+      const authorId = entry.authorId ?? (entry as any)?.by ?? (entry as any)?.authorId ?? undefined;
+      const associatedInteractionId =
+        (entry as any)?.associatedInteractionId ?? (entry as any)?.interactionId ?? undefined;
+
+      return {
+        id: entry.id ?? `remark-${idx}`,
+        text: entry.text ?? (entry as any)?.note ?? "",
+        author,
+        authorId,
+        createdAt,
+        updatedAt,
+        associatedInteractionId,
+      };
+    });
+    if (normalizedFromQuery.length > 0) return normalizedFromQuery;
 
     const fromHistory: RemarkEntry[] = Array.isArray(lead?.history)
       ? lead.history
@@ -89,7 +109,7 @@ export default function ViewLead() {
               (entry as any)?.byName ??
               (entry as any)?.author ??
               (entry as any)?.by ??
-              "Unknown";
+              fallbackAuthor;
             return {
               id: entry?.id ?? `timeline-remark-${idx}`,
               text: entry?.text ?? "",
@@ -108,14 +128,130 @@ export default function ViewLead() {
         ? lead.remarks.map((remark, idx) => ({
             id: `lead-remark-${idx}`,
             text: remark?.text ?? "",
-            author: remark?.author ?? "Unknown",
+            author: remark?.author ?? fallbackAuthor,
+            authorId: (remark as any)?.authorId ?? undefined,
             createdAt: remark?.createdAt ?? new Date().toISOString(),
             updatedAt: remark?.createdAt ?? undefined,
           }))
         : [];
 
     return fromLeadRemarks;
-  }, [interactionHistoryData?.leadInteractionHistory?.remarkHistory, lead?.history, lead?.remarks]);
+  }, [interactionHistoryData?.leadInteractionHistory?.remarkHistory, lead?.history, lead?.remarks, user?.name]);
+
+  const remarkByInteractionId = useMemo(() => {
+    const lookup = new Map<string, RemarkEntry>();
+    remarkHistory.forEach((remark) => {
+      if (remark.associatedInteractionId) {
+        lookup.set(String(remark.associatedInteractionId), remark);
+      }
+    });
+    return lookup;
+  }, [remarkHistory]);
+
+  const interactionEvents = useMemo<LeadEvent[]>(() => {
+    const interactions = interactionHistoryData?.leadInteractionHistory?.interactions ?? [];
+    return interactions.map((interaction) => {
+      const linkedRemark = interaction?.id ? remarkByInteractionId.get(String(interaction.id)) : undefined;
+      const prev =
+        interaction.pipelineStageFrom || interaction.statusFilterFrom
+          ? { stage: interaction.pipelineStageFrom, status: interaction.statusFilterFrom }
+          : undefined;
+      const next =
+        interaction.pipelineStageTo || interaction.statusFilterTo
+          ? { stage: interaction.pipelineStageTo, status: interaction.statusFilterTo }
+          : undefined;
+      const followUp = interaction.nextActionDueAt ?? null;
+      const meta = {
+        ...(interaction.meta ?? {}),
+        authorId: interaction.authorId,
+        authorName: interaction.authorName,
+        authorEmail: interaction.authorEmail,
+        nextActionDueAt: interaction.nextActionDueAt,
+        pipelineStageFrom: interaction.pipelineStageFrom,
+        pipelineStageTo: interaction.pipelineStageTo,
+        statusFilterFrom: interaction.statusFilterFrom,
+        statusFilterTo: interaction.statusFilterTo,
+      };
+      const resolvedAuthorName =
+        linkedRemark?.author ||
+        interaction.authorName ||
+        (interaction.authorId && interaction.authorId === user?.id ? user?.name : undefined) ||
+        undefined;
+      const resolvedText = linkedRemark?.text ?? interaction.text ?? "";
+
+      return {
+        id: `interaction-${interaction.id}`,
+        type: (interaction.type as any) ?? "INTERACTION",
+        text: resolvedText,
+        note: resolvedText || null,
+        tags: interaction.tags ?? null,
+        occurredAt: interaction.occurredAt,
+        followUpOn: followUp,
+        prev,
+        next,
+        meta,
+        authorId: interaction.authorId ?? null,
+        authorName: resolvedAuthorName ?? null,
+        authorEmail: interaction.authorEmail ?? null,
+      };
+    });
+  }, [interactionHistoryData?.leadInteractionHistory?.interactions, remarkByInteractionId, user?.id, user?.name]);
+
+  const remarkEvents = useMemo<LeadEvent[]>(() => {
+    return remarkHistory
+      .filter((remark) => !remark.associatedInteractionId)
+      .map((remark) => ({
+        id: remark.id ?? `remark-${remark.createdAt}`,
+        type: "REMARK_UPDATED",
+        text: remark.text ?? "",
+        note: remark.text ?? "",
+        tags: ["REMARK"],
+        occurredAt: remark.createdAt,
+        meta: {
+          authorId: remark.authorId ?? null,
+          authorName: remark.author ?? null,
+        },
+        authorId: remark.authorId ?? null,
+        authorName: remark.author ?? null,
+        authorEmail: null,
+      }));
+  }, [remarkHistory]);
+
+  const events: LeadEvent[] = useMemo(() => {
+    const baseEvents = (lead?.events ?? []).map((ev) => {
+      const meta = (ev as any)?.meta ?? {};
+      const authorFromMeta =
+        meta?.authorName || meta?.actorName || meta?.by || meta?.author?.name || undefined;
+      const authorEmailFromMeta = meta?.authorEmail || meta?.author?.email || undefined;
+      const followUp =
+        (ev as any)?.followUpOn ??
+        meta?.nextActionDueAt ??
+        meta?.followUpOn ??
+        meta?.nextAction ??
+        null;
+      return {
+        ...ev,
+        note: (ev as any)?.note ?? ev.text ?? null,
+        authorName: (ev as any)?.authorName ?? authorFromMeta ?? null,
+        authorEmail: (ev as any)?.authorEmail ?? authorEmailFromMeta ?? null,
+        authorId: (ev as any)?.authorId ?? meta?.authorId ?? null,
+        followUpOn: followUp,
+        meta,
+      };
+    });
+
+    const combined = [...interactionEvents, ...remarkEvents, ...baseEvents];
+    const seen = new Set<string>();
+    return combined
+      .filter((ev) => {
+        if (!ev?.occurredAt) return false;
+        const key = ev.id ?? `${ev.type}-${ev.occurredAt}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
+  }, [interactionEvents, remarkEvents, lead?.events]);
 
   const [statusValue, setStatusValue] = useState<string | undefined>(lead?.status as string | undefined);
   const [stageValue, setStageValue] = useState<string | undefined>(lead?.clientStage as string | undefined);
@@ -232,6 +368,13 @@ export default function ViewLead() {
   const [isRmDrawerOpen, setRmDrawerOpen] = useState(false);
 
   const handleCreateEventEnhanced = async () => {
+    const actorMeta = {
+      authorId: user?.id ?? null,
+      authorName: user?.name ?? null,
+      authorEmail: user?.email ?? null,
+    };
+    const nowIso = new Date().toISOString();
+
     if (!leadId) return;
     const text = note.trim();
     if (!text) {
@@ -262,13 +405,19 @@ export default function ViewLead() {
         variables: {
           input: {
             leadId,
-            type: eventType,
+            type: eventType || "NOTE",
             text,
             tags: [eventType, "MANUAL_ENTRY"],
             channel: channel || null,
             outcome: outcome || null,
             nextFollowUpAt,
             dormantReason: null,
+            occurredAt: nowIso,
+            meta: {
+              ...actorMeta,
+              source: "view-lead-add-event",
+              nextActionDueAt: nextFollowUpAt,
+            },
           },
         },
       });
@@ -279,7 +428,9 @@ export default function ViewLead() {
             input: {
               leadId,
               remark: text,
-              ...(user?.id && user?.name ? { authorId: user.id, authorName: user.name } : {}),
+              ...(actorMeta.authorId && actorMeta.authorName
+                ? { authorId: actorMeta.authorId, authorName: actorMeta.authorName }
+                : {}),
             },
           },
         });

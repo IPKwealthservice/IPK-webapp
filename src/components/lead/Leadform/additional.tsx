@@ -195,7 +195,7 @@ export default function AdditionalInsightsForm({
 
         {lead.product === "SIP" && (
           <div>
-            <Label>SIP Amount (₹)</Label>
+            <Label>SIP Amount (Rs)</Label>
             <Input
               type="number"
               value={lead.sipAmount}

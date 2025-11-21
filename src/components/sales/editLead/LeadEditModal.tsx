@@ -14,8 +14,11 @@ import {
   CHANGE_STAGE,
   UPDATE_LEAD_REMARK,
 } from "@/components/sales/view_lead/gql/view_lead.gql";
-import { UPDATE_LEAD_REMARK_WITH_INTERACTION } from "@/components/sales/view_lead/gql/leadInteraction.gql";
-import { valueToLabel } from "@/components/lead/types";
+import {
+  LEAD_INTERACTION_HISTORY,
+  UPDATE_LEAD_REMARK_WITH_INTERACTION,
+} from "@/components/sales/view_lead/gql/leadInteraction.gql";
+import { valueToLabel, productOptions, investmentOptions } from "@/components/lead/types";
 import {
   genderOptions,
   professionOptions,
@@ -103,6 +106,7 @@ export default function LeadEditModal({
     UPDATE_LEAD_REMARK_WITH_INTERACTION
   );
   const [remarkDraft, setRemarkDraft] = useState("");
+  const [latestRemarkLocal, setLatestRemarkLocal] = useState<any | null>(null);
 
   const leadIdFromUrl = useMemo(() => {
     try {
@@ -128,6 +132,7 @@ export default function LeadEditModal({
   }, [form.leadSource, form.leadSourceOther, form.referralName, initial.leadSourceOther, initial.referralName]);
 
   const latestRemark = useMemo(() => {
+    if (latestRemarkLocal) return latestRemarkLocal;
     const list = Array.isArray((initial as any)?.remarks) ? [...((initial as any).remarks as any[])] : [];
     list.sort((a, b) => Date.parse(String(b?.createdAt || "")) - Date.parse(String(a?.createdAt || "")));
     if (list.length > 0) return list[0];
@@ -141,7 +146,7 @@ export default function LeadEditModal({
       };
     }
     return null;
-  }, [initial]);
+  }, [initial, latestRemarkLocal]);
 
   const latestRemarkRelative = useMemo(() => {
     if (!latestRemark?.createdAt) return null;
@@ -181,6 +186,11 @@ export default function LeadEditModal({
       : LEAD_PIPELINE_STAGES.filter((s) => s !== "NEW_LEAD" && s !== "FIRST_TALK_DONE");
   }, [form.clientStage, initial]);
 
+  const productValue = String((form as any).product ?? "");
+  const productUpper = productValue.trim().toUpperCase();
+  const showIapFields = productUpper === "IAP";
+  const showSipFields = productUpper === "SIP";
+
   const isSaving = saving || mutating || stageUpdating || bioSaving || remarkUpdating || remarkTimelineUpdating;
 
   const validate = () => {
@@ -208,6 +218,21 @@ export default function LeadEditModal({
     if ((prof === "BUSINESS" || prof === "EMPLOYEE") && !company) {
       nextErrors.companyName = "Company is required for business/employee";
     }
+
+    // Product-specific validation
+    const productRaw = String((form as any).product ?? "").trim().toUpperCase();
+    const investmentRangeRaw = String((form as any).investmentRange ?? "").trim();
+    const sipAmountRaw = String((form as any).sipAmount ?? "").trim();
+    if (productRaw === "IAP" && !investmentRangeRaw) {
+      nextErrors.investmentRange = "Select investment range for IAP";
+    }
+    if (productRaw === "SIP") {
+      const sipNum = Number(sipAmountRaw);
+      if (!sipAmountRaw || Number.isNaN(sipNum) || sipNum <= 0) {
+        nextErrors.sipAmount = "Enter a valid SIP amount";
+      }
+    }
+
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -265,14 +290,20 @@ export default function LeadEditModal({
         occupations: payload.occupations,
         bioText: payload.bioText,
         email: normalize((form as any).email) ?? undefined,
-        product: normalize((form as any).product) ?? undefined,
-        investmentRange: normalize((form as any).investmentRange) ?? undefined,
-        sipAmount: (() => {
-          const sv = String((form as any).sipAmount ?? "").trim();
-          if (!sv) return undefined;
-          const n = Number(sv);
-          return Number.isFinite(n) ? n : undefined;
-        })(),
+      product: normalize((form as any).product) ?? undefined,
+      investmentRange: (() => {
+        const productRaw = String((form as any).product ?? "").trim().toUpperCase();
+        if (productRaw !== "IAP") return undefined;
+        return normalize((form as any).investmentRange) ?? undefined;
+      })(),
+      sipAmount: (() => {
+        const productRaw = String((form as any).product ?? "").trim().toUpperCase();
+        if (productRaw !== "SIP") return undefined;
+        const sv = String((form as any).sipAmount ?? "").trim();
+        if (!sv) return undefined;
+        const n = Number(sv);
+        return Number.isFinite(n) ? n : undefined;
+      })(),
         referralCode: normalize((form as any).referralCode) ?? undefined,
         referralName: normalize((form as any).referralName) ?? undefined,
         stageFilter: normalize((form as any).stageFilter) ?? undefined,
@@ -304,30 +335,76 @@ export default function LeadEditModal({
 
       const trimmedRemark = remarkDraft.trim();
       if (trimmedRemark && leadId) {
-        await Promise.all([
-          mutRemarkWithInteraction({
+        const nowIso = new Date().toISOString();
+        const authorName = user?.name ?? "Unknown";
+        const authorId = user?.id ?? null;
+
+        try {
+          console.log("Saving remark:", { leadId, text: trimmedRemark, authorName, authorId });
+
+          // Primary mutation: Update remark with interaction tracking
+          const remarkResult = await mutRemarkWithInteraction({
             variables: {
               leadId,
               text: trimmedRemark,
-              nextActionDueAt: payload.nextActionDueAt ?? undefined,
+              nextActionDueAt: input.nextActionDueAt ?? undefined,
               createInteractionEvent: true,
             },
-          }),
-          mutRemark({
+            refetchQueries: [
+              "LeadInteractionHistory",
+              "LeadDetailWithTimeline",
+            ],
+            awaitRefetchQueries: true,
+          });
+
+          console.log("Remark mutation result:", remarkResult);
+
+          // Backup: Also save via basic remark mutation
+          await mutRemark({
             variables: {
               input: {
                 leadId,
                 remark: trimmedRemark,
-                ...(user?.id && user?.name ? { authorId: user.id, authorName: user.name } : {}),
+                ...(authorId && authorName ? { authorId, authorName } : {}),
               },
             },
-          }),
-        ]);
+            refetchQueries: ["LeadDetailWithTimeline"],
+            awaitRefetchQueries: false,
+          });
+
+          // Update local UI state for immediate feedback
+          setLatestRemarkLocal({
+            text: trimmedRemark,
+            author: authorName,
+            authorId,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          });
+
+          toast.success("Remark saved successfully!");
+          console.log("Remark saved, local state updated");
+        } catch (remarkErr: any) {
+          console.error("Failed to save remark:", remarkErr);
+          toast.error(remarkErr?.message || "Failed to save remark");
+          throw remarkErr;
+        }
       }
 
-      toast.success("Lead details updated successfully. Refreshing...");
-      await onSubmit?.(payload);
+      toast.success("Lead details updated successfully!");
+      
+      // Clear remark draft
       setRemarkDraft("");
+      
+      // Call parent onSubmit to trigger refetch
+      try {
+        await onSubmit?.(payload);
+        // Give server a moment to process before refetching
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (submitErr) {
+        console.error("onSubmit error:", submitErr);
+      }
+      
+      // Close modal
       onClose();
     } catch (err: any) {
       toast.error(err?.message || "Failed to update lead");
@@ -491,31 +568,58 @@ export default function LeadEditModal({
             </div>
 
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-              <Field label="Product">
-                <input
+              <Field label="Product" error={errors.product}>
+                <select
                   className={INPUT}
-                  value={String((form as any).product ?? "")}
-                  onChange={(e) => (handle as any)("product", e.target.value)}
-                  placeholder="e.g. SIP"
-                />
+                  value={productValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm((prev) => ({
+                      ...(prev ?? {}),
+                      product: val,
+                      // reset dependent fields
+                      investmentRange: val.toUpperCase() === "IAP" ? (prev as any)?.investmentRange ?? "" : "",
+                      sipAmount: val.toUpperCase() === "SIP" ? (prev as any)?.sipAmount ?? "" : "",
+                    }));
+                  }}
+                >
+                  <option value="">Select product</option>
+                  {productOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </Field>
-              <Field label="Investment range">
-                <input
-                  className={INPUT}
-                  value={String((form as any).investmentRange ?? "")}
-                  onChange={(e) => (handle as any)("investmentRange", e.target.value)}
-                  placeholder="e.g. 1L-5L"
-                />
-              </Field>
-              <Field label="SIP amount">
-                <input
-                  className={INPUT}
-                  value={String((form as any).sipAmount ?? "")}
-                  onChange={(e) => (handle as any)("sipAmount", e.target.value)}
-                  placeholder="e.g. 5000"
-                  inputMode="numeric"
-                />
-              </Field>
+
+              {showIapFields && (
+                <Field label="Investment range" error={errors.investmentRange}>
+                  <select
+                    className={INPUT}
+                    value={String((form as any).investmentRange ?? "")}
+                    onChange={(e) => (handle as any)("investmentRange", e.target.value)}
+                  >
+                    <option value="">Select range</option>
+                    {investmentOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+
+              {showSipFields && (
+                <Field label="SIP amount" error={errors.sipAmount}>
+                  <input
+                    className={INPUT}
+                    value={String((form as any).sipAmount ?? "")}
+                    onChange={(e) => (handle as any)("sipAmount", e.target.value)}
+                    placeholder="e.g. 5000"
+                    inputMode="numeric"
+                  />
+                </Field>
+              )}
             </div>
           </SectionCard>
 

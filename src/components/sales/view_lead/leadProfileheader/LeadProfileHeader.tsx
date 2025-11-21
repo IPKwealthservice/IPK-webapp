@@ -284,6 +284,13 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
       sipAmount: (typeof lead.sipAmount === 'number' ? lead.sipAmount : ""),
       gender: (lead.gender ?? "").toUpperCase(),
       remark: lead.remark ?? "",
+      remarks: Array.isArray(lead.remarks)
+        ? lead.remarks.map((r) => ({
+            text: r?.text ?? "",
+            author: r?.author ?? "",
+            createdAt: r?.createdAt ?? new Date().toISOString(),
+          }))
+        : undefined,
       referralName: lead.referralName ?? "",
       leadSourceOther: lead.leadSourceOther ?? "",
       age: lead.age ?? null,
@@ -530,14 +537,14 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
               </div>
               <div className="mt-3 space-y-2 text-xs text-gray-500">
                 <div className="flex justify-between">
-                  <span>Entered on</span>
+                  <span>Lead Gen.on</span>
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     {enteredOnDisplay}
                   </span>
                 </div>
                 {leadCapturedOnRaw && (
                   <div className="flex justify-between">
-                    <span>Captured on</span>
+                    <span>Lead Appr.on</span>
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {formatDateDisplay(leadCapturedOnRaw)}
                     </span>
@@ -560,7 +567,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
               </div>
               <div className="mt-3 space-y-2 text-xs text-gray-500">
                 <div className="flex items-center justify-between gap-3">
-                  <span>Pipeline stage</span>
+                  <span>Stage</span>
                   <span
                     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${stageDisplay.pillClass}`}
                   >
@@ -569,7 +576,7 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Stage filter</span>
+                  <span>Status</span>
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     {headerStatus ? humanize(headerStatus) : "Not set"}
                   </span>

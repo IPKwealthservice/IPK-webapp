@@ -87,6 +87,12 @@ export default function LeadUnifiedUpdateCard({
 
   const onSave = async () => {
     if (!leadId) return;
+    const actorMeta = {
+      authorId: user?.id ?? null,
+      authorName: user?.name ?? null,
+      authorEmail: user?.email ?? null,
+    };
+    const nowIso = new Date().toISOString();
     const ops: Promise<any>[] = [];
     setSaving(true);
     try {
@@ -221,11 +227,20 @@ export default function LeadUnifiedUpdateCard({
             variables: {
               input: {
                 leadId,
+                type: 'NOTE',
                 text: notes,
                 channel: 'CALL', // Hardcoded default
                 outcome: null, // Hardcoded default
                 nextFollowUpAt: nextFollowUpAt ?? undefined,
-                tags: ['ui:unified'],
+                occurredAt: nowIso,
+                tags: ['ui:unified', actorMeta.authorId ? `actor:${actorMeta.authorId}` : 'actor:unknown'],
+                meta: {
+                  ...actorMeta,
+                  capturedFrom: 'LeadUnifiedUpdateCard',
+                  nextActionDueAt: nextFollowUpAt ?? undefined,
+                  stageBefore: currentStage,
+                  statusBefore: currentStatus,
+                },
               },
             },
           })

@@ -59,7 +59,7 @@ export default function LeadRemarkHistory({
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="flex-1 overflow-y-auto p-5 max-h-[420px]">
         {remarks.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-6 text-center text-sm text-gray-500 dark:border-white/10 dark:bg-white/5">
             <BookMarked className="h-8 w-8 mx-auto mb-2 text-gray-400" />
