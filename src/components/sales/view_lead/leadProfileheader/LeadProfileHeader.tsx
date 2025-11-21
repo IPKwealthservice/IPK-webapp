@@ -104,8 +104,8 @@ export default function LeadProfileHeader({ lead, loading, canEditProfile, onPro
     valueToLabel(professionRaw || undefined, professionOptions) ||
     (professionRaw ? humanize(professionRaw) : "Not set");
   
-  const designationDisplay = (occ0?.designation as string) ?? lead.designation ?? "Not set";
-  const companyNameDisplay = (occ0?.companyName as string) ?? lead.companyName ?? "Not set";
+  const designationDisplay = String((occ0?.designation ?? lead.designation ?? "Not set"));
+  const companyNameDisplay = String((occ0?.companyName ?? lead.companyName ?? "Not set"));
 
   const productDisplay =
     valueToLabel(product || undefined, productOptions) || "Not specified";
