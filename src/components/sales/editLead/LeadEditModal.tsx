@@ -311,6 +311,8 @@ export default function LeadEditModal({
             nextActionDueAt: payload.nextActionDueAt ?? undefined,
             createInteractionEvent: true,
           },
+          refetchQueries: ['LeadInteractionHistory', 'LeadDetailWithTimeline'],
+          awaitRefetchQueries: true,
         });
       }
 

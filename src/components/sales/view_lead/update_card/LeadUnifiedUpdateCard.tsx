@@ -147,6 +147,8 @@ export default function LeadUnifiedUpdateCard({
               nextActionDueAt: nextFollowUpAt || undefined,
               createInteractionEvent: true,
             },
+            refetchQueries: ['LeadInteractionHistory', 'LeadDetailWithTimeline'],
+            awaitRefetchQueries: true,
           })
         );
       }
