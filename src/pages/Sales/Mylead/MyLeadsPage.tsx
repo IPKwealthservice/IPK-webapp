@@ -10,6 +10,7 @@ import { LeadStage, LeadStatus } from "@/components/sales/myleads/interface/type
 import { STAGE_SEQUENCE } from "@/components/sales/myleads/stageMeta";
 import { MY_ASSIGNED_LEADS, LEADS_PAGED } from "@/core/graphql/lead/lead.gql";
 import { useAuth } from "@/context/AuthContex";
+import { constructFullName } from "@/utils/formatters";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -139,8 +140,7 @@ export default function MyLeadsPage() {
 }
 
 function normalizeLead(node: MyAssignedLeadNode): Lead {
-  const fallbackName = node.name ?? [node.firstName, node.lastName].filter(Boolean).join(" ").trim();
-  const name = fallbackName && fallbackName.length > 0 ? fallbackName : "Unnamed lead";
+  const name = constructFullName(node.name, node.firstName, node.lastName, "Unnamed lead");
   const mobile = node.mobile ?? node.phone ?? null;
   const location = node.location ?? node.city ?? null;
   const rawAging = node.agingDays ?? computeAgingDays(node.approachAt ?? node.createdAt);

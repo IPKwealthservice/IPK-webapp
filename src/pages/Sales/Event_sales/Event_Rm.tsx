@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -41,7 +41,7 @@ const SalesEvent: React.FC = () => {
   const [eventStartDate, setEventStartDate] = useState("");
   const [eventEndDate, setEventEndDate] = useState("");
   const [eventLevel, setEventLevel] = useState("");
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [userEvents, setUserEvents] = useState<CalendarEvent[]>([]);
   const calendarRef = useRef<FullCalendar>(null);
   const { isOpen, openModal, closeModal } = useModal();
 
@@ -85,9 +85,8 @@ const SalesEvent: React.FC = () => {
       });
   }, [data?.myAssignedLeads?.items]);
 
-  useEffect(() => {
-    setEvents(leadEvents);
-  }, [leadEvents]);
+  // Combine lead events with user-created events
+  const allEvents = useMemo(() => [...leadEvents, ...userEvents], [leadEvents, userEvents]);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     resetModalFields();
@@ -109,7 +108,7 @@ const SalesEvent: React.FC = () => {
   const handleAddOrUpdateEvent = () => {
     if (selectedEvent) {
       // Update existing event
-      setEvents((prevEvents) =>
+      setUserEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.id === selectedEvent.id
             ? {
@@ -132,7 +131,7 @@ const SalesEvent: React.FC = () => {
         allDay: true,
         extendedProps: { calendar: eventLevel },
       };
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
+      setUserEvents((prevEvents) => [...prevEvents, newEvent]);
     }
     closeModal();
     resetModalFields();
@@ -163,7 +162,7 @@ const SalesEvent: React.FC = () => {
               center: "title",
               right: "dayGridMonth,timeGridWeek,timeGridDay",
             }}
-            events={events}
+            events={allEvents}
             selectable={true}
             select={handleDateSelect}
             eventClick={handleEventClick}

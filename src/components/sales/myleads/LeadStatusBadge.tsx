@@ -1,4 +1,5 @@
-﻿import Badge from "@/components/ui/badge/Badge";
+﻿import { memo } from "react";
+import Badge from "@/components/ui/badge/Badge";
 import { humanize } from "@/utils/formatters";
 import type { LeadStatus } from "./interface/type";
 
@@ -7,7 +8,7 @@ type Props = {
   size?: "sm" | "md";
 };
 
-export default function LeadStatusBadge({ status, size = "sm" }: Props) {
+function LeadStatusBadge({ status, size = "sm" }: Props) {
   // If no Stage Filter/status provided, show a neutral placeholder instead of "Pending"
   if (!status) {
     return (
@@ -35,3 +36,5 @@ export default function LeadStatusBadge({ status, size = "sm" }: Props) {
     </Badge>
   );
 }
+
+export default memo(LeadStatusBadge);

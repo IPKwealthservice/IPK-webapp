@@ -193,7 +193,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
           upsertSupportRef.current.supported =
             mutationNames.includes("upsertSelf");
         } catch (schemaError) {
-          console.warn("Unable to determine upsertSelf availability", schemaError);
+          if (import.meta.env.DEV) {
+            console.warn("Unable to determine upsertSelf availability", schemaError);
+          }
           upsertSupportRef.current.supported = false;
         } finally {
           upsertSupportRef.current.checked = true;
@@ -204,7 +206,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
         try {
           await client.mutate({ mutation: UPSERT_SELF, errorPolicy: "ignore" });
         } catch (mutationError) {
-          console.error("Failed to ensure authenticated user record", mutationError);
+          if (import.meta.env.DEV) {
+            console.error("Failed to ensure authenticated user record", mutationError);
+          }
         }
       }
 
@@ -225,7 +229,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
         setUser(null);
       }
     } catch (error) {
-      console.error("Failed to load authenticated user", error);
+      if (import.meta.env.DEV) {
+        console.error("Failed to load authenticated user", error);
+      }
       setUser(null);
     } finally {
       // ✅ only end loading after ME completes (or fails)
@@ -251,10 +257,14 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
       try {
         const token = await current.getIdToken(false);
         setIdToken(token);
-         console.log("🔥 Firebase ID Token:", token);
+        if (import.meta.env.DEV) {
+          console.log("🔥 Firebase ID Token:", token);
+        }
         
       } catch (error) {
-        console.error("Failed to retrieve ID token", error);
+        if (import.meta.env.DEV) {
+          console.error("Failed to retrieve ID token", error);
+        }
         await signOut(auth);
         setFirebaseUser(null);
         setIdToken(null);
@@ -277,7 +287,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
       // onIdTokenChanged will drive the rest
       return { success: true };
     } catch (error) {
-      console.error("Login failed", error);
+      if (import.meta.env.DEV) {
+        console.error("Login failed", error);
+      }
 
       if (error instanceof FirebaseError) {
         const info = AUTH_ERROR_MESSAGES[error.code] ?? DEFAULT_LOGIN_ERROR;

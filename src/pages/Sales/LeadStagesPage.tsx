@@ -12,6 +12,7 @@ import { STAGE_META, STAGE_SEQUENCE } from '@/components/sales/myleads/stageMeta
 import { LeadStage, LeadStageFilter } from '@/components/sales/myleads/interface/type';
 import Button from '@/components/ui/button/Button';
 import { LEADS_PAGED, MY_ASSIGNED_LEADS } from '@/core/graphql/lead/lead.gql';
+import { constructFullName } from '@/utils/formatters';
 
 type FilterId = 'ALL' | LeadStage | LeadStageFilter | 'PENDING_CALLS' | 'MISSED_CALLS';
 type FilterMode = 'STAGE' | 'STATUS';
@@ -80,7 +81,7 @@ export default function LeadStagesPage() {
       return {
         id: n.id,
         leadCode: n.leadCode ?? null,
-        name: (n.name || [n.firstName, n.lastName].filter(Boolean).join(' ')) ?? '-',
+        name: constructFullName(n.name, n.firstName, n.lastName, '-'),
         email: n.email ?? null,
         mobile: n.phone ?? null,
         location: n.location ?? undefined,
@@ -164,20 +165,30 @@ export default function LeadStagesPage() {
     },
   };
 
-  // Cards at top (Stage or Status mode)
-  const stageCards = useMemo<StageCardInfo[]>(() => {
+  // Pre-compute call counts to avoid duplicate filtering
+  const callCounts = useMemo(() => {
     const now = Date.now();
     const soonCutoff = now + 24 * 60 * 60 * 1000; // 24h
+    let pending = 0;
+    let missed = 0;
 
-    const pendingCalls = allLeads.filter((l: any) => {
-      const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
-      return Number.isFinite(ts) && ts >= now && ts <= soonCutoff;
-    }).length;
+    for (const lead of allLeads) {
+      const ts = lead.nextActionDueAt ? Date.parse(lead.nextActionDueAt) : NaN;
+      if (Number.isFinite(ts)) {
+        if (ts < now) {
+          missed++;
+        } else if (ts <= soonCutoff) {
+          pending++;
+        }
+      }
+    }
 
-    const missedCalls = allLeads.filter((l: any) => {
-      const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
-      return Number.isFinite(ts) && ts < now;
-    }).length;
+    return { pending, missed, now, soonCutoff };
+  }, [allLeads]);
+
+  // Cards at top (Stage or Status mode)
+  const stageCards = useMemo<StageCardInfo[]>(() => {
+    const { pending: pendingCalls, missed: missedCalls } = callCounts;
 
     if (mode === 'STATUS') {
       const statusCounts = new Map<LeadStageFilter, number>();
@@ -259,15 +270,14 @@ export default function LeadStagesPage() {
           'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
       },
     ];
-  }, [mode, stageCounts, allLeads, STATUS_SEQUENCE]);
+  }, [mode, stageCounts, allLeads, STATUS_SEQUENCE, callCounts]);
 
   // Filter by selected card (stage/status/pending/missed)
   const filteredByStage = useMemo(() => {
     if (selectedStage === 'ALL') return allLeads;
 
     if (selectedStage === 'PENDING_CALLS' || selectedStage === 'MISSED_CALLS') {
-      const now = Date.now();
-      const soonCutoff = now + 24 * 60 * 60 * 1000;
+      const { now, soonCutoff } = callCounts;
       return allLeads.filter((l: any) => {
         const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
         if (!Number.isFinite(ts)) return false;
@@ -281,7 +291,7 @@ export default function LeadStagesPage() {
     }
 
     return allLeads.filter((lead: any) => lead.clientStage === selectedStage);
-  }, [selectedStage, allLeads, mode]);
+  }, [selectedStage, allLeads, mode, callCounts]);
 
   // Text search filter
   const filtered = useMemo(() => {
@@ -428,7 +438,7 @@ export default function LeadStagesPage() {
                   <button
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/[0.06]"
                     onClick={() => {
-                      console.log('LeadStages:onExport csv');
+                      // TODO: Implement CSV export
                       setExportOpen(false);
                     }}
                   >
@@ -437,7 +447,7 @@ export default function LeadStagesPage() {
                   <button
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/[0.06]"
                     onClick={() => {
-                      console.log('LeadStages:onExport xlsx');
+                      // TODO: Implement Excel export
                       setExportOpen(false);
                     }}
                   >
