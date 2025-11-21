@@ -4,10 +4,6 @@ import { toast } from 'react-toastify';
 import { Flag, Milestone, Clock3, StickyNote, ChevronDown, CheckCircle2 } from 'lucide-react';
 
 import {
-  CHANGE_STAGE,
-  CREATE_LEAD_EVENT,
-  ADD_LEAD_NOTE,
-  UPDATE_LEAD_REMARK,
   UPDATE_LEAD_STATUS,
 } from '../gql/view_lead.gql';
 import {
@@ -16,7 +12,6 @@ import {
   UPDATE_LEAD_REMARK_WITH_INTERACTION,
 } from '../gql/leadInteraction.gql';
 import { UPDATE_NEXT_ACTION_DUE } from '@/components/sales/view_lead/gql/followUp.gql';
-import { UPDATE_LEAD_DETAILS } from '@/components/sales/editLead/update_gql/update_lead.gql';
 import { shouldAutoOpenLead } from '../autoStatus';
 import { useAuth } from '@/context/AuthContex';
 
@@ -52,12 +47,7 @@ export default function LeadUnifiedUpdateCard({
   const [productExplained, setProductExplained] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
 
-  const [mutUpdateDetails] = useMutation(UPDATE_LEAD_DETAILS);
-  const [mutStage] = useMutation(CHANGE_STAGE);
   const [mutUpdateStatus] = useMutation(UPDATE_LEAD_STATUS);
-  const [mutInteraction] = useMutation(CREATE_LEAD_EVENT);
-  const [mutNote] = useMutation(ADD_LEAD_NOTE);
-  const [mutRemark] = useMutation(UPDATE_LEAD_REMARK);
   const [mutRecordStageChange] = useMutation(RECORD_STAGE_CHANGE);
   const [mutRecordStatusFilterChange] = useMutation(RECORD_STATUS_FILTER_CHANGE);
   const [mutUpdateNextAction] = useMutation(UPDATE_NEXT_ACTION_DUE);
@@ -213,36 +203,9 @@ export default function LeadUnifiedUpdateCard({
         );
       }
 
-      // timeline entry + remark mirror
-      if (notes.trim()) {
-        // Always log via interaction so we can persist channel and nextFollowUpAt (and optional outcome)
-        ops.push(
-          mutInteraction({
-            variables: {
-              input: {
-                leadId,
-                text: notes,
-                channel: 'CALL', // Hardcoded default
-                outcome: null, // Hardcoded default
-                nextFollowUpAt: nextFollowUpAt ?? undefined,
-                tags: ['ui:unified'],
-              },
-            },
-          })
-        );
-        // Mirror the text into the simple remark field with author info
-        ops.push(
-          mutRemark({
-            variables: {
-              input: {
-                leadId,
-                remark: notes,
-                ...(user?.id && user?.name ? { authorId: user.id, authorName: user.name } : {}),
-              },
-            },
-          })
-        );
-      }
+      // Note: When hasNotes is true, mutRemarkWithInteraction (lines 151-161) already handles
+      // creating both the remark entry AND the interaction timeline entry with proper history tracking.
+      // We don't need to call mutInteraction and mutRemark separately here.
 
       await Promise.all(ops);
       const successMsg = nextFollowUpAt 

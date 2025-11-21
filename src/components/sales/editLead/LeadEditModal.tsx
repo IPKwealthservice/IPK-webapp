@@ -12,7 +12,6 @@ import { useAuth } from "@/context/AuthContex";
 import {
   UPDATE_LEAD_BIO,
   CHANGE_STAGE,
-  UPDATE_LEAD_REMARK,
 } from "@/components/sales/view_lead/gql/view_lead.gql";
 import { UPDATE_LEAD_REMARK_WITH_INTERACTION } from "@/components/sales/view_lead/gql/leadInteraction.gql";
 import { valueToLabel } from "@/components/lead/types";
@@ -98,7 +97,6 @@ export default function LeadEditModal({
   const [mutUpdate, { loading: mutating }] = useMutation(UPDATE_LEAD_DETAILS);
   const [mutBio, { loading: bioSaving }] = useMutation(UPDATE_LEAD_BIO);
   const [mutStage, { loading: stageUpdating }] = useMutation(CHANGE_STAGE);
-  const [mutRemark, { loading: remarkUpdating }] = useMutation(UPDATE_LEAD_REMARK);
   const [mutRemarkWithInteraction, { loading: remarkTimelineUpdating }] = useMutation(
     UPDATE_LEAD_REMARK_WITH_INTERACTION
   );
@@ -181,7 +179,7 @@ export default function LeadEditModal({
       : LEAD_PIPELINE_STAGES.filter((s) => s !== "NEW_LEAD" && s !== "FIRST_TALK_DONE");
   }, [form.clientStage, initial]);
 
-  const isSaving = saving || mutating || stageUpdating || bioSaving || remarkUpdating || remarkTimelineUpdating;
+  const isSaving = saving || mutating || stageUpdating || bioSaving || remarkTimelineUpdating;
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -304,25 +302,16 @@ export default function LeadEditModal({
 
       const trimmedRemark = remarkDraft.trim();
       if (trimmedRemark && leadId) {
-        await Promise.all([
-          mutRemarkWithInteraction({
-            variables: {
-              leadId,
-              text: trimmedRemark,
-              nextActionDueAt: payload.nextActionDueAt ?? undefined,
-              createInteractionEvent: true,
-            },
-          }),
-          mutRemark({
-            variables: {
-              input: {
-                leadId,
-                remark: trimmedRemark,
-                ...(user?.id && user?.name ? { authorId: user.id, authorName: user.name } : {}),
-              },
-            },
-          }),
-        ]);
+        // mutRemarkWithInteraction with createInteractionEvent:true handles both
+        // the remark history entry AND the interaction timeline entry
+        await mutRemarkWithInteraction({
+          variables: {
+            leadId,
+            text: trimmedRemark,
+            nextActionDueAt: payload.nextActionDueAt ?? undefined,
+            createInteractionEvent: true,
+          },
+        });
       }
 
       toast.success("Lead details updated successfully. Refreshing...");
