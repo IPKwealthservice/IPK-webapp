@@ -38,6 +38,9 @@ export type Lead = {
   name: string;
   email?: string | null;
   mobile?: string | null;
+  phone?: string | null;
+  phoneNormalized?: string | null;
+  phones?: Array<{ number?: string | null; normalized?: string | null; label?: string | null }>;
   location?: string | null;
   agingDays?: number;
   leadSource: string;

@@ -7,7 +7,7 @@ import BulkRegistrationButton from "@/components/lead/bulk-register/BulkRegistra
 import BulkImportModal from "@/components/lead/bulk-register/BulkImportModal"; // ⬅ add
 import { createLead } from "@/core/graphql/lead/lead";
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { ASSIGN_LEAD, REASSIGN_LEAD, LEADS_OPEN } from "@/core/graphql/lead/lead.gql";
+import { ASSIGN_LEAD, REASSIGN_LEAD, LEADS_OPEN, UPDATE_LEAD_REMARK } from "@/core/graphql/lead/lead.gql";
 import { toast } from "react-toastify";
 import CreateLeadForm from "@/components/lead/Leadform/Leadform";
 import AdditionalInsightsForm from "@/components/lead/Leadform/additional";
@@ -52,6 +52,7 @@ export default function LeadEntry() {
   const [submitting, setSubmitting] = useState(false);
   const [assignLead] = useMutation(ASSIGN_LEAD);
   const [reassignLead] = useMutation(REASSIGN_LEAD);
+  const [saveRemark] = useMutation(UPDATE_LEAD_REMARK);
   // Optional: auto-resolve referral name when a lead code is provided
   const [findLeadByCode] = useLazyQuery(LEADS_OPEN, { fetchPolicy: "network-only" });
 
@@ -90,6 +91,8 @@ export default function LeadEntry() {
   const handleConfirmSave = async () => {
     setSubmitting(true);
     try {
+      const trimmedRemark = (lead.remark ?? "").trim();
+
       const normalizedLeadSource =
         lead.leadSource === "others"
           ? lead.leadSourceOther?.trim()
@@ -128,7 +131,6 @@ export default function LeadEntry() {
         investmentRange: lead.investmentRange || undefined,
         sipAmount: lead.sipAmount ? Number(lead.sipAmount) : undefined,
         clientTypes: lead.clientType || undefined,
-        remark: lead.remark || undefined,
       };
       const created = await createLead(payload);
 
@@ -156,6 +158,19 @@ export default function LeadEntry() {
         }
       }
       toast.success(created?.leadCode ? `Lead created: ${created.leadCode}` : "Lead created");
+
+      // Persist remark with author context so history shows who added it
+      if (trimmedRemark && created?.id) {
+        try {
+          await saveRemark({
+            variables: { input: { leadId: created.id, remark: trimmedRemark } },
+          });
+        } catch (remarkError) {
+          console.error("Failed to save remark with author context", remarkError);
+          toast.warn("Lead saved, but remark could not be saved. Please retry adding the remark.");
+        }
+      }
+
       setLead({
         firstName: "", lastName: "", email: "", phone: "", leadSource: "",
         assignMode: "AUTO",

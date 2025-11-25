@@ -42,12 +42,22 @@ export default function MyLeads({
     return list.filter((lead) => {
       const stageLabel = lead.clientStage ? STAGE_META[lead.clientStage]?.label ?? "" : "";
       const statusLabel = lead.status ? formatLeadStatus(lead.status) : "";
+      const phoneStrings = [
+        lead.mobile ?? "",
+        (lead as any).phone ?? "",
+        (lead as any).phoneNormalized ?? "",
+        ...(((lead as any).phones ?? []) as Array<any>).map(
+          (p) => String(p?.number ?? p?.normalized ?? ""),
+        ),
+      ]
+        .filter(Boolean)
+        .join(" ");
       return (
         [
           lead.name,
           lead.email ?? "",
           lead.leadCode ?? "",
-          lead.mobile ?? "",
+          phoneStrings,
           lead.location ?? "",
           lead.leadSource ?? "",
           String(lead.agingDays ?? ""),
@@ -91,7 +101,7 @@ export default function MyLeads({
                 setQuery(event.target.value);
                 setPage(1);
               }}
-              placeholder="Search by name, mobile, status..."
+              placeholder="Search by name, any phone, status..."
               className="h-10 w-72 rounded-xl border border-gray-200 bg-transparent px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-emerald-300 focus:outline-hidden focus:ring-3 focus:ring-emerald-200 dark:border-white/10 dark:text-white/90 dark:placeholder:text-white/30"
             />
           </div>

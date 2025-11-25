@@ -1,7 +1,17 @@
 import { useMemo, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { toast } from "react-toastify";
-import { CheckCircle2, Clock3, RefreshCcw, PencilLine } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock3,
+  RefreshCcw,
+  PencilLine,
+  Home,
+  Smartphone,
+  Briefcase,
+  MessageCircle,
+  Phone,
+} from "lucide-react";
 
 import LeadStatusBadge from "@/components/sales/myleads/LeadStatusBadge";
 import {
@@ -182,6 +192,15 @@ export default function LeadProfileHeader({
       label: formatPhoneLabel(phone),
     }));
 
+  const resolvePhoneIcon = (label: string) => {
+    const key = label.toLowerCase();
+    if (key.includes("whats")) return MessageCircle;
+    if (key.includes("home")) return Home;
+    if (key.includes("work")) return Briefcase;
+    if (key.includes("mobile")) return Smartphone;
+    return Phone;
+  };
+
   const leadSourceDisplay =
     valueToLabel(lead.leadSource ?? undefined, leadOptions) || "Not set";
 
@@ -252,6 +271,16 @@ export default function LeadProfileHeader({
   const modalInitialValues = useMemo((): LeadEditModalValues => {
     let primaryPhone: string | undefined;
     let whatsappPhone: string | undefined;
+    const phoneDrafts: any[] = Array.isArray(lead.phones)
+      ? lead.phones.map((p) => ({
+          id: p.id,
+          number: p.number,
+          label: p.label,
+          isPrimary: p.isPrimary,
+          isWhatsapp: p.isWhatsapp,
+          normalized: p.normalized,
+        }))
+      : [];
 
     if (Array.isArray(lead.phones) && lead.phones.length > 0) {
       const list = lead.phones as any[];
@@ -266,6 +295,14 @@ export default function LeadProfileHeader({
     }
 
     const selectedPhone = primaryPhone ?? lead.phone ?? "";
+    if (!phoneDrafts.length && selectedPhone) {
+      phoneDrafts.push({
+        number: selectedPhone,
+        label: "MOBILE",
+        isPrimary: true,
+        isWhatsapp: false,
+      });
+    }
 
     return {
       id: lead.id,
@@ -315,6 +352,7 @@ export default function LeadProfileHeader({
       stageFilter: lead.stageFilter ?? "",
       clientTypes: coerceClientTypes(lead.clientTypes ?? undefined),
       nextActionDueAt: lead.nextActionDueAt ?? undefined,
+      phones: phoneDrafts,
     } as LeadEditModalValues;
   }, [lead, occ0]);
 
@@ -430,18 +468,6 @@ export default function LeadProfileHeader({
                   <div className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500/10 text-lg font-semibold text-emerald-700 transition-colors dark:bg-emerald-400/20 dark:text-emerald-100">
                     {initials(lead.name)}
                   </div>
-                  {canEditProfile && (
-                    <button
-                      type="button"
-                      onClick={handleEditClick}
-                      disabled={loading}
-                      aria-label="Edit lead details"
-                      title="Edit lead details"
-                      className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white shadow-lg transition-transform hover:scale-105 hover:bg-emerald-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-75 dark:border-gray-800"
-                    >
-                      <PencilLine className="h-4 w-4" />
-                    </button>
-                  )}
                 </div>
                 <div className="flex-grow">
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -548,32 +574,57 @@ export default function LeadProfileHeader({
             </div>
 
             {/* Alt numbers */}
-            <div className="rounded-2xl bg-white/70 p-4 text-sm text-gray-500 dark:bg-white/5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
-                Alternative mobile numbers
-              </p>
+            <div className="rounded-2xl bg-white/70 p-4 text-sm text-gray-500 shadow-sm dark:bg-white/5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                  Alternative mobile numbers
+                </p>
+                {alternativePhones.length > 2 && (
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-200">
+                    Showing 2 of {alternativePhones.length}
+                  </span>
+                )}
+              </div>
               {alternativePhones.length ? (
-                <div className="mt-3 space-y-2 text-sm font-semibold text-gray-900 dark:text-white">
-                  {alternativePhones.map((phone) => (
-                    <div
-                      key={phone.number}
-                      className="flex items-center justify-between gap-4"
-                    >
-                      <span>{phone.label}</span>
-                      <span className="text-right">{phone.number}</span>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    {alternativePhones.slice(0, 2).map((phone) => {
+                      const Icon = resolvePhoneIcon(phone.label);
+                      return (
+                        <div
+                          key={phone.number}
+                          className="flex items-center gap-2 rounded-2xl bg-emerald-50/70 px-3 py-2 text-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:bg-emerald-900/40 dark:text-white/90"
+                        >
+                          <span
+                            className="grid h-8 w-8 place-items-center rounded-full bg-white text-emerald-600 shadow-inner dark:bg-emerald-800/70 dark:text-emerald-100"
+                            title={phone.label}
+                            aria-label={phone.label}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="text-sm font-semibold leading-5">
+                            {phone.number}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {alternativePhones.length > 2 && (
+                    <p className="mt-2 text-xs text-gray-400 dark:text-white/50">
+                      Showing first 2 numbers saved for this lead.
+                    </p>
+                  )}
+                </>
               ) : (
                 <p className="mt-3 text-sm text-gray-400">Not provided</p>
               )}
             </div>
 
-            {/* Occupation moved below alt numbers */}
-            <div className="rounded-2xl bg-white/70 p-4 text-xs dark:bg-white/[0.03]">
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
-                Occupation
-              </p>
+          {/* Occupation moved below alt numbers */}
+          <div className="rounded-2xl bg-white/70 p-4 text-xs dark:bg-white/[0.03]">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+              Occupation
+            </p>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 <div>
                   <p className="text-[11px] text-gray-500 dark:text-white/60">Profession</p>
@@ -595,6 +646,19 @@ export default function LeadProfileHeader({
                 </div>
               </div>
             </div>
+            {canEditProfile && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleEditClick}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-600 shadow-sm transition hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-emerald-200"
+                >
+                  <PencilLine className="h-4 w-4" />
+                  Edit details
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Col 3: Lead meta */}

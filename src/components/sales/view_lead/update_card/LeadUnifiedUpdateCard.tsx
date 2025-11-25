@@ -1,6 +1,8 @@
 // LeadUnifiedUpdateCard.tsx
-import { useEffect, useMemo, useState } from "react";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
 import { ApolloError, useMutation } from "@apollo/client";
+import { Listbox, Transition } from "@headlessui/react";
+import DatePicker from "react-datepicker";
 import { toast } from "react-toastify";
 import {
   Flag,
@@ -10,6 +12,7 @@ import {
   ChevronDown,
   CheckCircle2,
 } from "lucide-react";
+import "react-datepicker/dist/react-datepicker.css";
 
 import {
   CHANGE_STAGE,
@@ -54,7 +57,7 @@ export default function LeadUnifiedUpdateCard({
   // form state
   const [status, setStatus] = useState<string>(String(currentStatus ?? "OPEN"));
   const [stage, setStage] = useState<string>(String(currentStage ?? "NEW_LEAD"));
-  const [followUp, setFollowUp] = useState<string>("");
+  const [followUp, setFollowUp] = useState<Date | null>(null);
   const [notes, setNotes] = useState<string>("");
   const [productExplained, setProductExplained] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
@@ -82,8 +85,7 @@ export default function LeadUnifiedUpdateCard({
 
   const nextFollowUpAt = useMemo(() => {
     if (!followUp) return null;
-    const t = Date.parse(followUp);
-    return Number.isNaN(t) ? null : new Date(t).toISOString();
+    return followUp.toISOString();
   }, [followUp]);
 
   // filter out NEW_LEAD / FIRST_TALK_DONE once lead has moved ahead
@@ -188,7 +190,7 @@ export default function LeadUnifiedUpdateCard({
 
       toast.success(successMsg);
       setNotes("");
-      setFollowUp("");
+      setFollowUp(null);
       onSaved?.();
     } catch (err) {
       const e = err as ApolloError;
@@ -279,67 +281,46 @@ export default function LeadUnifiedUpdateCard({
         )}
 
         {/* Stage */}
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500">
-            Pipeline stage
-          </label>
-          <div className="relative">
-            <select
-              className={`${INPUT} w-full appearance-none pr-8 ${
-                saving ? "opacity-80" : ""
-              }`}
-              value={stage}
-              onChange={(e) => setStage(e.target.value)}
-              disabled={saving}
-            >
-              {stageOptionsForUi.map((s) => (
-                <option key={s} value={s}>
-                  {String(s).replace(/_/g, " ")}
-                </option>
-              ))}
-            </select>
-            <Milestone className="pointer-events-none absolute right-2 top-2.5 h-4 w-4 text-zinc-400" />
-          </div>
-        </div>
+        <FancySelect
+          label="Pipeline stage"
+          icon={<Milestone className="h-4 w-4 text-emerald-600" />}
+          value={stage}
+          onChange={setStage}
+          options={stageOptionsForUi.map((s) => ({
+            value: s,
+            label: toLabel(s),
+          }))}
+          disabled={saving}
+        />
 
-        {/* LeadStage Filter (Status) */}
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500">
-            LeadStage Filter
-          </label>
-          <div className="relative">
-            <select
-              className={`${INPUT} w-full appearance-none pr-8 ${
-                saving ? "opacity-80" : ""
-              }`}
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              disabled={saving}
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {String(s).replace(/_/g, " ")}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-2.5 h-4 w-4 text-zinc-400" />
-          </div>
-        </div>
+        <FancySelect
+          label="LeadStage Filter"
+          icon={<ChevronDown className="h-4 w-4 text-emerald-600" />}
+          value={status}
+          onChange={setStatus}
+          options={STATUS_OPTIONS.map((s) => ({
+            value: s,
+            label: toLabel(s),
+          }))}
+          disabled={saving}
+        />
 
-        {/* Next follow-up */}
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500">
-            Next follow-up
-          </label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-gray-500">Next follow-up</label>
           <div className="relative">
-            <input
-              type="datetime-local"
-              className={`${INPUT} w-full ${saving ? "opacity-80" : ""}`}
-              value={followUp}
-              onChange={(e) => setFollowUp(e.target.value)}
+            <DatePicker
+              selected={followUp}
+              onChange={(date) => setFollowUp(date)}
+              showTimeSelect
+              timeIntervals={15}
+              dateFormat="dd MMM, yyyy • h:mm aa"
+              placeholderText="Pick date & time"
+              className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white"
+              popperClassName="z-50"
+              calendarClassName="rounded-xl border border-gray-200 shadow-lg dark:border-white/10"
               disabled={saving}
             />
-            <Clock3 className="pointer-events-none absolute right-2 top-2.5 h-4 w-4 text-zinc-400" />
+            <Clock3 className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-zinc-400" />
           </div>
         </div>
 
@@ -364,5 +345,82 @@ export default function LeadUnifiedUpdateCard({
         </div>
       </div>
     </section>
+  );
+}
+
+type FancyOption = { value: string; label: string };
+
+function toLabel(value: string) {
+  return String(value)
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function FancySelect({
+  label,
+  value,
+  onChange,
+  options,
+  icon,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: FancyOption[];
+  icon?: React.ReactNode;
+  disabled?: boolean;
+}) {
+  const selected = options.find((o) => o.value === value) ?? options[0];
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-medium text-gray-500">{label}</label>
+      <Listbox value={selected?.value} onChange={onChange} disabled={disabled}>
+        <div className="relative">
+          <Listbox.Button
+            className={`flex w-full items-center justify-between rounded-xl border border-zinc-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-800 shadow-sm transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white ${
+              disabled ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              {icon}
+              <span>{selected?.label ?? "Select"}</span>
+            </span>
+            <ChevronDown className="h-4 w-4 text-zinc-400" />
+          </Listbox.Button>
+
+          <Transition
+            as={Fragment}
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-95"
+          >
+            <Listbox.Options className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-white/10 dark:bg-gray-900">
+              {options.map((opt) => (
+                <Listbox.Option
+                  key={opt.value}
+                  value={opt.value}
+                  className={({ active, selected: isSel }) =>
+                    `flex items-center justify-between px-3 py-2 text-sm transition ${
+                      active ? "bg-emerald-50 text-emerald-700" : "text-gray-800 dark:text-white"
+                    } ${isSel ? "font-semibold" : "font-medium"}`
+                  }
+                >
+                  {({ selected: isSel }) => (
+                    <>
+                      <span>{opt.label}</span>
+                      {isSel && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                    </>
+                  )}
+                </Listbox.Option>
+              ))}
+            </Listbox.Options>
+          </Transition>
+        </div>
+      </Listbox>
+    </div>
   );
 }

@@ -13,7 +13,13 @@ import { LeadStage, LeadStageFilter } from '@/components/sales/myleads/interface
 import Button from '@/components/ui/button/Button';
 import { LEADS_PAGED, MY_ASSIGNED_LEADS } from '@/core/graphql/lead/lead.gql';
 
-type FilterId = 'ALL' | LeadStage | LeadStageFilter | 'PENDING_CALLS' | 'MISSED_CALLS';
+type FilterId =
+  | 'ALL'
+  | LeadStage
+  | LeadStageFilter
+  | 'TODAY_FOLLOWUP'
+  | 'PENDING_CALLS'
+  | 'MISSED_CALLS';
 type FilterMode = 'STAGE' | 'STATUS';
 
 type StageCardInfo = {
@@ -34,6 +40,16 @@ export default function LeadStagesPage() {
   const [mode, setMode] = useState<FilterMode>('STAGE');
   const [q, setQ] = useState('');
   const [exportOpen, setExportOpen] = useState(false);
+  const startOfToday = useMemo(() => {
+    const next = new Date();
+    next.setHours(0, 0, 0, 0);
+    return next.getTime();
+  }, []);
+  const endOfToday = useMemo(() => {
+    const next = new Date();
+    next.setHours(23, 59, 59, 999);
+    return next.getTime();
+  }, []);
 
   // ⬇️ IMPORTANT: args MUST match schema LeadListArgs
   const baseArgs = useMemo(
@@ -168,6 +184,10 @@ export default function LeadStagesPage() {
   const stageCards = useMemo<StageCardInfo[]>(() => {
     const now = Date.now();
     const soonCutoff = now + 24 * 60 * 60 * 1000; // 24h
+    const todayFollowUps = allLeads.filter((l: any) => {
+      const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
+      return Number.isFinite(ts) && ts >= startOfToday && ts <= endOfToday;
+    }).length;
 
     const pendingCalls = allLeads.filter((l: any) => {
       const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
@@ -235,6 +255,14 @@ export default function LeadStagesPage() {
         badgeClass:
           'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-200',
       },
+      {
+        id: 'TODAY_FOLLOWUP',
+        label: 'Today follow-up',
+        helper: 'Due today',
+        count: todayFollowUps,
+        badgeClass:
+          'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200',
+      },
       ...STAGE_SEQUENCE.map((stage) => ({
         id: stage,
         label: STAGE_META[stage].label,
@@ -259,11 +287,18 @@ export default function LeadStagesPage() {
           'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
       },
     ];
-  }, [mode, stageCounts, allLeads, STATUS_SEQUENCE]);
+  }, [mode, stageCounts, allLeads, STATUS_SEQUENCE, startOfToday, endOfToday]);
 
   // Filter by selected card (stage/status/pending/missed)
   const filteredByStage = useMemo(() => {
     if (selectedStage === 'ALL') return allLeads;
+
+    if (selectedStage === 'TODAY_FOLLOWUP') {
+      return allLeads.filter((l: any) => {
+        const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
+        return Number.isFinite(ts) && ts >= startOfToday && ts <= endOfToday;
+      });
+    }
 
     if (selectedStage === 'PENDING_CALLS' || selectedStage === 'MISSED_CALLS') {
       const now = Date.now();
@@ -281,7 +316,7 @@ export default function LeadStagesPage() {
     }
 
     return allLeads.filter((lead: any) => lead.clientStage === selectedStage);
-  }, [selectedStage, allLeads, mode]);
+  }, [selectedStage, allLeads, mode, startOfToday, endOfToday]);
 
   // Text search filter
   const filtered = useMemo(() => {
@@ -304,6 +339,9 @@ export default function LeadStagesPage() {
         .includes(qq),
     );
   }, [filteredByStage, q]);
+
+  const tableTitle =
+    selectedStage === 'TODAY_FOLLOWUP' ? 'Today follow-up leads' : 'Lead stages';
 
   return (
     <>
@@ -396,7 +434,7 @@ export default function LeadStagesPage() {
         })}
       </section>
 
-      <ComponentCard title="Lead stages">
+      <ComponentCard title={tableTitle}>
         <div className="mb-4 flex flex-wrap items-center gap-3 sm:justify-end">
           <div className="flex w-full items-center gap-3 sm:w-auto">
             <FilterBox

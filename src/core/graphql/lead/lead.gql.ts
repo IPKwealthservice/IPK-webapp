@@ -217,3 +217,14 @@ export const CREATE_LEADS_BULK = gql`
     }
   }
 `;
+
+/** Update only the remark/notes field */
+export const UPDATE_LEAD_REMARK = gql`
+  mutation UpdateLeadRemark($input: UpdateLeadRemarkInput!) {
+    updateLeadRemark(input: $input) {
+      id
+      remarks { text author createdAt }
+      remark { text byName by at }
+    }
+  }
+`;

@@ -8,7 +8,6 @@ const STAGE_SEQUENCE: LeadStage[] = [
   LeadStage.ACCOUNT_OPENED,
   LeadStage.NO_RESPONSE_DORMANT,
   LeadStage.NOT_INTERESTED_DORMANT,
-  LeadStage.RISKY_CLIENT_DORMANT,
   LeadStage.HIBERNATED,
 ];
 
