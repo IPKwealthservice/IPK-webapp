@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Onboarding Process</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f1f0fb;
+    }
+
+    .page-wrapper {
+      max-width: 980px;
+      margin: 40px auto;
+      padding: 32px 40px 48px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 24px;
+      font-weight: 500;
+    }
+
+    /* Profile Upload */
+    .profile-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+    .profile-photo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 2px solid #4b3b9a;
+      object-fit: cover;
+      background: #ddd;
+    }
+    .upload-btn {
+      margin-top: 6px;
+      padding: 6px 14px;
+      background: #4b3b9a;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    /* Top steps / progress bar */
+    .steps {
+      display: flex;
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+
+    .step {
+      position: relative;
+      padding: 10px 26px;
+      background: #4b3b9a;
+      color: #fff;
+      font-size: 13px;
+      text-align: center;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .step:not(:last-child) {
+      margin-right: 12px;
+    }
+
+    .step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -18px;
+      width: 0;
+      height: 0;
+      border-top: 18px solid transparent;
+      border-bottom: 18px solid transparent;
+      border-left: 18px solid #4b3b9a;
+    }
+
+    .step:first-child {
+      border-radius: 24px 0 0 24px;
+    }
+
+    .step:last-child {
+      border-radius: 0 24px 24px 0;
+    }
+
+    /* Sections */
+    .section {
+      margin-top: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    .section-header h2 {
+      font-size: 16px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .chevron {
+      font-weight: 700;
+    }
+
+    .fields-grid {
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: 48px;
+      row-gap: 12px;
+    }
+
+    .field {
+      min-width: 240px;
+      flex: 1 1 260px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 2px;
+    }
+
+    .text box-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid #999;
+      padding: 2px 0 4px;
+      font-size: 13px;
+      outline: none;
+      background: transparent;
+    }
+
+    .text box-input::placeholder {
+      color: #bbb;
+    }
+
+    .inline-row {
+      display: flex;
+      
+      align-items: center;
+      gap: 10px;
+    }
+
+    .small-btn {
+      border: none;
+      padding: 4px 12px;
+      font-size: 11px;
+      border-radius: 12px;
+      background: #f0f0ff;
+      color: #4b3b9a;
+      cursor: pointer;
+    }
+
+    .small-btn:hover {
+      background: #e0ddff;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .checkbox-row label {
+      font-size: 12px;
+      color: #444;
+    }
+
+    /* Save / Cancel Buttons */
+    .action-buttons {
+      margin-top: 40px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .save-btn {
+      padding: 10px 28px;
+      background: #4b3b9a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .cancel-btn {
+      padding: 10px 26px;
+      background: #bbb;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .page-wrapper {
+        margin: 0;
+        border-radius: 0;
+      }
+
+      .steps {
+        flex-wrap: wrap;
+      }
+
+      .step {
+        margin-bottom: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page-wrapper">
+
+    <!-- Profile Upload (ADDED) -->
+    <div class="profile-wrapper">
+      <div style="text-align:center;">
+        <img id="profilePreview" class="profile-photo" src="https://via.placeholder.com/90">
+        <br>
+        <input type="file" id="profileInput" accept="image/*" style="display:none">
+        <button class="upload-btn" onclick="document.getElementById('profileInput').click()">
+          Upload Photo
+        </button>
+      </div>
+    </div>
+
+    <h1>Onboarding Process</h1>
+
+    <!-- Progress steps -->
+    <div class="steps">
+      <div class="step">Client Profile</div>
+      <div class="step">Authentication</div>
+      <div class="step">Risk Type</div>
+      <div class="step">Suitability</div>
+      <div class="step">Agreement</div>
+      <div class="step">E-Sign</div>
+    </div>
+
+    <!-- Your Entire HTML (UNCHANGED) -->
+    <!-- ========================== -->
+    <!-- START OF YOUR SAME CONTENT -->
+    <!-- ========================== -->
+
+    <!-- Personal Details -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Personal Details</h2>
+        <span class="chevron">&gt;</span>
+      </div>
+
+      <div class="fields-grid">
+        <div class="field">
+          <label>Name</label>
+          <input class="text box-input" type="text" placeholder="Enter full name" />
+        </div>
+
+        <div class="field">
+          <label>Address</label>
+          <input class="text box-input" type="text" placeholder="Enter address" />
+        </div>
+
+        <div class="field">
+          <label>Location</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>DOB</label>
+          <input class="text box-input" type="date" />
+        </div>
+
+        <div class="field">
+          <label>Age</label>
+          <input class="text box-input" type="number" />
+        </div>
+
+        <div class="field">
+          <label>Gender</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Occupation</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Income</label>
+          <input class="text box-input" type="number" />
+        </div>
+
+        <div class="field">
+          <label>Company Name</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Designation</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>PAN No.</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Aadhaar Number</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Contact Person No.</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Relationship</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Client Source</label>
+          <input class="text box-input" type="text" />
+        </div>
+      </div>
+
+      <!-- Family A/C with + Add -->
+      <div id="familyAccounts">
+        <div class="field" style="margin-top: 16px; max-width: 320px;">
+          <label>Family A/C</label>
+          <div class="inline-row">
+            <input class="text box-input" type="text" placeholder="Family A/C number" />
+            <button type="button" class="small-btn" onclick="addFamilyAccount()">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demat Account -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Demat Account</h2>
+        <span class="chevron">&gt;</span>
+      </div>
+
+      <div class="fields-grid">
+        <div class="field">
+          <label>DP Id</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Client Code</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Scheme Name</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Broker Name</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Nominee</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Nominee Contact</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>A/C Type</label>
+          <input class="text box-input" type="text" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Contact</h2>
+        <span class="chevron">&gt;</span>
+      </div>
+
+      <div class="fields-grid">
+        <div class="field">
+          <label>Mobile No.</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div id="whatsappNumbers" class="field">
+          <label>WhatsApp Number</label>
+          <div class="inline-row">
+            <input class="text box-input" type="text" />
+            <button type="button" class="small-btn" onclick="addWhatsappNumber()">+ Add</button>
+          </div>
+          <div class="checkbox-row">
+               <input id="sameAsAbove" type="checkbox" />
+               <label for="sameAsAbove">Same as above</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Language</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <input class="text box-input" type="email" />
+        </div>
+
+        <div class="field">
+          <label>Trade Confirmation Code</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>A/C Opening Date</label>
+          <input class="text box-input" type="date" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Billing Details -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Billing Details</h2>
+        <span class="chevron">&gt;</span>
+      </div>
+
+      <div class="fields-grid">
+        <div class="field">
+          <label>Name</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Address</label>
+          <input class="text box-input" type="text" />
+               <div class="checkbox-row">
+                    <input id="sameAsAbove" type="checkbox" />
+                    <label for="sameAsAbove">Same as above</label>
+                </div>
+        </div>
+
+        <div class="field">
+          <label>Scheme Name</label>
+          <input class="text box-input" type="text" />
+        </div>
+      </div>
+
+      
+
+    <!-- Bank Details -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Bank Details</h2>
+        <span class="chevron">&gt;</span>
+      </div>
+
+      <div class="fields-grid">
+        <div class="field">
+          <label>Holder Name</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Bank Name</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>Acc Number</label>
+          <input class="text box-input" type="text" />
+        </div>
+
+        <div class="field">
+          <label>IFSC</label>
+          <input class="text box-input" type="text" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== -->
+    <!-- END OF YOUR SAME CONTENT -->
+    <!-- ======================== -->
+
+    <!-- Save and Cancel buttons (ADDED) -->
+    <div class="action-buttons">
+      <button class="cancel-btn">Cancel</button>
+      <button class="save-btn">Save</button>
+    </div>
+
+  </div>
+
+  <script>
+    function addFamilyAccount() {
+      const container = document.getElementById("familyAccounts");
+      const wrapper = document.createElement("div");
+      wrapper.className = "field";
+      wrapper.style.marginTop = "8px";
+      wrapper.style.maxWidth = "320px";
+      wrapper.innerHTML = `
+        <label>Family A/C</label>
+        <input class="underline-input" type="text" placeholder="Family A/C number" />
+      `;
+      container.appendChild(wrapper);
+    }
+
+    function addWhatsappNumber() {
+      const container = document.getElementById("whatsappNumbers");
+      const extra = document.createElement("div");
+      extra.className = "field";
+      extra.style.marginTop = "8px";
+      extra.innerHTML = `
+        <label>WhatsApp Number</label>
+        <input class="underline-input" type="text" />
+      `;
+      container.parentNode.appendChild(extra);
+    }
+
+    // Profile upload preview
+    document.getElementById("profileInput").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById("profilePreview").src = URL.createObjectURL(file);
+      }
+    });
+  </script>
+
+</body>
+</html>
+
+
