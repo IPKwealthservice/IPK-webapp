@@ -30,6 +30,29 @@ type StageCardInfo = {
   badgeClass?: string;
 };
 
+// Normalize various date representations (ISO string, ms, or seconds) into a timestamp.
+const toFollowUpTs = (value: unknown): number | null => {
+  if (value == null) return null;
+
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return null;
+    return value < 1e12 ? value * 1000 : value;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const asNumber = Number(trimmed);
+    if (!Number.isNaN(asNumber) && asNumber > 0) {
+      return asNumber < 1e12 ? asNumber * 1000 : asNumber;
+    }
+    const parsed = Date.parse(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+};
+
 export default function LeadStagesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -85,6 +108,7 @@ export default function LeadStagesPage() {
     if (!items?.length) return [];
 
     return items.map((n: any) => {
+      const nextFollowUpTs = toFollowUpTs(n.nextActionDueAt ?? n.approachAt ?? null);
       const createdAt = n.createdAt ?? null;
       const approachAt = n.approachAt ?? null;
       const baseTs = approachAt || createdAt;
@@ -107,7 +131,7 @@ export default function LeadStagesPage() {
         stageFilter: n.stageFilter ?? null,
         clientStage: n.clientStage || undefined,
         lastContactedAt: n.lastContactedAt ?? null,
-        nextActionDueAt: n.nextActionDueAt ?? null,
+        nextActionDueAt: nextFollowUpTs ? new Date(nextFollowUpTs).toISOString() : null,
         assignedRm: n.assignedRM ?? null,
         isNew: n.clientStage === 'NEW_LEAD' || !n.lastContactedAt,
       };
@@ -185,18 +209,18 @@ export default function LeadStagesPage() {
     const now = Date.now();
     const soonCutoff = now + 24 * 60 * 60 * 1000; // 24h
     const todayFollowUps = allLeads.filter((l: any) => {
-      const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
-      return Number.isFinite(ts) && ts >= startOfToday && ts <= endOfToday;
+      const ts = toFollowUpTs(l.nextActionDueAt);
+      return ts != null && ts >= startOfToday && ts <= endOfToday;
     }).length;
 
     const pendingCalls = allLeads.filter((l: any) => {
-      const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
-      return Number.isFinite(ts) && ts >= now && ts <= soonCutoff;
+      const ts = toFollowUpTs(l.nextActionDueAt);
+      return ts != null && ts >= now && ts <= soonCutoff;
     }).length;
 
     const missedCalls = allLeads.filter((l: any) => {
-      const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
-      return Number.isFinite(ts) && ts < now;
+      const ts = toFollowUpTs(l.nextActionDueAt);
+      return ts != null && ts < now;
     }).length;
 
     if (mode === 'STATUS') {
@@ -295,8 +319,8 @@ export default function LeadStagesPage() {
 
     if (selectedStage === 'TODAY_FOLLOWUP') {
       return allLeads.filter((l: any) => {
-        const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
-        return Number.isFinite(ts) && ts >= startOfToday && ts <= endOfToday;
+        const ts = toFollowUpTs(l.nextActionDueAt);
+        return ts != null && ts >= startOfToday && ts <= endOfToday;
       });
     }
 
@@ -304,8 +328,8 @@ export default function LeadStagesPage() {
       const now = Date.now();
       const soonCutoff = now + 24 * 60 * 60 * 1000;
       return allLeads.filter((l: any) => {
-        const ts = l.nextActionDueAt ? Date.parse(l.nextActionDueAt) : NaN;
-        if (!Number.isFinite(ts)) return false;
+        const ts = toFollowUpTs(l.nextActionDueAt);
+        if (ts == null) return false;
         if (selectedStage === 'MISSED_CALLS') return ts < now;
         return ts >= now && ts <= soonCutoff;
       });
@@ -492,6 +516,7 @@ export default function LeadStagesPage() {
           pageSize={8}
           showHeader={false}
           loading={loading}
+          nextFollowUpLabel={selectedStage === 'TODAY_FOLLOWUP' ? 'Today follow-up' : 'Next follow-up'}
           showAssignedRm={isAdmin}
         />
 

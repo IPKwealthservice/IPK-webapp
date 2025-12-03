@@ -23,6 +23,7 @@ export default function MyLeads({
   pageSize = 8,
   showHeader = true,
   query: externalQuery = "",
+  nextFollowUpLabel = "Next follow-up",
   // Optional busy indicator to show a unified loading row
   loading = false,
   showAssignedRm = false,
@@ -121,7 +122,7 @@ export default function MyLeads({
               {showAssignedRm && (
                 <TableCell isHeader className="px-6 py-3">Assigned RM</TableCell>
               )}
-              <TableCell isHeader className="px-6 py-3">Next follow-up</TableCell>
+              <TableCell isHeader className="px-6 py-3">{nextFollowUpLabel}</TableCell>
               <TableCell isHeader className="px-6 py-3 text-center">View more</TableCell>
               <TableCell isHeader className="px-6 py-3 text-right">Actions</TableCell>
             </TableRow>

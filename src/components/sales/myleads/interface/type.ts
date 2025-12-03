@@ -67,5 +67,7 @@ export type MyLeadsProps = {
   showHeader?: boolean;
   /** Optional external search query when using showHeader=false. */
   query?: string;
+  /** Custom label for the Next follow-up column. */
+  nextFollowUpLabel?: string;
 };
 
