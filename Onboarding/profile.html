@@ -29,48 +29,179 @@
       font-weight: 500;
     }
 
-    /* Profile Upload */
-    .profile-wrapper {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 20px;
-    }
-    .profile-photo {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      border: 2px solid #4b3b9a;
-      object-fit: cover;
-      background: #ddd;
-    }
-    .upload-btn {
-      margin-top: 6px;
-      padding: 6px 14px;
-      background: #4b3b9a;
-      border: none;
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      font-size: 12px;
-    }
+/* Position top-right */
+.profile-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
 
-    /* Top steps / progress bar */
-    .steps {
-      display: flex;
-      margin-bottom: 32px;
-      overflow: hidden;
-    }
+.profile-container {
+  text-align: center;
+}
 
-    .step {
-      position: relative;
-      padding: 10px 26px;
-      background: #4b3b9a;
-      color: #fff;
-      font-size: 13px;
-      text-align: center;
-      text-transform: capitalize;
-      white-space: nowrap;
-    }
+/* Profile circle */
+.profile-photo-holder {
+  width: 130px;
+  height: 130px;
+  position: relative;
+}
+
+.profile-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid #4b3b9a;
+  object-fit: cover;
+  background: #e9e6ff;
+}
+
+/* Default user icon (center) */
+.profile-icon-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  color: #7369d7;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Pencil Edit Icon */
+.edit-icon {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: #4b3b9a;
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* Small Modern Buttons */
+.profile-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.btn-small {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-small.save {
+  background: #4b3b9a;
+  color: white;
+}
+
+.btn-small.remove {
+  background: #d3d3d3;
+  color: black;
+}
+
+    /* ALTERNATE STEPS BOX (CHEVRON STYLE WITH HOVER + ACTIVE + NUMBERS) */
+.alt-steps {
+  display: flex;
+  gap: 22px;   /* SPACE BETWEEN EACH STEP BOX */
+  margin-bottom: 20px;
+  margin-top: 18px;
+}
+
+.alt-step {
+  position: relative;
+  background: #140b8a; /* main color */
+  color: white;
+  padding: 10px 36px 10px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  height: 38px;
+  line-height: 18px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+/* STEP NUMBER */
+.alt-step span.step-number {
+  font-weight: bold;
+  margin-right: 6px;
+  color: #fff;
+  opacity: 0.9;
+}
+
+/* Left cut */
+.alt-step::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 19px solid transparent;
+  border-bottom: 19px solid transparent;
+  border-right: 20px solid #140b8a;
+}
+
+/* Right arrow */
+.alt-step::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 19px solid transparent;
+  border-bottom: 19px solid transparent;
+  border-left: 20px solid #140b8a;
+}
+
+/* HOVER */
+.alt-step:hover {
+  background: #1e0fb3;
+}
+
+.alt-step:hover::before {
+  border-right-color: #1e0fb3;
+}
+
+.alt-step:hover::after {
+  border-left-color: #1e0fb3;
+}
+
+/* ACTIVE STEP */
+.alt-step.active {
+  background: #090567;
+}
+
+.alt-step.active::before {
+  border-right-color: #090567;
+}
+
+.alt-step.active::after {
+  border-left-color: #090567;
+}
+
+@media (max-width: 768px) {
+  .alt-steps {
+    flex-wrap: wrap;
+  }
+}
 
     .step:not(:last-child) {
       margin-right: 12px;
@@ -118,6 +249,34 @@
       font-weight: 700;
     }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.section-header .chevron {
+  transition: transform 0.25s;
+}
+
+.section-header.active .chevron {
+  transform: rotate(90deg);
+}
+
+.section-divider {
+  height: 1px;
+  width: 100%;
+  background: #5b8f74;
+  opacity: 0.75;
+  border-radius: 4px;
+  margin: 4px 0 14px 0;
+}
+
+.section-body {
+  display: none;
+}
+
     .fields-grid {
       display: flex;
       flex-wrap: wrap;
@@ -153,7 +312,7 @@
 
     .inline-row {
       display: flex;
-      
+
       align-items: center;
       gap: 10px;
     }
@@ -225,72 +384,305 @@
         margin-bottom: 8px;
       }
     }
+
+/* POPUP OVERLAY */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+/* POPUP BOX */
+.modal-box {
+  width: 780px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0;
+  animation: fadeIn 0.25s ease;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+}
+
+/* HEADER */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #4b3b9a;
+  padding: 14px 20px;
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-x {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* BODY */
+.modal-body {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* PHOTO */
+.photo-section img {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #4b3b9a;
+}
+
+/* DETAILS */
+.details-section {
+  flex: 1;
+  font-size: 14px;
+}
+
+.details-section h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #4b3b9a;
+  margin: 16px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 26px;
+  margin-bottom: 10px;
+}
+
+.details-grid p {
+  margin: 0;
+}
+
+.details-grid strong {
+  color: #111;
+}
+
+/* FOOTER */
+.modal-footer {
+  padding: 14px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #fafafa;
+  border-radius: 0 0 12px 12px;
+}
+
+.modal-btn {
+  padding: 8px 18px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-btn.cancel {
+  background: #ccc;
+}
+
+.modal-btn.submit {
+  background: #4b3b9a;
+  color: white;
+}
+
+/* SUCCESS POPUP OVERLAY */
+.success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
+}
+
+/* SUCCESS CARD */
+.success-box {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 12px;
+  text-align: center;
+  animation: scaleIn 0.25s ease-out;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+
+.success-icon {
+  font-size: 48px;
+  color: #1cab73;
+  margin-bottom: 10px;
+  animation: popIn 0.25s ease-out;
+}
+
+.success-box h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1cab73;
+}
+
+/* Animations */
+@keyframes scaleIn {
+  from { transform: scale(0.75); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
   </style>
 </head>
+
+<!-- PROFESSIONAL PROFILE PREVIEW -->
+<div id="previewModal" class="modal-overlay">
+  <div class="modal-box">
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h2>Profile Preview</h2>
+      <button class="close-x" onclick="closePreview()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- PROFILE PHOTO -->
+      <div class="photo-section">
+        <img id="previewPhoto" src="https://via.placeholder.com/120">
+      </div>
+
+      <!-- DETAILS -->
+      <div id="previewDetails" class="details-section"></div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closePreview()">Close</button>
+      <button class="modal-btn submit" onclick="submitProfile()">Submit</button>
+    </div>
+  </div>
+</div>
+
+    <!-- SUCCESS POPUP -->
+    <div id="successPopup" class="success-overlay">
+         <div class="success-box">
+         <div class="success-icon">✔</div>
+         <h3>Profile Submitted Successfully!</h3>
+    </div>
+</div>
 
 <body>
   <div class="page-wrapper">
 
-    <!-- Profile Upload (ADDED) -->
-    <div class="profile-wrapper">
-      <div style="text-align:center;">
-        <img id="profilePreview" class="profile-photo" src="https://via.placeholder.com/90">
-        <br>
-        <input type="file" id="profileInput" accept="image/*" style="display:none">
-        <button class="upload-btn" onclick="document.getElementById('profileInput').click()">
-          Upload Photo
-        </button>
-      </div>
+  <div class="profile-wrapper">
+  <div class="profile-container">
+
+    <div class="profile-photo-holder">
+      <img id="profilePreview" class="profile-photo" src="">
+
+      <!-- Default user icon -->
+      <div id="profileIcon" class="profile-icon-overlay">👤</div>
+
+      <!-- Pencil edit icon overlay -->
+      <div class="edit-icon" onclick="chooseProfileImage()">✏️</div>
     </div>
+
+    <input type="file" id="profileInput" accept="image/*" style="display:none">
+
+    <!-- Small, professional action buttons -->
+    <div class="profile-buttons">
+      <button class="btn-small save" onclick="saveProfileImage()">Save</button>
+      <button class="btn-small remove" onclick="removeProfileImage()">Remove</button>
+    </div>
+  </div>
+</div>
 
     <h1>Onboarding Process</h1>
 
     <!-- Progress steps -->
-    <div class="steps">
-      <div class="step">Client Profile</div>
-      <div class="step">Authentication</div>
-      <div class="step">Risk Type</div>
-      <div class="step">Suitability</div>
-      <div class="step">Agreement</div>
-      <div class="step">E-Sign</div>
+    <div class="alt-steps">
+         <div class="alt-step active">Client Profile</div>
+         <div class="alt-step">Authentication</div>
+         <div class="alt-step">Risk Type</div>
+         <div class="alt-step">Suitability</div>
+         <div class="alt-step">Agreement</div>
+         <div class="alt-step">E-Sign</div>
     </div>
+
 
     <!-- Your Entire HTML (UNCHANGED) -->
     <!-- ========================== -->
     <!-- START OF YOUR SAME CONTENT -->
     <!-- ========================== -->
+  <section class="section">
+  <div class="section-header" onclick="toggleSection('personalBody', this)">
+    <h2>Personal Details</h2>
+    <span class="chevron">&gt;</span>
+  </div>
 
-    <!-- Personal Details -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Personal Details</h2>
-        <span class="chevron">&gt;</span>
-      </div>
+  <div class="section-divider"></div>
 
-      <div class="fields-grid">
+  <div id="personalBody" class="section-body">
+    <!-- PERSONAL DETAILS FIELDS -->
+    <!-- (Your existing fields stay inside here) -->
+     <div class="fields-grid">
         <div class="field">
           <label>Name</label>
           <input class="text box-input" type="text" placeholder="Enter full name" />
         </div>
 
-        <div class="field">
-          <label>Address</label>
-          <input class="text box-input" type="text" placeholder="Enter address" />
-        </div>
+      <div class="field">
+          <label>Communication Address</label>
+          <input id="commAddress" class="text box-input" type="text" placeholder="Enter communication address" />
+      </div>
 
+      <div class="field">
+           <label>Permanent Address</label>
+           <input id="permAddress" class="text box-input" type="text" placeholder="Enter permanent address" />
+
+      <div class="checkbox-row">
+           <input id="permSame" type="checkbox" onclick="copyCommToPermanent()" />
+           <label for="permSame">Same as communication address</label>
+      </div>
+    </div>
         <div class="field">
           <label>Location</label>
           <input class="text box-input" type="text" />
         </div>
 
         <div class="field">
-          <label>DOB</label>
-          <input class="text box-input" type="date" />
+            <label>DOB</label>
+            <input id="dob" class="text box-input" type="date" onchange="calculateAge()" />
         </div>
-
+       
         <div class="field">
-          <label>Age</label>
-          <input class="text box-input" type="number" />
+            <label>Age</label>
+            <input id="age" class="text box-input" type="number" readonly />
         </div>
 
         <div class="field">
@@ -343,27 +735,30 @@
           <input class="text box-input" type="text" />
         </div>
       </div>
-
       <!-- Family A/C with + Add -->
       <div id="familyAccounts">
         <div class="field" style="margin-top: 16px; max-width: 320px;">
-          <label>Family A/C</label>
-          <div class="inline-row">
-            <input class="text box-input" type="text" placeholder="Family A/C number" />
-            <button type="button" class="small-btn" onclick="addFamilyAccount()">+ Add</button>
-          </div>
+           <label>Family A/C</label>
+           <div class="inline-row">
+           <input class="text box-input" type="text" placeholder="Family A/C number" />
+           <button type="button" class="small-btn" onclick="addFamilyAccount()">+ Add</button>
+           </div>
         </div>
       </div>
-    </section>
+  </div>
+</section>
 
-    <!-- Demat Account -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Demat Account</h2>
-        <span class="chevron">&gt;</span>
-      </div>
+   <section class="section">
+  <div class="section-header" onclick="toggleSection('dematBody', this)">
+    <h2>Demat Account</h2>
+    <span class="chevron">&gt;</span>
+  </div>
 
-      <div class="fields-grid">
+  <div class="section-divider"></div>
+
+  <div id="dematBody" class="section-body">
+    <!-- DEMAT ACCOUNT FIELDS -->
+     <div class="fields-grid">
         <div class="field">
           <label>DP Id</label>
           <input class="text box-input" type="text" />
@@ -399,32 +794,36 @@
           <input class="text box-input" type="text" />
         </div>
       </div>
-    </section>
+  </div>
+</section>
+<section class="section">
+  <div class="section-header" onclick="toggleSection('contactBody', this)">
+    <h2>Contact</h2>
+    <span class="chevron">&gt;</span>
+  </div>
 
-    <!-- Contact -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Contact</h2>
-        <span class="chevron">&gt;</span>
-      </div>
+  <div class="section-divider"></div>
 
-      <div class="fields-grid">
+  <div id="contactBody" class="section-body">
+    <!-- CONTACT FIELDS -->
+     <div class="fields-grid">
         <div class="field">
           <label>Mobile No.</label>
-          <input class="text box-input" type="text" />
+          <input id="mobileNumber" class="text box-input" type="text" />
         </div>
 
-        <div id="whatsappNumbers" class="field">
-          <label>WhatsApp Number</label>
-          <div class="inline-row">
-            <input class="text box-input" type="text" />
-            <button type="button" class="small-btn" onclick="addWhatsappNumber()">+ Add</button>
-          </div>
-          <div class="checkbox-row">
-               <input id="sameAsAbove" type="checkbox" />
-               <label for="sameAsAbove">Same as above</label>
-          </div>
+      <div id="whatsappNumbers" class="field">
+           <label>WhatsApp Number</label>
+        <div class="inline-row">
+           <input id="whatsappPrimary" class="text box-input" type="text" />
+           <button type="button" class="small-btn" onclick="addWhatsappNumber()">+ Add</button>
         </div>
+
+        <div class="checkbox-row">
+           <input id="whatsappSame" type="checkbox" onclick="copyMobileToWhatsapp()" />
+           <label for="whatsappSame">Same as Mobile Number</label>
+        </div>
+      </div>
 
         <div class="field">
           <label>Language</label>
@@ -446,46 +845,54 @@
           <input class="text box-input" type="date" />
         </div>
       </div>
-    </section>
+  </div>
+</section>
 
-    <!-- Billing Details -->
     <section class="section">
-      <div class="section-header">
-        <h2>Billing Details</h2>
-        <span class="chevron">&gt;</span>
-      </div>
+  <div class="section-header" onclick="toggleSection('billingBody', this)">
+    <h2>Billing Details</h2>
+    <span class="chevron">&gt;</span>
+  </div>
 
-      <div class="fields-grid">
+  <div class="section-divider"></div>
+
+  <div id="billingBody" class="section-body">
+    <!-- BILLING DETAILS FIELDS -->
+     <div class="fields-grid">
         <div class="field">
           <label>Name</label>
           <input class="text box-input" type="text" />
         </div>
 
-        <div class="field">
-          <label>Address</label>
-          <input class="text box-input" type="text" />
-               <div class="checkbox-row">
-                    <input id="sameAsAbove" type="checkbox" />
-                    <label for="sameAsAbove">Same as above</label>
-                </div>
-        </div>
+    <div class="field">
+         <label>Address</label>
+         <input id="billingAddress" class="text box-input" type="text" />
 
+    <div class="checkbox-row">
+         <input id="billingSame" type="checkbox" onclick="copyPermanentToBilling()" />
+         <label for="billingSame">Same as permanent address</label>
+    </div>
+  </div>
         <div class="field">
           <label>Scheme Name</label>
           <input class="text box-input" type="text" />
         </div>
       </div>
+  </div>
+</section>
 
-      
-
-    <!-- Bank Details -->
     <section class="section">
-      <div class="section-header">
-        <h2>Bank Details</h2>
-        <span class="chevron">&gt;</span>
-      </div>
+  <div class="section-header" onclick="toggleSection('bankBody', this)">
+    <h2>Bank Details</h2>
+    <span class="chevron">&gt;</span>
+  </div>
 
-      <div class="fields-grid">
+  <div class="section-divider"></div>
+
+  <div id="bankBody" class="section-body">
+    <!-- BANK DETAILS FIELDS -->
+     
+     <div class="fields-grid">
         <div class="field">
           <label>Holder Name</label>
           <input class="text box-input" type="text" />
@@ -506,7 +913,8 @@
           <input class="text box-input" type="text" />
         </div>
       </div>
-    </section>
+  </div>
+</section>
 
     <!-- ======================== -->
     <!-- END OF YOUR SAME CONTENT -->
@@ -514,37 +922,270 @@
 
     <!-- Save and Cancel buttons (ADDED) -->
     <div class="action-buttons">
-      <button class="cancel-btn">Cancel</button>
-      <button class="save-btn">Save</button>
+      <button class="save-btn" onclick="showProfilePreview()">Save</button>
     </div>
-
   </div>
 
   <script>
+
+    function calculateAge() {
+  const dob = document.getElementById("dob").value;
+  const ageField = document.getElementById("age");
+
+  if (!dob) {
+    ageField.value = "";
+    return;
+  }
+
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const dayDiff = today.getDate() - birthDate.getDate();
+
+  // adjust age if birthday not reached this year
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age--;
+  }
+
+  ageField.value = age;
+}
+
+function showProfilePreview() {
+  document.getElementById("previewModal").style.display = "flex";
+
+  // Set photo
+  const photo = document.getElementById("profilePreview").src;
+  document.getElementById("previewPhoto").src =
+    photo || "https://via.placeholder.com/120";
+
+  // BUILD HTML
+  const html = `
+    ${section("Personal Details")}
+    ${grid([
+      row("Name", getVal('input[placeholder="Enter full name"]')),
+      row("Communication Address", getVal("#commAddress")),
+      row("Permanent Address", getVal("#permAddress")),
+      row("Location", getVal('input[placeholder="Location"]')),
+      row("DOB", getVal('input[type="date"]')),
+      row("Age", getVal('input[type="number"]')),
+      row("Gender", getVal('input[placeholder="Gender"]')),
+      row("Occupation", getVal('input[placeholder="Occupation"]')),
+      row("Income", getVal('input[placeholder="Income"]')),
+      row("Company", getVal('input[placeholder="Company Name"]')),
+      row("Designation", getVal('input[placeholder="Designation"]')),
+      row("PAN", getVal('input[placeholder="PAN No."]')),
+      row("Aadhaar", getVal('input[placeholder="Aadhaar Number"]')),
+      row("Contact Person", getVal('input[placeholder="Contact Person No."]')),
+      row("Relationship", getVal('input[placeholder="Relationship"]')),
+      row("Client Source", getVal('input[placeholder="Client Source"]')),
+    ])}
+
+    ${section("Family Accounts")}
+    <ul>${buildFamilyAccounts()}</ul>
+
+    ${section("Demat Account")}
+    ${grid([
+      row("DP ID", getVal('input[placeholder="DP Id"]')),
+      row("Client Code", getVal('input[placeholder="Client Code"]')),
+      row("Scheme", getVal('input[placeholder="Scheme Name"]')),
+      row("Broker", getVal('input[placeholder="Broker Name"]')),
+      row("Nominee", getVal('input[placeholder="Nominee"]')),
+      row("Nominee Contact", getVal('input[placeholder="Nominee Contact"]')),
+      row("A/C Type", getVal('input[placeholder="A/C Type"]')),
+    ])}
+
+    ${section("Contact")}
+    ${grid([
+      row("Mobile", getVal("#mobileNumber")),
+      row("WhatsApp", getVal("#whatsappPrimary")),
+      row("Language", getVal('input[placeholder="Language"]')),
+      row("Email", getVal('input[type="email"]')),
+      row("Trade Code", getVal('input[placeholder="Trade Confirmation Code"]')),
+      row("A/C Opening Date", getVal('input[type="date"]')),
+    ])}
+
+    ${section("Billing")}
+    ${grid([
+      row("Name", getVal('section:nth-of-type(4) input[type="text"]')),
+      row("Address", getVal('#billingAddress')),
+      row("Scheme Name", getVal('section:nth-of-type(4) input[placeholder="Scheme Name"]')),
+    ])}
+
+    ${section("Bank Details")}
+    ${grid([
+      row("Holder Name", getVal('input[placeholder="Holder Name"]')),
+      row("Bank Name", getVal('input[placeholder="Bank Name"]')),
+      row("Acc Number", getVal('input[placeholder="Acc Number"]')),
+      row("IFSC", getVal('input[placeholder="IFSC"]')),
+    ])}
+  `;
+
+  document.getElementById("previewDetails").innerHTML = html;
+}
+
+function showSuccessPopup() {
+  const successBox = document.getElementById("successPopup");
+  successBox.style.display = "flex";
+
+  // auto close after 2 seconds (optional)
+  setTimeout(() => {
+    successBox.style.display = "none";
+  }, 2000);
+}
+
+function submitProfile() {
+  closePreview();      // close the big preview box
+  showSuccessPopup();  // show the green success popup
+}
+
+function buildFamilyAccounts() {
+  let html = "";
+  document.querySelectorAll("#familyAccounts input").forEach(i => {
+    if (i.value.trim()) html += `<li>${i.value}</li>`;
+  });
+  return html || "<li>No Family Accounts Added</li>";
+}
+
+function section(title) {
+  return `<h3>${title}</h3>`;
+}
+
+function grid(rows) {
+  return `<div class="details-grid">${rows.join("")}</div>`;
+}
+
+function row(label, value) {
+  return `<p><strong>${label}:</strong> ${value || "-"}</p>`;
+}
+
+function getVal(selector) {
+  const el = document.querySelector(selector);
+  return el ? el.value : "";
+}
+
+function closePreview() {
+  document.getElementById("previewModal").style.display = "none";
+}
+
+
     function addFamilyAccount() {
-      const container = document.getElementById("familyAccounts");
-      const wrapper = document.createElement("div");
-      wrapper.className = "field";
-      wrapper.style.marginTop = "8px";
-      wrapper.style.maxWidth = "320px";
-      wrapper.innerHTML = `
-        <label>Family A/C</label>
-        <input class="underline-input" type="text" placeholder="Family A/C number" />
-      `;
-      container.appendChild(wrapper);
-    }
+    const container = document.getElementById("familyAccounts");
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "field";
+    wrapper.style.marginTop = "8px";
+    wrapper.style.maxWidth = "320px";
+
+    wrapper.innerHTML = `
+    <label>Family A/C</label>
+    <div class="inline-row">
+      <input class="underline-input" type="text" placeholder="Family A/C number" />
+      <button type="button" class="small-btn" onclick="this.parentNode.parentNode.remove()">Cancel</button>
+    </div>
+  `;
+
+  container.appendChild(wrapper);
+  }
+
 
     function addWhatsappNumber() {
-      const container = document.getElementById("whatsappNumbers");
-      const extra = document.createElement("div");
-      extra.className = "field";
-      extra.style.marginTop = "8px";
-      extra.innerHTML = `
-        <label>WhatsApp Number</label>
-        <input class="underline-input" type="text" />
-      `;
-      container.parentNode.appendChild(extra);
-    }
+    const container = document.getElementById("whatsappNumbers");
+
+    const extra = document.createElement("div");
+    extra.className = "field";
+    extra.style.marginTop = "8px";
+
+    extra.innerHTML = `
+    <label>WhatsApp Number</label>
+    <div class="inline-row">
+      <input class="underline-input" type="text" />
+      <button type="button" class="small-btn" onclick="this.parentNode.parentNode.remove()">Cancel</button>
+    </div>
+  `;
+
+  container.appendChild(extra);
+  }
+
+  function copyMobileToWhatsapp() {
+  const mobile = document.getElementById("mobileNumber").value;
+  const waPrimary = document.getElementById("whatsappPrimary");
+
+  if (document.getElementById("whatsappSame").checked) {
+    waPrimary.value = mobile;
+  } else {
+    waPrimary.value = "";
+  }
+}
+
+
+  function copyCommToPermanent() {
+  const comm = document.getElementById("commAddress").value;
+  const perm = document.getElementById("permAddress");
+
+  if (document.getElementById("permSame").checked) {
+    perm.value = comm;
+  } else {
+    perm.value = "";
+  }
+}
+
+  function copyPermanentToBilling() {
+  const perm = document.getElementById("permAddress").value;
+  const bill = document.getElementById("billingAddress");
+
+  if (document.getElementById("billingSame").checked) {
+    bill.value = perm;
+  } else {
+    bill.value = "";
+  }
+}
+
+function chooseProfileImage() {
+  document.getElementById("profileInput").click();
+}
+
+document.getElementById("profileInput").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    document.getElementById("profilePreview").src = URL.createObjectURL(file);
+    document.getElementById("profileIcon").style.display = "none";
+  }
+});
+
+function removeProfileImage() {
+  document.getElementById("profilePreview").src = "";
+  document.getElementById("profileIcon").style.display = "block";
+}
+
+function saveProfileImage() {
+  alert("Profile image saved!");
+}
+
+function openAccordion(sectionId, headerEl) {
+  const allBodies = document.querySelectorAll(".section-body");
+  const allHeaders = document.querySelectorAll(".section-header");
+
+  // Hide all sections
+  allBodies.forEach(body => (body.style.display = "none"));
+  allHeaders.forEach(h => h.classList.remove("active"));
+
+  // Open clicked section
+  const currentSection = document.getElementById(sectionId);
+  currentSection.style.display = "block";
+  headerEl.classList.add("active");
+}
+
+function toggleSection(id, header) {
+  const body = document.getElementById(id);
+  body.style.display = (body.style.display === "none" || body.style.display === "") 
+    ? "block" 
+    : "none";
+
+  header.classList.toggle("active");
+}
+
 
     // Profile upload preview
     document.getElementById("profileInput").addEventListener("change", function(e) {
