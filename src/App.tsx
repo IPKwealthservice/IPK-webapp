@@ -26,6 +26,7 @@ import SalesEvent from "@/pages/Sales/Event_sales/Event_Rm";
 import LeadStagesPage from "@/pages/Sales/LeadStagesPage";
 import ViewLeadPage from "@/pages/Sales/ViewLeadPage";
 import LeadProfileLanding from "@/pages/Sales/LeadProfileLanding";
+import OnboardingProcess from "@/pages/Sales/OnboardingProcess";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import IPKUsers from "@/pages/Admin/IPKUsers";
 
@@ -102,6 +103,7 @@ export default function App() {
               <Route path="sales/stages" element={<LeadStagesPage />} />
               <Route path="sales/leads" element={<LeadProfileLanding />} />
               <Route path="sales/leads/:id" element={<ViewLeadPage />} />
+              <Route path="sales/onboardingProcess" element={<OnboardingProcess />} />
               <Route path="sales/events" element={<SalesEvent />} />
               {/* <Route path="sales/call" element={<CallConnectPage />} /> */}
               {/* <Route path="sales/chat" element={<ChatPage />} /> */}

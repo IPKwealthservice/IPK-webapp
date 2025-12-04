@@ -58,6 +58,7 @@ const salesNav: NavItem[] = [
     subItems: [
       { name: 'My Leads', path: '/sales/stages' },
       { name: 'Lead Profile', path: '/sales/leads' },
+      { name: 'Onboarding Process', path: '/sales/onboardingProcess' },
     ],
   },
   // {
