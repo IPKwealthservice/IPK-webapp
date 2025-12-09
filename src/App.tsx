@@ -37,6 +37,14 @@ import UserProfiles from "@/pages/UserProfiles";
 import Blank from "@/pages/Blank";
 // import ChatPage from "@/pages/Sales/Support/ChatPage";
 
+//Onboarding Process
+import ClientProfile from "@/components/sales/OnboardingPage/steps/ClientProfile";
+import Authentication from "@/components/sales/OnboardingPage/steps/Authentication";
+import RiskType from "@/components/sales/OnboardingPage/steps/RiskType";
+import Suitability from "@/components/sales/OnboardingPage/steps/Suitability";
+import Agreement from "@/components/sales/OnboardingPage/steps/Agreement";
+import ESign from "@/components/sales/OnboardingPage/steps/ESign";
+
 type Role = "ADMIN" | "RM" | "STAFF" | "MARKETING" | "ANALYST";
 
 /** Decides the landing route based on backend role */
@@ -113,6 +121,14 @@ export default function App() {
             <Route path="profile" element={<UserProfiles />} />
             <Route path="blank" element={<Blank />} />
           </Route>
+
+          {/* ----------------- ONBOARDING PROCESS ROUTES ----------------- */}
+          <Route path="/sales/onboarding/client-profile" element={<ClientProfile />} />
+          <Route path="/sales/onboarding/authentication" element={<Authentication />} />
+          <Route path="/sales/onboarding/risk-type" element={<RiskType />} />
+          <Route path="/sales/onboarding/suitability" element={<Suitability />} />
+          <Route path="/sales/onboarding/agreement" element={<Agreement />} />
+          <Route path="/sales/onboarding/e-sign" element={<ESign />} />
 
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
