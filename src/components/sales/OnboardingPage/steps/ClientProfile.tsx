@@ -4,6 +4,7 @@ import InputField from "../components/InputField";
 import DropdownField from "../components/DropdownField";
 import TextAreaField from "../components/TextAreaField";
 import FamilyAccounts from "../components/FamilyAccounts";
+import HeaderSteps from "../steps/HeaderSteps";
 
 export default function ClientProfile() {
   return (

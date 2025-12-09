@@ -1,4 +1,5 @@
 import OnboardingHeader from "../OnboardingHeader";
+import HeaderSteps from "../steps/HeaderSteps";
 
 export default function RiskType() {
   return (
