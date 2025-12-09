@@ -25,7 +25,7 @@ export default function ClientProfile() {
 
           <DropdownField
             label="Income Range"
-            options={["1–2 LPA", "2–5 LPA", "5–10 LPA", "10+ LPA"]}
+            options={["1–2 LPA", "2–3 LPA", "3–4 LPA", "4–5 LPA", "5–6 LPA", "6–7 LPA", "7–8 LPA", "8–9 LPA", "9–10 LPA", "10+ LPA"]}
           />
         </div>
 
