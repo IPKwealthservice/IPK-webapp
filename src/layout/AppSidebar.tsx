@@ -58,9 +58,15 @@ const salesNav: NavItem[] = [
     subItems: [
       { name: 'My Leads', path: '/sales/stages' },
       { name: 'Lead Profile', path: '/sales/leads' },
-      { name: 'Onboarding Process', path: '/sales/onboardingProcess' },
     ],
   },
+
+   {
+    icon: <GroupIcon />,
+    name: "Onboarding Process",
+    path: "/sales/onboardingProcess",
+  },
+];
   // {
   //   icon: <CalenderIcon />,
   //   name: 'Engagement',
@@ -70,7 +76,7 @@ const salesNav: NavItem[] = [
   //     { name: 'Chat', path: '/sales/chat' },
   //   ],
   // },
-];
+
 
 const adminNav: NavItem[] = [
   {
