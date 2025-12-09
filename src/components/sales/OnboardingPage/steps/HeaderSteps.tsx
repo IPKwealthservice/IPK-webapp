@@ -9,7 +9,7 @@ const steps = [
   "E-Sign",
 ];
 
-export default function HeaderSteps() {
+export default function HeaderSteps({ current }: { current: number }) {
   return (
     <div className="flex gap-4 mb-8 justify-center flex-wrap">
       {steps.map((step, index) => (
