@@ -7,10 +7,10 @@ import FamilyAccounts from "../components/FamilyAccounts";
 
 export default function ClientProfile() {
   return (
-    <div className="p-8">
-      <OnboardingHeader />
+    <div className="max-w-5xl mx-auto p-8">
+      <OnboardingHeader current={1} />
 
-      <h1 className="text-xl font-semibold mb-4">Client Profile</h1>
+      <h2 className="text-xl font-semibold mb-4">Client Profile</h2>
 
       <Section title="Personal Information">
         <div className="grid grid-cols-2 gap-6">

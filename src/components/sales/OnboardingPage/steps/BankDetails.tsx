@@ -9,11 +9,11 @@ interface Props {
 export default function BankDetails({ form, update }: Props) {
   return (
     <div className="grid grid-cols-2 gap-6">
-      <InputField label="Holder Name" value={form.holderName} onChange={(v) => update("holderName", v)} />
-      <InputField label="Bank Name" value={form.bankName} onChange={(v) => update("bankName", v)} />
-      <InputField label="Account Number" value={form.accNumber} onChange={(v) => update("accNumber", v)} />
-      <InputField label="IFSC" value={form.ifsc} onChange={(v) => update("ifsc", v)} />
-      <InputField label="MICR No" value={form.micr} onChange={(v) => update("micr", v)} />
+      <InputField label="Holder Name" value={form.holderName} onChange={(v: any) => update("holderName", v)} />
+      <InputField label="Bank Name" value={form.bankName} onChange={(v: any) => update("bankName", v)} />
+      <InputField label="Account Number" value={form.accNumber} onChange={(v: any) => update("accNumber", v)} />
+      <InputField label="IFSC" value={form.ifsc} onChange={(v: any) => update("ifsc", v)} />
+      <InputField label="MICR No" value={form.micr} onChange={(v: any) => update("micr", v)} />
     </div>
   );
 }

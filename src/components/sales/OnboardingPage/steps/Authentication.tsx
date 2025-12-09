@@ -2,23 +2,13 @@ import OnboardingHeader from "../OnboardingHeader";
 
 export default function Authentication() {
   return (
-    <div className="p-8">
-      <OnboardingHeader />
+    <div className="max-w-5xl mx-auto p-8">
+      <OnboardingHeader current={2} />
 
-      <h1 className="text-xl font-semibold mb-4">Authentication</h1>
+      <h2 className="text-xl font-semibold mb-4">Authentication</h2>
 
-      <div className="bg-white p-6 rounded-xl shadow">
-        <p className="text-gray-600">Authentication steps will be added here.</p>
-      </div>
-
-      <div className="flex justify-between mt-6">
-        <a href="/sales/onboarding/client-profile" className="px-6 py-2 bg-gray-400 text-white rounded-lg">
-          Back
-        </a>
-
-        <a href="/sales/onboarding/risk-type" className="px-6 py-2 bg-indigo-600 text-white rounded-lg">
-          Next
-        </a>
+      <div className="p-6 bg-white rounded-xl shadow">
+        Authentication Form Coming Here...
       </div>
     </div>
   );

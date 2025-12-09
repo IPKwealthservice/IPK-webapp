@@ -2,21 +2,13 @@ import OnboardingHeader from "../OnboardingHeader";
 
 export default function Suitability() {
   return (
-    <div className="p-8">
-      <OnboardingHeader />
+    <div className="max-w-5xl mx-auto p-8">
+      <OnboardingHeader current={4} />
 
-      <h1 className="text-xl font-semibold mb-4">Suitability</h1>
+      <h2 className="text-xl font-semibold mb-4">Suitability Assessment</h2>
 
-      <div className="bg-white p-6 rounded-xl shadow">Suitability questionnaire content here.</div>
-
-      <div className="flex justify-between mt-6">
-        <a href="/sales/onboarding/risk-type" className="px-6 py-2 bg-gray-400 text-white rounded-lg">
-          Back
-        </a>
-
-        <a href="/sales/onboarding/agreement" className="px-6 py-2 bg-indigo-600 text-white rounded-lg">
-          Next
-        </a>
+      <div className="p-6 bg-white rounded-xl shadow">
+        Suitability Questions Coming Here...
       </div>
     </div>
   );
