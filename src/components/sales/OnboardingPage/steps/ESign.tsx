@@ -4,7 +4,7 @@ import HeaderSteps from "../steps/HeaderSteps";
 export default function ESign() {
   return (
     <div className="max-w-5xl mx-auto p-8">
-      <OnboardingHeader current={6} />
+      <HeaderSteps current={6} />
 
       <h2 className="text-xl font-semibold mb-4">E-Sign</h2>
 
