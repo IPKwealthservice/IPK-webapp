@@ -1,48 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import HeaderSteps from "../steps/HeaderSteps";
-import { useNavigate } from "react-router-dom";
 
 export default function Authentication() {
-  const navigate = useNavigate();
-
-  // ---------------- INPUT STATES ----------------
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState(["", "", "", ""]);
-  const inputRefs = useRef<any[]>([]);
 
-  // ---------------- TIMER STATES ----------------
-  const [timer, setTimer] = useState(0);
-  const [otpSent, setOtpSent] = useState(false);
+  const inputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
 
-  // ---------------- COUNTDOWN EFFECT ----------------
-  useEffect(() => {
-    if (timer <= 0) return;
-    const interval = setInterval(() => setTimer((t) => t - 1), 1000);
-    return () => clearInterval(interval);
-  }, [timer]);
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  };
-
-  // ---------------- SEND OTP ----------------
-  const handleSendOtp = () => {
-    if (!mobile || mobile.length < 10) {
-      alert("Enter a valid Mobile Number");
-      return;
-    }
-
-    setOtpSent(true);
-    setTimer(30);
-    alert("OTP sent successfully!");
-
-    // Focus first OTP box automatically
-    setTimeout(() => inputRefs.current[0]?.focus(), 300);
-  };
-
-  // ---------------- OTP BOX HANDLER ----------------
   const handleOtpChange = (value: string, index: number) => {
     if (!/^[0-9]?$/.test(value)) return;
 
@@ -50,145 +19,63 @@ export default function Authentication() {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Move to next
     if (value && index < 3) {
-      inputRefs.current[index + 1].focus();
+      inputRefs[index + 1].current?.focus();
     }
   };
 
-  // Handle backspace properly
-  const handleKeyDown = (e: any, index: number) => {
+  const handleOtpKey = (e: any, index: number) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      const newOtp = [...otp];
-      newOtp[index - 1] = "";
-      setOtp(newOtp);
-
-      inputRefs.current[index - 1].focus();
+      inputRefs[index - 1].current?.focus();
     }
-  };
-
-  // Auto paste (e.g., from SMS)
-  const handlePaste = (e: any) => {
-    const paste = e.clipboardData.getData("text").slice(0, 4);
-    if (/^\d{4}$/.test(paste)) {
-      const digits = paste.split("");
-      setOtp(digits);
-
-      digits.forEach((d:any, i: any) => {
-        inputRefs.current[i].value = d;
-      });
-
-      setTimeout(() => inputRefs.current[3]?.focus(), 50);
-    }
-  };
-
-  // ---------------- VERIFY OTP ----------------
-  const handleVerifyOtp = () => {
-    const fullOtp = otp.join("");
-    if (fullOtp.length < 4) {
-      alert("Enter full 4-digit OTP");
-      return;
-    }
-
-    alert("OTP Verified!");
-    navigate("/sales/onboarding/risk-type");
   };
 
   return (
     <div className="max-w-5xl mx-auto p-8">
-
-      {/* Header Steps */}
       <HeaderSteps current={2} />
 
-      <h2 className="text-xl font-semibold mb-4">Authentication</h2>
+      <h2 className="text-xl font-semibold mb-6 text-center">
+        Authentication
+      </h2>
 
-      <div className="p-10 bg-white rounded-xl shadow">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+      <div className="p-6 bg-white rounded-xl shadow w-full">
 
-          {/* ------- LEFT SECTION (Send OTP) ------- */}
-          <div>
-            <h2 className="text-3xl font-semibold mb-2">Welcome!!</h2>
-            <p className="text-gray-600 mb-8">
-              Secure login to access your onboarding
-            </p>
+        {/* Mobile Input */}
+        <label className="block text-sm font-medium mb-2">Mobile Number</label>
+        <input
+          type="text"
+          maxLength={10}
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          className="border p-3 rounded-lg w-full mb-4"
+          placeholder="Enter Mobile Number"
+        />
 
-            <label className="block text-sm font-medium mb-1">
-              📞 Mobile Number
-            </label>
+        <button className="w-full bg-indigo-600 text-white py-2 rounded-lg mb-6">
+          Send OTP
+        </button>
 
+        {/* OTP Boxes */}
+        <div className="flex justify-center gap-3 mb-6">
+          {otp.map((digit, index) => (
             <input
+              key={index}
+              ref={inputRefs[index]}
               type="text"
-              placeholder="+91 XXXXXXXXXX"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="w-full border border-indigo-300 rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-
-            <button
-              onClick={handleSendOtp}
-              disabled={timer > 0}
-              className={`mt-6 px-6 py-2 rounded-md text-white transition 
-                ${
-                  timer > 0
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700"
-                }`}
-            >
-              {timer > 0 ? `Resend in ${formatTime(timer)}` : "Send OTP"}
-            </button>
-          </div>
-
-          {/* ------- RIGHT SECTION (4-digit OTP UI) ------- */}
-          <div>
-            <h2 className="text-xl font-semibold mb-1">Verify your number</h2>
-
-            <p className="text-gray-600 mb-4 text-sm">
-              {otpSent
-                ? "OTP sent to your Mobile Number"
-                : "Enter your mobile number and click Send OTP"}
-            </p>
-
-            {/* ---- NEW 4 DIGIT OTP BOXES ---- */}
-            <div className="flex gap-4" onPaste={handlePaste}> 
-              {[0, 1, 2, 3].map((i) => (
-              <input
-              key={i}
-              //ref={(el) => (inputRefs.current[i] = el)}
               maxLength={1}
-              type="text"
-              inputMode="numeric"
-              className=" w-14 h-14 text-center border border-indigo-400 rounded-lg text-xl font-semibold focus:ring-2 focus:ring-indigo-600 outline-none"
-              value={otp[i]}
-              onChange={(e) => handleOtpChange(e.target.value, i)}
-              onKeyDown={(e) => handleKeyDown(e, i)}
-              disabled={!otpSent}
+              value={digit}
+              onChange={(e) => handleOtpChange(e.target.value, index)}
+              onKeyDown={(e) => handleOtpKey(e, index)}
+              className="w-10 h-10 text-center text-lg border 
+                         rounded-md outline-none border-indigo-300
+                         focus:ring-2 focus:ring-indigo-500"
             />
           ))}
         </div>
 
-            <button
-              onClick={handleVerifyOtp}
-              disabled={!otpSent}
-              className={`mt-6 px-6 py-2 rounded-md text-white transition 
-                ${
-                  !otpSent
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700"
-                }`}
-            >
-              Verify OTP
-            </button>
-
-            {otpSent && (
-              <p className="text-gray-500 text-xs mt-4">
-                {timer > 0
-                  ? `Resend OTP in ${formatTime(timer)}`
-                  : "You can resend now."}
-              </p>
-            )}
-          </div>
-
-        </div>
+        <button className="w-full bg-green-600 text-white py-2 rounded-lg">
+          Verify OTP
+        </button>
       </div>
     </div>
   );
