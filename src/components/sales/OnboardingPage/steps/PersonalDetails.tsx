@@ -53,46 +53,46 @@ export default function PersonalDetails({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
-        <InputField label="Name" value={form.name} onChange={(v) => update("name", v)} />
-        <InputField label="Location" value={form.location} onChange={(v) => update("location", v)} />
+        <InputField label="Name" value={form.name} onChange={(v: any) => update("name", v)} />
+        <InputField label="Location" value={form.location} onChange={(v: any) => update("location", v)} />
 
-        <InputField label="Gender" value={form.gender} onChange={(v) => update("gender", v)} />
+        <InputField label="Gender" value={form.gender} onChange={(v: any) => update("gender", v)} />
 
         <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
         <InputField label="Age" value={form.age} readOnly />
 
-        <InputField label="Occupation" value={form.occupation} onChange={(v) => update("occupation", v)} />
-        <InputField label="Income (1–2 LPA)" value={form.income} onChange={(v) => update("income", v)} />
-        <InputField label="Company" value={form.company} onChange={(v) => update("company", v)} />
-        <InputField label="Designation" value={form.designation} onChange={(v) => update("designation", v)} />
+        <InputField label="Occupation" value={form.occupation} onChange={(v: any) => update("occupation", v)} />
+        <InputField label="Income (1–2 LPA)" value={form.income} onChange={(v: any) => update("income", v)} />
+        <InputField label="Company" value={form.company} onChange={(v: any) => update("company", v)} />
+        <InputField label="Designation" value={form.designation} onChange={(v: any) => update("designation", v)} />
 
-        <InputField label="PAN No" value={form.pan} onChange={(v) => update("pan", v)} />
-        <InputField label="Aadhar Number" value={form.aadhaar} onChange={(v) => update("aadhaar", v)} />
+        <InputField label="PAN No" value={form.pan} onChange={(v: any) => update("pan", v)} />
+        <InputField label="Aadhar Number" value={form.aadhaar} onChange={(v: any) => update("aadhaar", v)} />
 
         <InputField
           label="Contact Person Name"
           value={form.contactPersonName}
-          onChange={(v) => update("contactPersonName", v)}
+          onChange={(v: any) => update("contactPersonName", v)}
         />
 
         <InputField
           label="Contact Person No"
           value={form.contactPersonNo}
-          onChange={(v) => update("contactPersonNo", v)}
+          onChange={(v: any) => update("contactPersonNo", v)}
         />
 
         <DropdownField
           label="Relationship"
           value={form.relationship}
           options={relationshipOptions}
-          onChange={(v) => update("relationship", v)}
+          onChange={(v: any) => update("relationship", v)}
         />
 
         {form.relationship === "Others" && (
           <InputField
             label="Specify Relationship"
             value={form.relationshipOther}
-            onChange={(v) => update("relationshipOther", v)}
+            onChange={(v: any) => update("relationshipOther", v)}
           />
         )}
 
@@ -100,14 +100,14 @@ export default function PersonalDetails({
           label="Client Source"
           value={form.clientSource}
           options={clientSourceOptions}
-          onChange={(v) => update("clientSource", v)}
+          onChange={(v: any) => update("clientSource", v)}
         />
 
         {form.clientSource === "Others" && (
           <InputField
             label="Specify Client Source"
             value={form.clientSourceOther}
-            onChange={(v) => update("clientSourceOther", v)}
+            onChange={(v: any) => update("clientSourceOther", v)}
           />
         )}
       </div>
@@ -117,14 +117,14 @@ export default function PersonalDetails({
         <TextAreaField
           label="Communication Address"
           value={form.commAddress}
-          onChange={(v) => update("commAddress", v)}
+          onChange={(v: any) => update("commAddress", v)}
         />
 
         <div>
           <TextAreaField
             label="Permanent Address"
             value={form.permAddress}
-            onChange={(v) => update("permAddress", v)}
+            onChange={(v: any) => update("permAddress", v)}
           />
 
           <div className="flex items-center mt-2 gap-2">

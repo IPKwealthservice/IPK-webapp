@@ -12,23 +12,41 @@ import PreviewModal from "../components/PreviewModal";
 import SuccessPopup from "../components/SuccessPopup";
 import HeaderSteps from "./HeaderSteps";
 
+/* ===========================================================
+   REUSABLE SECTION HEADER WITH ARROW
+=========================================================== */
+const SectionHeader = ({
+  title,
+  isOpen,
+  toggle,
+}: {
+  title: string;
+  isOpen: boolean;
+  toggle: () => void;
+}) => (
+  <div
+    onClick={toggle}
+    className="flex justify-between items-center cursor-pointer text-lg font-semibold text-indigo-700 py-3 border-b"
+  >
+    <span>{title}</span>
+  </div>
+);
 
+/* ===========================================================
+   MAIN ONBOARDING PROCESS PAGE
+=========================================================== */
 export default function OnboardingProcess() {
-
-  /* -------------------------------------------------------------
-      SECTION TOGGLE
-  ------------------------------------------------------------- */
-  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<null | string>(null);
 
   const toggleSection = (name: string) => {
-    setOpenSection(prev => (prev === name ? null : name));
+    setOpenSection(openSection === name ? null : name);
   };
 
-
-  /* -------------------------------------------------------------
-      FORM STATE
-  ------------------------------------------------------------- */
+  /* ================================
+        FORM STATE
+  =================================*/
   const [form, setForm] = useState({
+    // PERSONAL
     name: "",
     commAddress: "",
     permAddress: "",
@@ -47,22 +65,26 @@ export default function OnboardingProcess() {
     relationship: "",
     clientSource: "",
 
+    // CONTACT
     mobile: "",
     whatsapp: "",
     language: "",
     email: "",
     tradeNumber: "",
 
+    // BILLING
     billName: "",
     gst: "",
     billingAddress: "",
 
+    // BANK
     holderName: "",
     bankName: "",
     accNumber: "",
     ifsc: "",
     micr: "",
 
+    // DEMAT
     dpId: "",
     clientCode: "",
     schemeName: "",
@@ -78,53 +100,37 @@ export default function OnboardingProcess() {
   });
 
   const update = (field: string, value: any) =>
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm((prev) => ({ ...prev, [field]: value }));
 
-
-  /* -------------------------------------------------------------
-      AGE CALCULATION
-  ------------------------------------------------------------- */
+  /* ================================
+        SPECIAL FIELD LOGIC
+  =================================*/
   const calculateAge = (dob: string) => {
     update("dob", dob);
     if (!dob) return update("age", "");
 
     const d = new Date(dob);
-    const t = new Date();
+    const today = new Date();
+    let age = today.getFullYear() - d.getFullYear();
 
-    let age = t.getFullYear() - d.getFullYear();
-    const m = t.getMonth() - d.getMonth();
-
-    if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+    const m = today.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
 
     update("age", String(age));
   };
 
-
-  /* -------------------------------------------------------------
-      AUTO-FILL LOGIC
-  ------------------------------------------------------------- */
   const [samePerm, setSamePerm] = useState(false);
+  const syncPermanent = () => samePerm && update("permAddress", form.commAddress);
+
   const [sameWhatsapp, setSameWhatsapp] = useState(false);
+  const syncWhatsapp = () => sameWhatsapp && update("whatsapp", form.mobile);
 
-  const syncPermanent = () => {
-    if (samePerm) update("permAddress", form.commAddress);
-  };
+  const [familyAccounts, setFamilyAccounts] = useState([""]);
+  const [whatsappList, setWhatsappList] = useState([""]);
 
-  const syncWhatsapp = () => {
-    if (sameWhatsapp) update("whatsapp", form.mobile);
-  };
-
-
-  /* -------------------------------------------------------------
-      LIST STATES
-  ------------------------------------------------------------- */
-  const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
-  const [whatsappList, setWhatsappList] = useState<string[]>([""]);
-
-
-  /* -------------------------------------------------------------
-      PREVIEW & SUCCESS POPUP
-  ------------------------------------------------------------- */
+  /* ================================
+        PREVIEW & SUCCESS
+  =================================*/
   const [preview, setPreview] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -134,138 +140,279 @@ export default function OnboardingProcess() {
     setTimeout(() => setSuccess(false), 1500);
   };
 
-
-  /* -------------------------------------------------------------
-      RENDER UI
-  ------------------------------------------------------------- */
+  /* ================================
+        UI RENDER
+  =================================*/
   return (
     <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
 
-      {/* -------------------------------------------------------------
-            STEP HEADER — CENTERED
-      ------------------------------------------------------------- */}
-      <div className="flex justify-center mb-8">
+      {/* STEP HEADER CENTERED */}
+      <div className="flex justify-center mb-6">
         <HeaderSteps current={1} />
       </div>
 
-
-      {/* -------------------------------------------------------------
-            PHOTO UPLOAD
-      ------------------------------------------------------------- */}
+      {/* PHOTO UPLOAD */}
       <FileUpload />
 
+      {/* =====================================================
+            PERSONAL DETAILS
+      ===================================================== */}
+      <SectionHeader
+        title="Personal Details"
+        isOpen={openSection === "personal"}
+        toggle={() => toggleSection("personal")}
+      />
 
-      {/* -------------------------------------------------------------
-            PERSONAL DETAILS — COLLAPSIBLE
-      ------------------------------------------------------------- */}
-      <div className="border p-4 rounded-lg mb-4">
-        <div
-          onClick={() => toggleSection("personal")}
-          className="flex justify-between items-center cursor-pointer text-lg font-semibold text-indigo-700"
-        >
-          <span>Personal Details</span>
-        </div>
+      {openSection === "personal" && (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-6">
+            <InputField label="Name" value={form.name} onChange={(v: any) => update("name", v)} />
+            <InputField label="Location" value={form.location} onChange={(v: any) => update("location", v)} />
+            <InputField label="Gender" value={form.gender} onChange={(v: any) => update("gender", v)} />
+            <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
+            <InputField label="Age" readOnly value={form.age} />
+            <InputField label="Occupation" value={form.occupation} onChange={(v: any) => update("occupation", v)} />
 
-        {openSection === "personal" && (
-          <>
-            <div className="mt-4 grid grid-cols-2 gap-6">
-              <InputField label="Name" value={form.name} onChange={(v: any)=>update("name",v)} />
-              <InputField label="Location" value={form.location} onChange={(v: any)=>update("location",v)} />
-              <InputField label="Gender" value={form.gender} onChange={(v: any)=>update("gender",v)} />
-              <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
-              <InputField label="Age" value={form.age} readOnly />
-              <InputField label="Occupation" value={form.occupation} onChange={(v: any)=>update("occupation",v)} />
+            <DropdownField
+              label="Income Range"
+              options={["1–2 LPA", "2–5 LPA", "5–10 LPA", "10+ LPA"]}
+              value={form.income}
+              onChange={(v: any) => update("income", v)}
+            />
 
-              <DropdownField
-                label="Income Range"
-                value={form.income}
-                options={["1–2 LPA","2–5 LPA","5–10 LPA","10+ LPA"]}
-                onChange={(v: any)=>update("income",v)}
-              />
+            <InputField label="Company" value={form.company} onChange={(v: any) => update("company", v)} />
+            <InputField label="Designation" value={form.designation} onChange={(v: any) => update("designation", v)} />
+            <InputField label="PAN No" value={form.pan} onChange={(v: any) => update("pan", v)} />
+            <InputField label="Aadhaar No." value={form.aadhaar} onChange={(v: any) => update("aadhaar", v)} />
+            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v: any) => update("contactPersonName", v)} />
+            <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v: any) => update("contactPersonNo", v)} />
 
-              <InputField label="Company" value={form.company} onChange={(v: any)=>update("company",v)} />
-              <InputField label="Designation" value={form.designation} onChange={(v: any)=>update("designation",v)} />
-              <InputField label="PAN No" value={form.pan} onChange={(v: any)=>update("pan",v)} />
-              <InputField label="Aadhaar No" value={form.aadhaar} onChange={(v: any)=>update("aadhaar",v)} />
-              <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v: any)=>update("contactPersonName",v)} />
-              <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v: any)=>update("contactPersonNo",v)} />
+            <DropdownField
+              label="Relationship"
+              options={[
+                "Spouse", "Son", "Daughter", "Father", "Mother",
+                "Brother", "Sister", "Grand Son", "Grand-Daughter",
+                "Grand Father", "Grand Mother", "Others"
+              ]}
+              value={form.relationship}
+              onChange={(v: any) => update("relationship", v)}
+            />
 
-              <DropdownField
-                label="Relationship"
-                value={form.relationship}
-                options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Others"]}
-                onChange={(v: any)=>update("relationship",v)}
-              />
+            <DropdownField
+              label="Client Source"
+              options={[
+                "Reference", "Online", "YES Con", "Start-up",
+                "Jubilan", "Spotlight-YES", "Others"
+              ]}
+              value={form.clientSource}
+              onChange={(v: any) => update("clientSource", v)}
+            />
+          </div>
 
-              <DropdownField
-                label="Client Source"
-                value={form.clientSource}
-                options={["Reference","Online","YES Con","Start-up","Jubilan","Spotlight-YES","Others"]}
-                onChange={(v: any)=>update("clientSource",v)}
-              />
-            </div>
+          {/* ADDRESSES */}
+          <div className="mt-6 grid grid-cols-2 gap-6">
+            <TextAreaField
+              label="Communication Address"
+              value={form.commAddress}
+              onChange={(v: any) => update("commAddress", v)}
+            />
 
-            {/* ADDRESS SECTION */}
-            <div className="mt-6 grid grid-cols-2 gap-6">
+            <div>
               <TextAreaField
-                label="Communication Address"
-                value={form.commAddress}
-                onChange={(v: any)=>update("commAddress",v)}
+                label="Permanent Address"
+                readOnly={samePerm}
+                value={samePerm ? form.commAddress : form.permAddress}
+                onChange={(v: any) => update("permAddress", v)}
               />
 
-              <div>
-                <TextAreaField
-                  label="Permanent Address"
-                  value={samePerm ? form.commAddress : form.permAddress}
-                  readOnly={samePerm}
-                  onChange={(v: any)=>update("permAddress",v)}
+              <label className="flex items-center gap-2 mt-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={samePerm}
+                  onChange={(e) => {
+                    setSamePerm(e.target.checked);
+                    syncPermanent();
+                  }}
                 />
-
-                <label className="flex items-center gap-2 mt-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={samePerm}
-                    onChange={(e)=>{
-                      setSamePerm(e.target.checked);
-                      syncPermanent();
-                    }}
-                  />
-                  Same as communication address
-                </label>
-              </div>
+                Same as communication address
+              </label>
             </div>
+          </div>
 
-            {/* FAMILY ACCOUNTS */}
-            <div className="mt-6">
-              <FamilyAccounts
-                accounts={familyAccounts}
-                add={()=>setFamilyAccounts([...familyAccounts,""])}
-                update={(i: any,v: any)=>{
-                  const list=[...familyAccounts];
-                  list[i]=v;
-                  setFamilyAccounts(list);
-                }}
-                remove={(i: any)=>{
-                  const list=familyAccounts.filter((_,idx)=>idx!==i);
-                  setFamilyAccounts(list);
-                }}
+          {/* FAMILY ACCOUNTS */}
+          <div className="mt-6">
+            <FamilyAccounts
+              accounts={familyAccounts}
+              add={() => setFamilyAccounts([...familyAccounts, ""])}
+              update={(i: any, v: any) => {
+                const list = [...familyAccounts];
+                list[i] = v;
+                setFamilyAccounts(list);
+              }}
+              remove={(i: any) => {
+                const list = familyAccounts.filter((_, idx) => idx !== i);
+                setFamilyAccounts(list);
+              }}
+            />
+          </div>
+        </>
+      )}
+
+      {/* =====================================================
+            DEMAT ACCOUNT
+      ===================================================== */}
+      <SectionHeader
+        title="Demat Account"
+        isOpen={openSection === "demat"}
+        toggle={() => toggleSection("demat")}
+      />
+
+      {openSection === "demat" && (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-6">
+            <InputField label="DP ID" value={form.dpId} onChange={(v: any) => update("dpId", v)} />
+            <InputField label="Client Code" value={form.clientCode} onChange={(v: any) => update("clientCode", v)} />
+            <InputField label="Scheme Name" value={form.schemeName} onChange={(v: any) => update("schemeName", v)} />
+            <InputField label="Broker Name" value={form.brokerName} onChange={(v: any) => update("brokerName", v)} />
+            <InputField label="Nominee Name" value={form.nomineeName} onChange={(v: any) => update("nomineeName", v)} />
+
+            <DropdownField
+              label="Nominee Relationship"
+              options={[
+                "Spouse","Son","Daughter","Father","Mother",
+                "Brother","Sister","Grand Son","Grand-Daughter",
+                "Grand Father","Grand Mother","Others"
+              ]}
+              value={form.nomineeRelation}
+              onChange={(v: any) => update("nomineeRelation", v)}
+            />
+
+            <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v: any) => update("nomineeContact", v)} />
+            <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v: any) => update("nomineeEmail", v)} />
+            <InputField label="Nominee Aadhar No." value={form.nomineeAadhar} onChange={(v: any) => update("nomineeAadhar", v)} />
+            <InputField label="Nominee PAN No." value={form.nomineePan} onChange={(v: any) => update("nomineePan", v)} />
+
+            <DropdownField
+              label="A/C Type"
+              options={["Resident India","NRI","HUF","PUT CTD","Minor","Joint","Others"]}
+              value={form.accountType}
+              onChange={(v: any) => update("accountType", v)}
+            />
+
+            <InputField type="date" label="A/C Opening Date" value={form.accountOpeningDate} onChange={(v: any) => update("accountOpeningDate", v)} />
+          </div>
+        </>
+      )}
+
+      {/* =====================================================
+            CONTACT DETAILS
+      ===================================================== */}
+      <SectionHeader
+        title="Contact Details"
+        isOpen={openSection === "contact"}
+        toggle={() => toggleSection("contact")}
+      />
+
+      {openSection === "contact" && (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-6">
+            <InputField label="Mobile No." value={form.mobile} onChange={(v: any) => update("mobile", v)} />
+
+            <div>
+              <InputField
+                label="WhatsApp Number"
+                readOnly={sameWhatsapp}
+                value={sameWhatsapp ? form.mobile : form.whatsapp}
+                onChange={(v: any) => update("whatsapp", v)}
               />
+
+              <label className="flex items-center gap-2 mt-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={sameWhatsapp}
+                  onChange={(e) => {
+                    setSameWhatsapp(e.target.checked);
+                    syncWhatsapp();
+                  }}
+                />
+                Same as Mobile Number
+              </label>
             </div>
-          </>
-        )}
-      </div>
 
+            <InputField label="Language" value={form.language} onChange={(v: any) => update("language", v)} />
+            <InputField label="Email" type="email" value={form.email} onChange={(v: any) => update("email", v)} />
+            <InputField label="Trade Confirmation Number" value={form.tradeNumber} onChange={(v: any) => update("tradeNumber", v)} />
+          </div>
 
-      {/* -------------------------------------------------------------
-            ALL OTHER SECTIONS (DEMAT, CONTACT, BILLING, BANK)
-            — You already wrote them, same pattern continues
-      ------------------------------------------------------------- */}
+          <div className="mt-6">
+            <WhatsappList
+              list={whatsappList}
+              add={() => setWhatsappList([...whatsappList, ""])}
+              update={(i: any, v: any) => {
+                const list = [...whatsappList];
+                list[i] = v;
+                setWhatsappList(list);
+              }}
+              remove={(i: any) => {
+                const list = whatsappList.filter((_, idx) => idx !== i);
+                setWhatsappList(list);
+              }}
+            />
+          </div>
+        </>
+      )}
 
+      {/* =====================================================
+            BILLING DETAILS
+      ===================================================== */}
+      <SectionHeader
+        title="Billing Details"
+        isOpen={openSection === "billing"}
+        toggle={() => toggleSection("billing")}
+      />
+
+      {openSection === "billing" && (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-6">
+            <InputField label="Name" value={form.billName} onChange={(v: any) => update("billName", v)} />
+            <InputField label="GST No." value={form.gst} onChange={(v: any) => update("gst", v)} />
+          </div>
+
+          <div className="mt-6">
+            <TextAreaField
+              label="Billing Address"
+              value={form.billingAddress}
+              onChange={(v: any) => update("billingAddress", v)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* =====================================================
+            BANK DETAILS
+      ===================================================== */}
+      <SectionHeader
+        title="Bank Details"
+        isOpen={openSection === "bank"}
+        toggle={() => toggleSection("bank")}
+      />
+
+      {openSection === "bank" && (
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-6">
+            <InputField label="Holder Name" value={form.holderName} onChange={(v: any) => update("holderName", v)} />
+            <InputField label="Bank Name" value={form.bankName} onChange={(v: any) => update("bankName", v)} />
+            <InputField label="Acc Number" value={form.accNumber} onChange={(v: any) => update("accNumber", v)} />
+            <InputField label="IFSC" value={form.ifsc} onChange={(v: any) => update("ifsc", v)} />
+            <InputField label="MICR No." value={form.micr} onChange={(v: any) => update("micr", v)} />
+          </div>
+        </>
+      )}
 
       {/* SAVE BUTTON */}
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-6">
         <button
-          onClick={()=>setPreview(true)}
+          onClick={() => setPreview(true)}
           className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
         >
           Save
@@ -273,8 +420,8 @@ export default function OnboardingProcess() {
       </div>
 
       {/* MODALS */}
-      <PreviewModal open={preview} data={form} onClose={()=>setPreview(false)} onSubmit={submitForm}/>
-      <SuccessPopup open={success}/>
+      <PreviewModal open={preview} data={form} onClose={() => setPreview(false)} onSubmit={submitForm} />
+      <SuccessPopup open={success} />
     </div>
   );
 }

@@ -19,45 +19,45 @@ const acTypeOptions = [
 export default function DematAccount({ form, update }: Props) {
   return (
     <div className="grid grid-cols-2 gap-6">
-      <InputField label="DP ID" value={form.dpId} onChange={(v) => update("dpId", v)} />
-      <InputField label="Client Code" value={form.clientCode} onChange={(v) => update("clientCode", v)} />
-      <InputField label="Scheme Name" value={form.schemeName} onChange={(v) => update("schemeName", v)} />
-      <InputField label="Broker Name" value={form.brokerName} onChange={(v) => update("brokerName", v)} />
+      <InputField label="DP ID" value={form.dpId} onChange={(v: any) => update("dpId", v)} />
+      <InputField label="Client Code" value={form.clientCode} onChange={(v: any) => update("clientCode", v)} />
+      <InputField label="Scheme Name" value={form.schemeName} onChange={(v: any) => update("schemeName", v)} />
+      <InputField label="Broker Name" value={form.brokerName} onChange={(v: any) => update("brokerName", v)} />
 
-      <InputField label="Nominee Name" value={form.nomineeName} onChange={(v) => update("nomineeName", v)} />
+      <InputField label="Nominee Name" value={form.nomineeName} onChange={(v: any) => update("nomineeName", v)} />
 
       <DropdownField
         label="Relationship"
         value={form.nomineeRelationship}
         options={relationOptions}
-        onChange={(v) => update("nomineeRelationship", v)}
+        onChange={(v: any) => update("nomineeRelationship", v)}
       />
 
       {form.nomineeRelationship === "Others" && (
         <InputField
           label="Specify Other Nominee Relationship"
           value={form.nomineeRelationshipOther}
-          onChange={(v) => update("nomineeRelationshipOther", v)}
+          onChange={(v: any) => update("nomineeRelationshipOther", v)}
         />
       )}
 
-      <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v) => update("nomineeContact", v)} />
-      <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v) => update("nomineeEmail", v)} />
-      <InputField label="Nominee Aadhaar No" value={form.nomineeAadhar} onChange={(v) => update("nomineeAadhar", v)} />
-      <InputField label="Nominee PAN No" value={form.nomineePan} onChange={(v) => update("nomineePan", v)} />
+      <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v: any) => update("nomineeContact", v)} />
+      <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v: any) => update("nomineeEmail", v)} />
+      <InputField label="Nominee Aadhaar No" value={form.nomineeAadhar} onChange={(v: any) => update("nomineeAadhar", v)} />
+      <InputField label="Nominee PAN No" value={form.nomineePan} onChange={(v: any) => update("nomineePan", v)} />
 
       <DropdownField
         label="A/C Type"
         value={form.acType}
         options={acTypeOptions}
-        onChange={(v) => update("acType", v)}
+        onChange={(v: any) => update("acType", v)}
       />
 
       {form.acType === "Others" && (
         <InputField
           label="Specify Other A/C Type"
           value={form.acTypeOther}
-          onChange={(v) => update("acTypeOther", v)}
+          onChange={(v: any) => update("acTypeOther", v)}
         />
       )}
 
@@ -65,7 +65,7 @@ export default function DematAccount({ form, update }: Props) {
         type="date"
         label="A/C Opening Date"
         value={form.acOpeningDate}
-        onChange={(v) => update("acOpeningDate", v)}
+        onChange={(v: any) => update("acOpeningDate", v)}
       />
     </div>
   );
