@@ -11,39 +11,26 @@ const steps = [
 
 export default function HeaderSteps({ current }: { current: number }) {
   return (
-    <div className="flex gap-4 mb-8 mt-4">
-
-      {steps.map((step, index) => (
+    <div className="flex gap-4 mb-8">
+      {steps.map((step) => (
         <Link
           key={step.id}
           to={step.path}
-          className={
-            "relative px-6 py-3 text-sm font-medium rounded-l-lg " +
-            (current === step.id
-              ? "bg-indigo-700 text-white"
-              : "bg-indigo-200 text-indigo-900")
-          }
+          className={`relative px-6 py-3 text-sm font-medium rounded-md
+            ${current === step.id ? "bg-indigo-700 text-white" : "bg-indigo-200 text-indigo-900"}
+          `}
         >
-          {/* Step Label */}
           {step.label}
 
-          {/* Right Arrow Shape */}
-          {index !== steps.length - 1 && (
-            <span
-              className={
-                "absolute top-0 right-[-20px] w-0 h-0 " +
-                "border-t-[20px] border-b-[20px] border-l-[20px] " +
-                (current === step.id
-                  ? "border-l-indigo-700"
-                  : "border-l-indigo-200") +
-                " border-t-transparent border-b-transparent"
-              }
-            />
-          )}
+          {/* Right Arrow shape */}
+          <span
+            className={`absolute top-0 right-[-20px] w-0 h-0 
+                border-t-[20px] border-b-[20px]
+                ${current === step.id ? "border-l-[20px] border-l-indigo-700" : "border-l-[20px] border-l-indigo-200"}
+                border-t-transparent border-b-transparent`}
+          ></span>
         </Link>
       ))}
-
     </div>
   );
 }
-

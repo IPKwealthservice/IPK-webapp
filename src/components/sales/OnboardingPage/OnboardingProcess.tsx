@@ -10,6 +10,7 @@ import FamilyAccounts from "./components/FamilyAccounts";
 import WhatsappList from "./components/WhatsappList";
 import PreviewModal from "./components/PreviewModal";
 import SuccessPopup from "./components/SuccessPopup";
+import HeaderSteps from "./steps/HeaderSteps";
 
 export default function OnboardingProcess() {
   // -------------------------------------------------
