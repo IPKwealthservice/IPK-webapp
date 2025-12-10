@@ -1,6 +1,6 @@
 import React from "react";
 import HeaderSteps from "./steps/HeaderSteps";
-import OnboardingProcess from "../../../components/sales/OnboardingPage/OnboardingProcess";
+import OnboardingProcess from "./steps/OnboardingProcess";
 
 export default function OnboardingPage() {
   return (
