@@ -117,10 +117,18 @@ export default function App() {
               {/* <Route path="sales/chat" element={<ChatPage />} /> */}
             </Route>
 
+             {/* ⭐ Your Onboarding 6 Steps INSIDE Dashboard Layout ⭐ */}
+             <Route path="sales/onboarding/client-profile" element={<OnboardingProcess />} />
+             <Route path="sales/onboarding/authentication" element={<Authentication />} />
+             <Route path="sales/onboarding/risk-type" element={<RiskType />} />
+             <Route path="sales/onboarding/suitability" element={<Suitability />} />
+             <Route path="sales/onboarding/agreement" element={<Agreement />} />
+            <Route path="sales/onboarding/e-sign" element={<ESign />} />
+            </Route>
+
             {/* Common */}
             <Route path="profile" element={<UserProfiles />} />
             <Route path="blank" element={<Blank />} />
-          </Route>
 
             {/* ---------- ONBOARDING PROCESS ROUTES ---------- */}
             <Route path="/sales/onboarding/client-profile" element={<OnboardingProcess />} />
