@@ -66,6 +66,37 @@ const salesNav: NavItem[] = [
     name: "Onboarding Process",
     path: "/sales/onboardingProcess",
   },
+   {
+    icon: <GridIcon />,
+    name: "Onboarding Process",
+    path: "/sales/onboarding/client-profile",
+    subItems: [
+      {
+        name: "Client Profile",
+        path: "/sales/onboarding/client-profile",
+      },
+      {
+        name: "Authentication",
+        path: "/sales/onboarding/authentication",
+      },
+      {
+        name: "Risk Type",
+        path: "/sales/onboarding/risk-type",
+      },
+      {
+        name: "Suitability",
+        path: "/sales/onboarding/suitability",
+      },
+      {
+        name: "Agreement",
+        path: "/sales/onboarding/agreement",
+      },
+      {
+        name: "E-Sign",
+        path: "/sales/onboarding/e-sign",
+      },
+    ],
+  },
 ];
   // {
   //   icon: <CalenderIcon />,
