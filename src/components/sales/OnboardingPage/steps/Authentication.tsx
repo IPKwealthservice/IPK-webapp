@@ -38,7 +38,6 @@ export default function Authentication() {
     setTimer(30);
     alert("OTP sent successfully!");
 
-    // Focus first OTP box automatically
     setTimeout(() => inputRefs.current[0]?.focus(), 300);
   };
 
@@ -50,13 +49,11 @@ export default function Authentication() {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Move to next
     if (value && index < 3) {
       inputRefs.current[index + 1].focus();
     }
   };
 
-  // Handle backspace properly
   const handleKeyDown = (e: any, index: number) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       const newOtp = [...otp];
@@ -67,15 +64,16 @@ export default function Authentication() {
     }
   };
 
-  // Auto paste (e.g., from SMS)
+  // ---------------- AUTO PASTE (SMS) ----------------
   const handlePaste = (e: any) => {
     const paste = e.clipboardData.getData("text").slice(0, 4);
+
     if (/^\d{4}$/.test(paste)) {
       const digits = paste.split("");
       setOtp(digits);
 
-      digits.forEach((d:any, i: any) => {
-        inputRefs.current[i].value = d;
+      digits.forEach((digit: any, i: any) => {
+        inputRefs.current[i].value = digit;
       });
 
       setTimeout(() => inputRefs.current[3]?.focus(), 50);
@@ -94,7 +92,7 @@ export default function Authentication() {
     navigate("/sales/onboarding/risk-type");
   };
 
-return (
+  return (
     <div className="max-w-5xl mx-auto p-8">
 
       {/* Step Header */}
@@ -102,13 +100,12 @@ return (
         <HeaderSteps current={2} />
       </div>
 
-      {/* White Card */}
-      <div className="bg-white rounded-xl shadow-lg p-8">
+      {/* White Card Box */}
+      <div className="bg-white rounded-xl shadow-lg p-10">
 
-      <div className="p-10 bg-white rounded-xl shadow">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
 
-          {/* ------- LEFT SECTION (Send OTP) ------- */}
+          {/* ---------------- LEFT: Send OTP ---------------- */}
           <div>
             <h2 className="text-3xl font-semibold mb-2">Welcome!!</h2>
             <p className="text-gray-600 mb-8">
@@ -141,7 +138,7 @@ return (
             </button>
           </div>
 
-          {/* ------- RIGHT SECTION (4-digit OTP UI) ------- */}
+          {/* ---------------- RIGHT: OTP UI ---------------- */}
           <div>
             <h2 className="text-xl font-semibold mb-1">Verify your number</h2>
 
@@ -151,23 +148,23 @@ return (
                 : "Enter your mobile number and click Send OTP"}
             </p>
 
-            {/* ---- NEW 4 DIGIT OTP BOXES ---- */}
-            <div className="flex gap-4" onPaste={handlePaste}> 
+            {/* OTP BOXES */}
+            <div className="flex gap-4" onPaste={handlePaste}>
               {[0, 1, 2, 3].map((i) => (
-              <input
-              key={i}
-              //ref={(el) => (inputRefs.current[i] = el)}
-              maxLength={1}
-              type="text"
-              inputMode="numeric"
-              className=" w-14 h-14 text-center border border-indigo-400 rounded-lg text-xl font-semibold focus:ring-2 focus:ring-indigo-600 outline-none"
-              value={otp[i]}
-              onChange={(e) => handleOtpChange(e.target.value, i)}
-              onKeyDown={(e) => handleKeyDown(e, i)}
-              disabled={!otpSent}
-            />
-          ))}
-        </div>
+                <input
+                  key={i}
+                  //ref={(el) => (inputRefs.current[i] = el)}
+                  maxLength={1}
+                  type="text"
+                  inputMode="numeric"
+                  className="w-12 h-12 text-center border border-indigo-400 rounded-lg text-xl font-semibold focus:ring-2 focus:ring-indigo-600 outline-none"
+                  value={otp[i]}
+                  onChange={(e) => handleOtpChange(e.target.value, i)}
+                  onKeyDown={(e) => handleKeyDown(e, i)}
+                  disabled={!otpSent}
+                />
+              ))}
+            </div>
 
             <button
               onClick={handleVerifyOtp}
@@ -194,6 +191,5 @@ return (
         </div>
       </div>
     </div>
-     </div>
   );
 }
