@@ -94,13 +94,16 @@ export default function Authentication() {
     navigate("/sales/onboarding/risk-type");
   };
 
-  return (
+return (
     <div className="max-w-5xl mx-auto p-8">
 
-      {/* Header Steps */}
-      <HeaderSteps current={2} />
+      {/* Step Header */}
+      <div className="flex justify-center mb-6">
+        <HeaderSteps current={2} />
+      </div>
 
-      <h2 className="text-xl font-semibold mb-4">Authentication</h2>
+      {/* White Card */}
+      <div className="bg-white rounded-xl shadow-lg p-8">
 
       <div className="p-10 bg-white rounded-xl shadow">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
@@ -191,5 +194,6 @@ export default function Authentication() {
         </div>
       </div>
     </div>
+     </div>
   );
 }

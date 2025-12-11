@@ -4,12 +4,15 @@ import HeaderSteps from "../steps/HeaderSteps";
 export default function ESign() {
   return (
     <div className="max-w-5xl mx-auto p-8">
-      <HeaderSteps current={6} />
 
-      <h2 className="text-xl font-semibold mb-4">E-Sign</h2>
+      <div className="flex justify-center mb-6">
+        <HeaderSteps current={6} />
+      </div>
 
-      <div className="p-6 bg-white rounded-xl shadow">
-        E-Signature Form Coming Here...
+      <div className="bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-xl font-semibold mb-4">E-Sign</h2>
+
+        {/* E-Sign API UI */}
       </div>
     </div>
   );
