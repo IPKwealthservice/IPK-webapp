@@ -1,27 +1,22 @@
 import React, { useState } from "react";
+import ContactDetails from "./ContactDetails";
 
-// ------------------------ COMPONENTS ------------------------
-import Section from "../components/Section";
+// COMPONENTS
 import InputField from "../components/InputField";
 import TextAreaField from "../components/TextAreaField";
 import DropdownField from "../components/DropdownField";
 import FileUpload from "../components/FileUpload";
 import FamilyAccounts from "../components/FamilyAccounts";
-import WhatsappList from "../components/WhatsappList";
 import PreviewModal from "../components/PreviewModal";
 import SuccessPopup from "../components/SuccessPopup";
 import HeaderSteps from "./HeaderSteps";
 
-/* ===========================================================
-   REUSABLE SECTION HEADER WITH ARROW
-=========================================================== */
+/* ================= SECTION HEADER ================= */
 const SectionHeader = ({
   title,
-  isOpen,
   toggle,
 }: {
   title: string;
-  isOpen: boolean;
   toggle: () => void;
 }) => (
   <div
@@ -32,20 +27,14 @@ const SectionHeader = ({
   </div>
 );
 
-/* ===========================================================
-   MAIN ONBOARDING PROCESS PAGE
-=========================================================== */
+/* ================= MAIN PAGE ================= */
 export default function OnboardingProcess() {
-  const [openSection, setOpenSection] = useState<null | string>(null);
-
-  const toggleSection = (name: string) => {
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const toggleSection = (name: string) =>
     setOpenSection(openSection === name ? null : name);
-  };
 
-  /* ================================
-        FORM STATE
-  =================================*/
-  const [form, setForm] = useState({
+  /* ================= FORM STATE ================= */
+  const [form, setForm] = useState<any>({
     // PERSONAL
     name: "",
     commAddress: "",
@@ -63,7 +52,9 @@ export default function OnboardingProcess() {
     contactPersonName: "",
     contactPersonNo: "",
     relationship: "",
+    relationshipOther: "",
     clientSource: "",
+    clientSourceOther: "",
 
     // CONTACT
     mobile: "",
@@ -71,6 +62,22 @@ export default function OnboardingProcess() {
     language: "",
     email: "",
     tradeNumber: "",
+
+    // DEMAT
+    dpId: "",
+    clientCode: "",
+    schemeName: "",
+    brokerName: "",
+    nomineeName: "",
+    nomineeRelationship: "",
+    nomineeRelationshipOther: "",
+    nomineeContact: "",
+    nomineeEmail: "",
+    nomineeAadhar: "",
+    nomineePan: "",
+    acType: "",
+    acTypeOther: "",
+    accountOpeningDate: "",
 
     // BILLING
     billName: "",
@@ -83,54 +90,29 @@ export default function OnboardingProcess() {
     accNumber: "",
     ifsc: "",
     micr: "",
-
-    // DEMAT
-    dpId: "",
-    clientCode: "",
-    schemeName: "",
-    brokerName: "",
-    nomineeName: "",
-    nomineeRelation: "",
-    nomineeContact: "",
-    nomineeEmail: "",
-    nomineeAadhar: "",
-    nomineePan: "",
-    accountType: "",
-    accountOpeningDate: "",
   });
 
   const update = (field: string, value: any) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((p: any) => ({ ...p, [field]: value }));
 
-  /* ================================
-        SPECIAL FIELD LOGIC
-  =================================*/
+  /* ================= SPECIAL LOGIC ================= */
   const calculateAge = (dob: string) => {
     update("dob", dob);
     if (!dob) return update("age", "");
-
     const d = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - d.getFullYear();
-
-    const m = today.getMonth() - d.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
-
+    const t = new Date();
+    let age = t.getFullYear() - d.getFullYear();
+    if (t < new Date(d.setFullYear(t.getFullYear()))) age--;
     update("age", String(age));
   };
 
   const [samePerm, setSamePerm] = useState(false);
-  const syncPermanent = () => samePerm && update("permAddress", form.commAddress);
+  const syncPermanent = () =>
+    samePerm && update("permAddress", form.commAddress);
 
-  const [sameWhatsapp, setSameWhatsapp] = useState(false);
-  const syncWhatsapp = () => sameWhatsapp && update("whatsapp", form.mobile);
+  const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
 
-  const [familyAccounts, setFamilyAccounts] = useState([""]);
-  const [whatsappList, setWhatsappList] = useState([""]);
-
-  /* ================================
-        PREVIEW & SUCCESS
-  =================================*/
+  /* ================= PREVIEW ================= */
   const [preview, setPreview] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -140,276 +122,190 @@ export default function OnboardingProcess() {
     setTimeout(() => setSuccess(false), 1500);
   };
 
-  /* ================================
-        UI RENDER
-  =================================*/
+  /* ================= UI ================= */
   return (
     <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-
-      {/* STEP HEADER CENTERED */}
       <div className="flex justify-center mb-6">
         <HeaderSteps current={1} />
       </div>
 
-      {/* PHOTO UPLOAD */}
       <FileUpload />
 
-      {/* =====================================================
-            PERSONAL DETAILS
-      ===================================================== */}
+      {/* ================= PERSONAL DETAILS ================= */}
       <SectionHeader
-        title="Personal Details"
-        isOpen={openSection === "personal"}
+        title="Personal Details ➤"
         toggle={() => toggleSection("personal")}
       />
 
       {openSection === "personal" && (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Name" value={form.name} onChange={(v: any) => update("name", v)} />
-            <InputField label="Location" value={form.location} onChange={(v: any) => update("location", v)} />
-            <InputField label="Gender" value={form.gender} onChange={(v: any) => update("gender", v)} />
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputField label="Name" value={form.name} onChange={(v:any)=>update("name",v)} />
+            <InputField label="Location" value={form.location} onChange={(v:any)=>update("location",v)} />
+            <InputField label="Gender" value={form.gender} onChange={(v:any)=>update("gender",v)} />
             <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
             <InputField label="Age" readOnly value={form.age} />
-            <InputField label="Occupation" value={form.occupation} onChange={(v: any) => update("occupation", v)} />
+            <InputField label="Occupation" value={form.occupation} onChange={(v:any)=>update("occupation",v)} />
 
             <DropdownField
-              label="Income Range"
-              options={["1–2 LPA", "2–5 LPA", "5–10 LPA", "10+ LPA"]}
+              label="Income"
               value={form.income}
-              onChange={(v: any) => update("income", v)}
+              options={["1–2 LPA","2–5 LPA","5–10 LPA","10+ LPA"]}
+              onChange={(v:any)=>update("income",v)}
             />
 
-            <InputField label="Company" value={form.company} onChange={(v: any) => update("company", v)} />
-            <InputField label="Designation" value={form.designation} onChange={(v: any) => update("designation", v)} />
-            <InputField label="PAN No" value={form.pan} onChange={(v: any) => update("pan", v)} />
-            <InputField label="Aadhaar No." value={form.aadhaar} onChange={(v: any) => update("aadhaar", v)} />
-            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v: any) => update("contactPersonName", v)} />
-            <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v: any) => update("contactPersonNo", v)} />
+            <InputField label="Company" value={form.company} onChange={(v:any)=>update("company",v)} />
+            <InputField label="Designation" value={form.designation} onChange={(v:any)=>update("designation",v)} />
+            <InputField label="PAN No." value={form.pan} onChange={(v:any)=>update("pan",v)} />
+            <InputField label="Aadhaar Number" value={form.aadhaar} onChange={(v:any)=>update("aadhaar",v)} />
+            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v:any)=>update("contactPersonName",v)} />
+            <InputField label="Contact Person No." value={form.contactPersonNo} onChange={(v:any)=>update("contactPersonNo",v)} />
 
             <DropdownField
               label="Relationship"
-              options={[
-                "Spouse", "Son", "Daughter", "Father", "Mother",
-                "Brother", "Sister", "Grand Son", "Grand-Daughter",
-                "Grand Father", "Grand Mother", "Others"
-              ]}
               value={form.relationship}
-              onChange={(v: any) => update("relationship", v)}
+              options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Grand Son","Grand-Daughter","Grand Father","Grand Mother","Others"]}
+              onChange={(v:any)=>update("relationship",v)}
             />
+
+            {form.relationship === "Others" && (
+              <InputField label="Specify Relationship" value={form.relationshipOther} onChange={(v:any)=>update("relationshipOther",v)} />
+            )}
 
             <DropdownField
               label="Client Source"
-              options={[
-                "Reference", "Online", "YES Con", "Start-up",
-                "Jubilan", "Spotlight-YES", "Others"
-              ]}
               value={form.clientSource}
-              onChange={(v: any) => update("clientSource", v)}
+              options={["Reference","Online","YES Con","Start-up","Jubilan","Spotlight-YES","Others"]}
+              onChange={(v:any)=>update("clientSource",v)}
             />
+
+            {form.clientSource === "Others" && (
+              <InputField label="Specify Client Source" value={form.clientSourceOther} onChange={(v:any)=>update("clientSourceOther",v)} />
+            )}
           </div>
 
-          {/* ADDRESSES */}
-          <div className="mt-6 grid grid-cols-2 gap-6">
-            <TextAreaField
-              label="Communication Address"
-              value={form.commAddress}
-              onChange={(v: any) => update("commAddress", v)}
-            />
-
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <TextAreaField label="Communication Address" value={form.commAddress} onChange={(v:any)=>update("commAddress",v)} />
             <div>
               <TextAreaField
                 label="Permanent Address"
                 readOnly={samePerm}
                 value={samePerm ? form.commAddress : form.permAddress}
-                onChange={(v: any) => update("permAddress", v)}
+                onChange={(v:any)=>update("permAddress",v)}
               />
-
               <label className="flex items-center gap-2 mt-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={samePerm}
-                  onChange={(e) => {
-                    setSamePerm(e.target.checked);
-                    syncPermanent();
-                  }}
-                />
+                <input type="checkbox" checked={samePerm} onChange={(e)=>{setSamePerm(e.target.checked);syncPermanent();}} />
                 Same as communication address
               </label>
             </div>
           </div>
 
-          {/* FAMILY ACCOUNTS */}
           <div className="mt-6">
             <FamilyAccounts
               accounts={familyAccounts}
-              add={() => setFamilyAccounts([...familyAccounts, ""])}
-              update={(i: any, v: any) => {
-                const list = [...familyAccounts];
-                list[i] = v;
-                setFamilyAccounts(list);
-              }}
-              remove={(i: any) => {
-                const list = familyAccounts.filter((_, idx) => idx !== i);
-                setFamilyAccounts(list);
-              }}
+              add={()=>setFamilyAccounts([...familyAccounts,""])}
+              update={(i:any,v:any)=>{const l=[...familyAccounts];l[i]=v;setFamilyAccounts(l);}}
+              remove={(i:any)=>setFamilyAccounts(familyAccounts.filter((_,idx)=>idx!==i))}
             />
           </div>
         </>
       )}
 
-      {/* =====================================================
-            DEMAT ACCOUNT
-      ===================================================== */}
+      {/* ================= DEMAT ACCOUNT ================= */}
       <SectionHeader
-        title="Demat Account"
-        isOpen={openSection === "demat"}
+        title="Demat Account ➤"
         toggle={() => toggleSection("demat")}
       />
 
       {openSection === "demat" && (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="DP ID" value={form.dpId} onChange={(v: any) => update("dpId", v)} />
-            <InputField label="Client Code" value={form.clientCode} onChange={(v: any) => update("clientCode", v)} />
-            <InputField label="Scheme Name" value={form.schemeName} onChange={(v: any) => update("schemeName", v)} />
-            <InputField label="Broker Name" value={form.brokerName} onChange={(v: any) => update("brokerName", v)} />
-            <InputField label="Nominee Name" value={form.nomineeName} onChange={(v: any) => update("nomineeName", v)} />
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputField label="DP ID" value={form.dpId} onChange={(v:any)=>update("dpId",v)} />
+          <InputField label="Client Code" value={form.clientCode} onChange={(v:any)=>update("clientCode",v)} />
+          <InputField label="Scheme Name" value={form.schemeName} onChange={(v:any)=>update("schemeName",v)} />
+          <InputField label="Broker Name" value={form.brokerName} onChange={(v:any)=>update("brokerName",v)} />
+          <InputField label="Nominee Name" value={form.nomineeName} onChange={(v:any)=>update("nomineeName",v)} />
 
-            <DropdownField
-              label="Nominee Relationship"
-              options={[
-                "Spouse","Son","Daughter","Father","Mother",
-                "Brother","Sister","Grand Son","Grand-Daughter",
-                "Grand Father","Grand Mother","Others"
-              ]}
-              value={form.nomineeRelation}
-              onChange={(v: any) => update("nomineeRelation", v)}
-            />
+          <DropdownField
+            label="Nominee Relationship"
+            value={form.nomineeRelationship}
+            options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Others"]}
+            onChange={(v:any)=>update("nomineeRelationship",v)}
+          />
 
-            <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v: any) => update("nomineeContact", v)} />
-            <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v: any) => update("nomineeEmail", v)} />
-            <InputField label="Nominee Aadhar No." value={form.nomineeAadhar} onChange={(v: any) => update("nomineeAadhar", v)} />
-            <InputField label="Nominee PAN No." value={form.nomineePan} onChange={(v: any) => update("nomineePan", v)} />
+          {form.nomineeRelationship === "Others" && (
+            <InputField label="Specify Nominee Relationship" value={form.nomineeRelationshipOther} onChange={(v:any)=>update("nomineeRelationshipOther",v)} />
+          )}
 
-            <DropdownField
-              label="A/C Type"
-              options={["Resident India","NRI","HUF","PUT CTD","Minor","Joint","Others"]}
-              value={form.accountType}
-              onChange={(v: any) => update("accountType", v)}
-            />
+          <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v:any)=>update("nomineeContact",v)} />
+          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeEmail",v)} />
+          <InputField label="Nominee Aadhaar No." value={form.nomineeAadhar} onChange={(v:any)=>update("nomineeAadhar",v)} />
+          <InputField label="Nominee PAN No." value={form.nomineePan} onChange={(v:any)=>update("nomineePan",v)} />
 
-            <InputField type="date" label="A/C Opening Date" value={form.accountOpeningDate} onChange={(v: any) => update("accountOpeningDate", v)} />
-          </div>
-        </>
+          <DropdownField
+            label="A/C Type"
+            value={form.acType}
+            options={["Resident India","NRI","HUF","PUT CTD","Minor","Joint","Others"]}
+            onChange={(v:any)=>update("acType",v)}
+          />
+
+          {form.acType === "Others" && (
+            <InputField label="Specify A/C Type" value={form.acTypeOther} onChange={(v:any)=>update("acTypeOther",v)} />
+          )}
+
+          <InputField type="date" label="A/C Opening Date" value={form.accountOpeningDate} onChange={(v:any)=>update("accountOpeningDate",v)} />
+        </div>
       )}
 
-      {/* =====================================================
-            CONTACT DETAILS
-      ===================================================== */}
+      {/* CONTACT DETAILS */}
       <SectionHeader
-        title="Contact Details"
-        isOpen={openSection === "contact"}
+        title="Contact Details ➤"
+        //isOpen={openSection === "contact"}
         toggle={() => toggleSection("contact")}
       />
 
       {openSection === "contact" && (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Mobile No." value={form.mobile} onChange={(v: any) => update("mobile", v)} />
-
-            <div>
-              <InputField
-                label="WhatsApp Number"
-                readOnly={sameWhatsapp}
-                value={sameWhatsapp ? form.mobile : form.whatsapp}
-                onChange={(v: any) => update("whatsapp", v)}
-              />
-
-              <label className="flex items-center gap-2 mt-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={sameWhatsapp}
-                  onChange={(e) => {
-                    setSameWhatsapp(e.target.checked);
-                    syncWhatsapp();
-                  }}
-                />
-                Same as Mobile Number
-              </label>
-            </div>
-
-            <InputField label="Language" value={form.language} onChange={(v: any) => update("language", v)} />
-            <InputField label="Email" type="email" value={form.email} onChange={(v: any) => update("email", v)} />
-            <InputField label="Trade Confirmation Number" value={form.tradeNumber} onChange={(v: any) => update("tradeNumber", v)} />
-          </div>
-
-          <div className="mt-6">
-            <WhatsappList
-              list={whatsappList}
-              add={() => setWhatsappList([...whatsappList, ""])}
-              update={(i: any, v: any) => {
-                const list = [...whatsappList];
-                list[i] = v;
-                setWhatsappList(list);
-              }}
-              remove={(i: any) => {
-                const list = whatsappList.filter((_, idx) => idx !== i);
-                setWhatsappList(list);
-              }}
-            />
-          </div>
-        </>
+        <div className="mt-4">
+          <ContactDetails form={form} update={update} />
+        </div>
       )}
 
-      {/* =====================================================
-            BILLING DETAILS
-      ===================================================== */}
+      {/* BILLING DETAILS */}
       <SectionHeader
-        title="Billing Details"
-        isOpen={openSection === "billing"}
+        title="Billing Details ➤"
+        //isOpen={openSection === "billing"}
         toggle={() => toggleSection("billing")}
       />
 
       {openSection === "billing" && (
         <>
           <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Name" value={form.billName} onChange={(v: any) => update("billName", v)} />
-            <InputField label="GST No." value={form.gst} onChange={(v: any) => update("gst", v)} />
+            <InputField label="Name" value={form.billName} onChange={(v:any)=>update("billName",v)} />
+            <InputField label="GST No." value={form.gst} onChange={(v:any)=>update("gst",v)} />
           </div>
-
           <div className="mt-6">
-            <TextAreaField
-              label="Billing Address"
-              value={form.billingAddress}
-              onChange={(v: any) => update("billingAddress", v)}
-            />
+            <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v:any)=>update("billingAddress",v)} />
           </div>
         </>
       )}
 
-      {/* =====================================================
-            BANK DETAILS
-      ===================================================== */}
+      {/* BANK DETAILS */}
       <SectionHeader
-        title="Bank Details"
-        isOpen={openSection === "bank"}
+        title="Bank Details ➤"
+        //isOpen={openSection === "bank"}
         toggle={() => toggleSection("bank")}
       />
 
       {openSection === "bank" && (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Holder Name" value={form.holderName} onChange={(v: any) => update("holderName", v)} />
-            <InputField label="Bank Name" value={form.bankName} onChange={(v: any) => update("bankName", v)} />
-            <InputField label="Acc Number" value={form.accNumber} onChange={(v: any) => update("accNumber", v)} />
-            <InputField label="IFSC" value={form.ifsc} onChange={(v: any) => update("ifsc", v)} />
-            <InputField label="MICR No." value={form.micr} onChange={(v: any) => update("micr", v)} />
-          </div>
-        </>
+        <div className="mt-4 grid grid-cols-2 gap-6">
+          <InputField label="Holder Name" value={form.holderName} onChange={(v:any)=>update("holderName",v)} />
+          <InputField label="Bank Name" value={form.bankName} onChange={(v:any)=>update("bankName",v)} />
+          <InputField label="Acc Number" value={form.accNumber} onChange={(v:any)=>update("accNumber",v)} />
+          <InputField label="IFSC" value={form.ifsc} onChange={(v:any)=>update("ifsc",v)} />
+          <InputField label="MICR No." value={form.micr} onChange={(v:any)=>update("micr",v)} />
+        </div>
       )}
 
-      {/* SAVE BUTTON */}
+      {/* SAVE */}
       <div className="flex justify-end mt-6">
         <button
           onClick={() => setPreview(true)}
@@ -419,7 +315,6 @@ export default function OnboardingProcess() {
         </button>
       </div>
 
-      {/* MODALS */}
       <PreviewModal open={preview} data={form} onClose={() => setPreview(false)} onSubmit={submitForm} />
       <SuccessPopup open={success} />
     </div>

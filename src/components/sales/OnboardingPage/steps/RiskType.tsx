@@ -1,5 +1,5 @@
 import OnboardingHeader from "../OnboardingHeader";
-import HeaderSteps from "../steps/HeaderSteps";
+import HeaderSteps from "../components/HeaderSteps";
 import { useNavigate } from "react-router-dom";
 
 export default function RiskType() {

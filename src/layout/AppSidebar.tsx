@@ -62,11 +62,14 @@ const salesNav: NavItem[] = [
   },
 
    {
-    icon: <GroupIcon />,
-    name: "Onboarding Process",
-    path: "/sales/onboardingProcess",
-  },
-  
+  icon: <GroupIcon />,
+  name: "Onboarding ",
+  path: "/sales/onboardingProcess",
+  subItems: [
+    { name: "Onboarding List", path: "/sales/onboardingProcess", },
+    { name: "Onboarding Process", path: "/sales/onboardingProcess", },
+  ],
+},
 ];
   // {
   //   icon: <CalenderIcon />,

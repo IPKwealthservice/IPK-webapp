@@ -1,5 +1,5 @@
 import OnboardingHeader from "../OnboardingHeader";
-import HeaderSteps from "../steps/HeaderSteps";
+import HeaderSteps from "../components/HeaderSteps";
 
 export default function ESign() {
   return (

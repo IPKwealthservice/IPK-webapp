@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import ContactDetails from "./steps/ContactDetails";
+import ContactDetails from "../steps/ContactDetails";
 
 // COMPONENTS
-import InputField from "./components/InputField";
-import TextAreaField from "./components/TextAreaField";
-import DropdownField from "./components/DropdownField";
-import FileUpload from "./components/FileUpload";
-import FamilyAccounts from "./components/FamilyAccounts";
-import PreviewModal from "./components/PreviewModal";
-import SuccessPopup from "./components/SuccessPopup";
-import HeaderSteps from "./components/HeaderSteps";
+import InputField from "../components/InputField";
+import TextAreaField from "../components/TextAreaField";
+import DropdownField from "../components/DropdownField";
+import FileUpload from "../components/FileUpload";
+import FamilyAccounts from "../components/FamilyAccounts";
+import PreviewModal from "../components/PreviewModal";
+import SuccessPopup from "../components/SuccessPopup";
+import HeaderSteps from "../components/HeaderSteps";
 
 /* ================= SECTION HEADER ================= */
 const SectionHeader = ({

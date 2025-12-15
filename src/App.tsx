@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useQuery } from "@apollo/client";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
@@ -26,7 +26,7 @@ import SalesEvent from "@/pages/Sales/Event_sales/Event_Rm";
 import LeadStagesPage from "@/pages/Sales/LeadStagesPage";
 import ViewLeadPage from "@/pages/Sales/ViewLeadPage";
 import LeadProfileLanding from "@/pages/Sales/LeadProfileLanding";
-import OnboardingProcess from "@/components/sales/OnboardingPage/steps/OnboardingProcess";
+import OnboardingProcess from "./components/sales/OnboardingPage";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import IPKUsers from "@/pages/Admin/IPKUsers";
 
@@ -117,26 +117,29 @@ export default function App() {
               {/* <Route path="sales/chat" element={<ChatPage />} /> */}
             </Route>
 
-             {/* ⭐ Your Onboarding 6 Steps INSIDE Dashboard Layout ⭐ */}
-             <Route path="sales/onboarding/client-profile" element={<OnboardingProcess />} />
-             <Route path="sales/onboarding/authentication" element={<Authentication />} />
-             <Route path="sales/onboarding/risk-type" element={<RiskType />} />
-             <Route path="sales/onboarding/suitability" element={<Suitability />} />
-             <Route path="sales/onboarding/agreement" element={<Agreement />} />
-            <Route path="sales/onboarding/e-sign" element={<ESign />} />
+             {/* ===== ONBOARDING MODULE ===== */}
+              <Route path="sales/onboarding" element={<Outlet />}>
+
+                {/* Plain list page */}
+             
+
+                {/* 6-step onboarding process */}
+                <Route path="process" element={<OnboardingProcess />}>
+                  <Route index element={<ClientProfile />} />
+                  <Route path="authentication" element={<Authentication />} />
+                  <Route path="risk-type" element={<RiskType />} />
+                  <Route path="suitability" element={<Suitability />} />
+                  <Route path="agreement" element={<Agreement />} />
+                  <Route path="e-sign" element={<ESign />} />
+                </Route>
+
+              </Route>
             </Route>
 
             {/* Common */}
             <Route path="profile" element={<UserProfiles />} />
             <Route path="blank" element={<Blank />} />
 
-            {/* ---------- ONBOARDING PROCESS ROUTES ---------- */}
-            <Route path="/sales/onboarding/client-profile" element={<OnboardingProcess />} />
-            <Route path="/sales/onboarding/authentication" element={<Authentication />} />
-            <Route path="/sales/onboarding/risk-type" element={<RiskType />} />
-            <Route path="/sales/onboarding/suitability" element={<Suitability />} />
-            <Route path="/sales/onboarding/agreement" element={<Agreement />} />
-            <Route path="/sales/onboarding/e-sign" element={<ESign />} />
 
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
