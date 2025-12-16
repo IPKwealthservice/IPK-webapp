@@ -89,7 +89,7 @@ export default function Authentication() {
     }
 
     alert("OTP Verified!");
-    navigate("/sales/onboarding/risk-type");
+    navigate("/sales/onboarding/process/risk-type");
   };
 
   return (

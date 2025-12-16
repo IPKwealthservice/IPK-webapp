@@ -44,6 +44,7 @@ import RiskType from "@/components/sales/OnboardingPage/steps/RiskType";
 import Suitability from "@/components/sales/OnboardingPage/steps/Suitability";
 import Agreement from "@/components/sales/OnboardingPage/steps/Agreement";
 import ESign from "@/components/sales/OnboardingPage/steps/ESign";
+import OnboardingListPage from "@/components/sales/OnboardingPage/OnboardingListPage";
 
 type Role = "ADMIN" | "RM" | "STAFF" | "MARKETING" | "ANALYST";
 
@@ -106,35 +107,40 @@ export default function App() {
 
             {/* Sales (RM)-only */}
             <Route element={<ProtectedRoute allow={["RM", "ADMIN"]} />}>
-              <Route path="sales/dashboard" element={<SalesRMDashboard />} />
-              <Route path="sales/assigned" element={<Navigate to="/sales/stages" replace />} />
-              <Route path="sales/stages" element={<LeadStagesPage />} />
-              <Route path="sales/leads" element={<LeadProfileLanding />} />
-              <Route path="sales/leads/:id" element={<ViewLeadPage />} />
-              <Route path="sales/onboardingProcess" element={<OnboardingProcess />} />
-              <Route path="sales/events" element={<SalesEvent />} />
-              {/* <Route path="sales/call" element={<CallConnectPage />} /> */}
-              {/* <Route path="sales/chat" element={<ChatPage />} /> */}
-            </Route>
 
-             {/* ===== ONBOARDING MODULE ===== */}
-              <Route path="sales/onboarding" element={<Outlet />}>
+            {/* Core Sales */}
+            <Route path="sales/dashboard" element={<SalesRMDashboard />} />
+            <Route path="sales/assigned" element={<Navigate to="/sales/stages" replace />} />
+            <Route path="sales/stages" element={<LeadStagesPage />} />
+            <Route path="sales/leads" element={<LeadProfileLanding />} />
+            <Route path="sales/leads/:id" element={<ViewLeadPage />} />
+            <Route path="sales/events" element={<SalesEvent />} />
 
-                {/* Plain list page */}
-             
+  {/* ================= ONBOARDING MODULE ================= */}
+<Route
+  path="sales/onboarding"
+  element={
+    <ProtectedRoute allow={["RM", "ADMIN"]}>
+      <Outlet />
+    </ProtectedRoute>
+  }
+>
+  {/* Onboarding list */}
+  <Route index element={<OnboardingListPage />} />
 
-                {/* 6-step onboarding process */}
-                <Route path="process" element={<OnboardingProcess />}>
-                  <Route index element={<ClientProfile />} />
-                  <Route path="authentication" element={<Authentication />} />
-                  <Route path="risk-type" element={<RiskType />} />
-                  <Route path="suitability" element={<Suitability />} />
-                  <Route path="agreement" element={<Agreement />} />
-                  <Route path="e-sign" element={<ESign />} />
-                </Route>
-
-              </Route>
-            </Route>
+  {/* Onboarding process */}
+  <Route path="process" element={<OnboardingProcess />}>
+    <Route index element={<ClientProfile />} />
+    <Route path="clientprofile" element={<ClientProfile />} />
+    <Route path="authentication" element={<Authentication />} />
+    <Route path="questionaire" element={<RiskType />} />
+    <Route path="suitability" element={<Suitability />} />
+    <Route path="agreement" element={<Agreement />} />
+    <Route path="e-sign" element={<ESign />} />
+          </Route>
+        </Route>
+      </Route>
+    </Route>
 
             {/* Common */}
             <Route path="profile" element={<UserProfiles />} />

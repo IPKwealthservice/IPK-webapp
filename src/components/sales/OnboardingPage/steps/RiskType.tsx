@@ -40,7 +40,7 @@ export default function RiskType() {
 
         <div className="flex justify-end mt-8">
           <button
-            onClick={() => navigate("/sales/onboarding/suitability")}
+            onClick={() => navigate("/sales/onboarding/process/suitability")}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
             Next
