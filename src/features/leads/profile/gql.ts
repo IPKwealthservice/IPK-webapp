@@ -7,6 +7,7 @@ export const LEAD_PROFILE_QUERY = gql`
       __typename
       id
       leadCode
+      clientCode
       name
       clientStage
       product
@@ -43,6 +44,20 @@ export const CHANGE_LEAD_STAGE_MUTATION = gql`
       id
       clientStage
       leadCode
+    }
+  }
+`;
+
+// Update lead details such as client code
+export const UPDATE_LEAD_DETAILS_MUTATION = gql`
+  mutation UpdateLeadDetails($input: UpdateLeadDetailsInput!) {
+    updateLeadDetails(input: $input) {
+      __typename
+      id
+      clientCode
+      leadCode
+      name
+      clientStage
     }
   }
 `;

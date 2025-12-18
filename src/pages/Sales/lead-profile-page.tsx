@@ -14,8 +14,10 @@ import EventTimeline from "@/features/leads/profile/EventTimeline";
 import {
   LEAD_PROFILE_QUERY,
   CHANGE_LEAD_STAGE_MUTATION,
+  UPDATE_LEAD_DETAILS_MUTATION,
   type StageOption,
 } from "@/features/leads/profile/gql";
+import ClientCodeModal from "@/features/leads/profile/ClientCodeModal";
 
 export default function LeadProfilePage() {
   const { leadId } = useParams<{ leadId: string }>();
@@ -26,19 +28,29 @@ export default function LeadProfilePage() {
     skip: !leadId,
   });
 
-  const [changeStage] = useMutation(CHANGE_LEAD_STAGE_MUTATION);
+  const [changeStage, { loading: changingStage }] = useMutation(CHANGE_LEAD_STAGE_MUTATION);
+  const [updateLeadDetails, { loading: updatingClientCode }] = useMutation(UPDATE_LEAD_DETAILS_MUTATION);
 
-  async function handleStageChange(next: StageOption) {
+  const [isClientCodeModalOpen, setClientCodeModalOpen] = React.useState(false);
+  const [pendingStage, setPendingStage] = React.useState<StageOption | null>(null);
+  const [clientCodeError, setClientCodeError] = React.useState<string | null>(null);
+  const [clientCodeDraft, setClientCodeDraft] = React.useState<string>("");
+
+  async function commitStageChange(next: StageOption, leadCodeOverride?: string) {
     if (!data?.lead?.id) return;
     const id = data.lead.id as string;
+    const optimisticCode = leadCodeOverride ?? data.lead.leadCode;
+
     await changeStage({
       variables: { id, stage: next },
       optimisticResponse: {
         __typename: "Mutation",
-        updateLead: { __typename: "IpkLeaddEntity", id, clientStage: next, leadCode: data.lead.leadCode },
+        updateLead: { __typename: "IpkLeaddEntity", id, clientStage: next, leadCode: optimisticCode },
       },
       update(cache, result) {
-        const newCode = (result?.data as any)?.updateLead?.leadCode as string | undefined;
+        const newCode =
+          (result?.data as any)?.updateLead?.leadCode ?? leadCodeOverride ?? (data?.lead?.leadCode as string | undefined);
+
         cache.modify({
           id: cache.identify({ __typename: "IpkLeaddEntity", id }),
           fields: {
@@ -48,6 +60,50 @@ export default function LeadProfilePage() {
         });
       },
     });
+  }
+
+  async function handleClientCodeSubmit(code: string) {
+    if (!data?.lead?.id || !pendingStage) return;
+    setClientCodeError(null);
+    const id = data.lead.id as string;
+
+    try {
+      await updateLeadDetails({
+        variables: { input: { leadId: id, clientCode: code } },
+        optimisticResponse: {
+          __typename: "Mutation",
+          updateLeadDetails: { __typename: "IpkLeaddEntity", id, clientCode: code },
+        },
+        update(cache, result) {
+          const newCode = (result?.data as any)?.updateLeadDetails?.clientCode ?? code;
+          cache.modify({
+            id: cache.identify({ __typename: "IpkLeaddEntity", id }),
+            fields: {
+              leadCode: () => newCode,
+            },
+          });
+        },
+      });
+
+      await commitStageChange(pendingStage, code);
+      setPendingStage(null);
+      setClientCodeModalOpen(false);
+    } catch (err: any) {
+      setClientCodeError(err?.message || "Unable to update client code. Please try again.");
+    }
+  }
+
+  function handleStageChange(next: StageOption) {
+    if (!data?.lead?.id) return;
+    if (next === "ACCOUNT_OPENED") {
+      setPendingStage(next);
+      setClientCodeDraft((data.lead.leadCode as string | undefined) ?? "");
+      setClientCodeError(null);
+      setClientCodeModalOpen(true);
+      return;
+    }
+
+    void commitStageChange(next);
   }
 
   if (loading) return <div className="p-6">Loading lead details…</div>;
@@ -80,13 +136,32 @@ export default function LeadProfilePage() {
       </div>
       <LeadSnapshot
         lead={lead}
-        stageSelect={<StageSelect value={lead.clientStage as StageOption | null} onChange={handleStageChange} />}
+        stageSelect={
+          <StageSelect
+            value={lead.clientStage as StageOption | null}
+            onChange={handleStageChange}
+            disabled={changingStage || updatingClientCode}
+          />
+        }
       />
 
       <section className="divide-y rounded-lg border">
         <EventComposer leadId={lead.id} />
         <EventTimeline events={lead.events ?? []} />
       </section>
+
+      <ClientCodeModal
+        isOpen={isClientCodeModalOpen}
+        onClose={() => {
+          setClientCodeModalOpen(false);
+          setPendingStage(null);
+          setClientCodeError(null);
+        }}
+        defaultCode={clientCodeDraft}
+        loading={updatingClientCode || changingStage}
+        error={clientCodeError}
+        onSubmit={(code) => handleClientCodeSubmit(code)}
+      />
     </div>
   );
 }

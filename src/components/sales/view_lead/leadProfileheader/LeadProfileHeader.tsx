@@ -29,7 +29,7 @@ import {
   formatSipAmount,
   humanize,
 } from "../interface/utils";
-import { parseISO, differenceInCalendarDays, isValid as isValidDate } from "date-fns";
+import { resolveLeadAgingDays } from "../interface/aging";
 import type { LeadProfile } from "../interface/types";
 import type { LeadEditModalValues } from "../../editLead/LeadEditModal";
 import LeadEditModal from "../../editLead/LeadEditModal";
@@ -212,20 +212,15 @@ export default function LeadProfileHeader({
   const enteredOnRaw = lead.createdAt ?? null;
   const leadCapturedOnRaw = lead.approachAt ?? null;
 
-  const agingSourceRaw = lead.updatedAt?.trim() ? lead.updatedAt : enteredOnRaw;
-  const agingDaysNum = useMemo(() => {
-    if (agingSourceRaw) {
-      try {
-        const d = parseISO(agingSourceRaw);
-        if (isValidDate(d)) {
-          return Math.max(0, differenceInCalendarDays(new Date(), d));
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return null;
-  }, [agingSourceRaw]);
+  const agingDaysNum = useMemo(
+    () =>
+      resolveLeadAgingDays({
+        agingDays: lead.agingDays ?? null,
+        approachAt: leadCapturedOnRaw,
+        createdAt: enteredOnRaw,
+      }),
+    [lead.agingDays, leadCapturedOnRaw, enteredOnRaw]
+  );
 
   const agingDisplay = formatAgingDays(agingDaysNum ?? undefined);
 
@@ -473,9 +468,24 @@ export default function LeadProfileHeader({
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {displayName}
                   </p>
-                  <p className="text-sm font-medium text-gray-500 dark:text-white/70">
-                    {lead.leadCode ?? "No code"}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-sm font-medium text-gray-500 dark:text-white/70">
+                      {lead.leadCode ?? "No code"}
+                    </p>
+                    {lead.clientCode && (
+                      <>
+                        <span className="text-gray-300 dark:text-white/20">•</span>
+<div className="inline-flex items-center rounded-lg bg-emerald-50 px-3 py-1.5 dark:bg-emerald-500/20">
+  <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 mr-1">
+    
+  </span>
+  <span className="text-lg font-extrabold tracking-wide text-emerald-800 dark:text-emerald-200">
+    {lead.clientCode}
+  </span>
+</div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -520,6 +530,18 @@ export default function LeadProfileHeader({
             {/* Email + Product card */}
             <div className="rounded-2xl bg-white/70 p-4 dark:bg-white/[0.03]">
               <div className="space-y-3">
+                {lead.clientCode && (
+                  <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                        Client Code
+                      </span>
+                      <span className="text-sm font-bold text-emerald-800 dark:text-emerald-200">
+                        {lead.clientCode}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
                     Email

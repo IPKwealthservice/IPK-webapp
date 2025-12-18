@@ -4,6 +4,7 @@ export const LEAD_FIELDS = gql`
   fragment LeadFields on IpkLeaddEntity {
     id
     leadCode
+    clientCode
     firstName
     lastName
     name

@@ -32,6 +32,7 @@ export const FRAG_LEAD_BASE = gql`
   fragment LeadBase on IpkLeaddEntity {
     id
     leadCode
+    clientCode
     name
     firstName
     lastName
@@ -130,6 +131,7 @@ export const CHANGE_STAGE = gql`
       nextActionDueAt
       lastSeenAt
       leadCode
+      clientCode
       updatedAt
     }
   }

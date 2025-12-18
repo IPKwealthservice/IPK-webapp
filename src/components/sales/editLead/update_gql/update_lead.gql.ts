@@ -36,6 +36,7 @@ mutation UpdateLeadDetails($input: UpdateLeadDetailsInput!) {
     email
     clientTypes
     clientStage
+    clientCode
     age
     bioText
     nextActionDueAt

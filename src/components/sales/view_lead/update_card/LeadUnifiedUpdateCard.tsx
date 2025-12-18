@@ -27,6 +27,7 @@ import {
   LeadStage,
   STAGE_OPTIONS,
 } from "../update_card/interface";
+import ClientCodeModal from "../ClientCodeModal";
 
 type Props = {
   leadId: string;
@@ -36,6 +37,8 @@ type Props = {
   currentStage?: LeadStage | string | null;
   /** existing pipeline status if you still use it elsewhere (not used here) */
   pipelineStatus?: LeadStageFilter | string | null;
+  /** Current client code if available */
+  currentClientCode?: string | null;
   onSaved?: () => void;
 };
 
@@ -50,9 +53,11 @@ export default function LeadUnifiedUpdateCard({
   leadId,
   currentStatus,
   currentStage,
+  currentClientCode,
   onSaved,
 }: Props) {
   const { user } = useAuth();
+  const [localClientCode, setLocalClientCode] = useState<string | null>(currentClientCode ?? null);
 
   // form state
   const [status, setStatus] = useState<string>(String(currentStatus ?? "OPEN"));
@@ -61,6 +66,15 @@ export default function LeadUnifiedUpdateCard({
   const [notes, setNotes] = useState<string>("");
   const [productExplained, setProductExplained] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
+  
+  // Client code modal state
+  const [showClientCodeModal, setShowClientCodeModal] = useState(false);
+  const [pendingStageChange, setPendingStageChange] = useState<{
+    stage: string;
+    status: string;
+    followUp: string | null;
+    notes: string;
+  } | null>(null);
 
   // keep local state synced with parent props
   useEffect(() => {
@@ -70,8 +84,12 @@ export default function LeadUnifiedUpdateCard({
   useEffect(() => {
     setStage(String(currentStage ?? "NEW_LEAD"));
   }, [currentStage]);
+  useEffect(() => {
+    setLocalClientCode(currentClientCode ?? null);
+  }, [currentClientCode]);
 
-  // mutations – ONLY schema-valid ones
+
+  // mutations - ONLY schema-valid ones
   const [mutChangeStage] = useMutation(CHANGE_STAGE);
   const [mutUpdateRemark] = useMutation(UPDATE_LEAD_REMARK);
 
@@ -108,27 +126,44 @@ export default function LeadUnifiedUpdateCard({
   const isNewLeadStage = String(stage || "").toUpperCase() === "NEW_LEAD";
   const showProductExplainedReminder = !isNewLeadStage && productExplained;
 
-  const onSave = async () => {
-    if (!leadId || saving) return;
+  // Check if stage is changing to ACCOUNT_OPENED
+  const isChangingToAccountOpened = 
+    String(stage).toUpperCase() === "ACCOUNT_OPENED" &&
+    String(currentStage ?? "").toUpperCase() !== "ACCOUNT_OPENED";
 
-    const trimmedNotes = notes.trim();
-    const stageChanged = String(stage) !== String(currentStage ?? "");
-    const statusChanged = String(status) !== String(currentStatus ?? "");
-    const hasFollowUp = Boolean(nextFollowUpAt);
-    const hasRemark = Boolean(trimmedNotes);
+  const buildStageChangePayload = (overrideStage?: string) => ({
+    stage: overrideStage ?? stage,
+    status,
+    followUp: nextFollowUpAt,
+    notes: notes.trim(),
+  });
 
-    const nothingChanged =
-      !stageChanged && !statusChanged && !hasFollowUp && !hasRemark;
+  const handleStageSelect = (nextStage: string) => {
+    setStage(nextStage);
 
-    if (nothingChanged) {
-      toast.info("Nothing to update");
-      return;
+    const normalized = String(nextStage).toUpperCase();
+    if (normalized === "ACCOUNT_OPENED" && !localClientCode) {
+      setPendingStageChange(buildStageChangePayload(nextStage));
+      setShowClientCodeModal(true);
     }
+  };
 
+  const executeStageChange = async (
+    targetStage: string,
+    targetStatus: string,
+    targetFollowUp: string | null,
+    targetNotes: string
+  ) => {
     setSaving(true);
     const ops: Promise<any>[] = [];
 
     try {
+      const trimmedNotes = targetNotes.trim();
+      const stageChanged = String(targetStage) !== String(currentStage ?? "");
+      const statusChanged = String(targetStatus) !== String(currentStatus ?? "");
+      const hasFollowUp = Boolean(targetFollowUp);
+      const hasRemark = Boolean(trimmedNotes);
+
       // 1) Single canonical mutation to update stage + stageFilter + followUp
       if (stageChanged || statusChanged || hasFollowUp) {
         ops.push(
@@ -136,12 +171,10 @@ export default function LeadUnifiedUpdateCard({
             variables: {
               input: {
                 leadId,
-                stage: stage as LeadStage, // enum name string
-                stageFilter: status as LeadStageFilter, // enum name string
-                nextFollowUpAt: nextFollowUpAt || undefined,
-                // NOTE: send ONLY the user-typed note, not synthesized text
+                stage: targetStage as LeadStage,
+                stageFilter: targetStatus as LeadStageFilter,
+                nextFollowUpAt: targetFollowUp || undefined,
                 note: trimmedNotes || undefined,
-                // only relevant (and optional) for first contact
                 productExplained: isNewLeadStage ? productExplained : undefined,
               },
             },
@@ -156,8 +189,9 @@ export default function LeadUnifiedUpdateCard({
                 }),
                 fields: {
                   clientStage: () => payload.clientStage,
-                  stageFilter: () => status,
+                  stageFilter: () => targetStatus,
                   nextActionDueAt: () => payload.nextActionDueAt,
+                  ...(payload.clientCode ? { clientCode: () => payload.clientCode } : {}),
                 },
               });
             },
@@ -172,7 +206,7 @@ export default function LeadUnifiedUpdateCard({
             variables: {
               input: {
                 leadId,
-                remark: trimmedNotes, // <= ONLY user-entered text
+                remark: trimmedNotes,
               },
             },
             refetchQueries,
@@ -182,10 +216,8 @@ export default function LeadUnifiedUpdateCard({
 
       await Promise.all(ops);
 
-      const successMsg = nextFollowUpAt
-        ? `Saved. Next follow-up: ${new Date(
-            nextFollowUpAt
-          ).toLocaleString()}`
+      const successMsg = targetFollowUp
+        ? `Saved. Next follow-up: ${new Date(targetFollowUp).toLocaleString()}`
         : "Saved. Timeline and remark updated.";
 
       toast.success(successMsg);
@@ -196,7 +228,6 @@ export default function LeadUnifiedUpdateCard({
       const e = err as ApolloError;
       console.error("Apollo error:", e);
 
-      // show GraphQL error message if present
       if (e?.graphQLErrors?.length) {
         console.error("GraphQL errors:", e.graphQLErrors);
         toast.error(e.graphQLErrors[0]?.message ?? "Failed to save");
@@ -214,18 +245,70 @@ export default function LeadUnifiedUpdateCard({
     }
   };
 
+  const onSave = async () => {
+    if (!leadId || saving) return;
+
+    const trimmedNotes = notes.trim();
+    const stageChanged = String(stage) !== String(currentStage ?? "");
+    const statusChanged = String(status) !== String(currentStatus ?? "");
+    const hasFollowUp = Boolean(nextFollowUpAt);
+    const hasRemark = Boolean(trimmedNotes);
+
+    const nothingChanged =
+      !stageChanged && !statusChanged && !hasFollowUp && !hasRemark;
+
+    if (nothingChanged) {
+      toast.info("Nothing to update");
+      return;
+    }
+
+    // If changing to ACCOUNT_OPENED and no client code exists, show modal
+    if (isChangingToAccountOpened && !localClientCode) {
+      setPendingStageChange(buildStageChangePayload());
+      setShowClientCodeModal(true);
+      return;
+    }
+
+    // Otherwise proceed with normal save
+    await executeStageChange(stage, status, nextFollowUpAt, trimmedNotes);
+  };
+
+  const handleClientCodeSuccess = async (clientCode: string) => {
+    setLocalClientCode(clientCode);
+    const payload = buildStageChangePayload(pendingStageChange?.stage);
+    await executeStageChange(
+      payload.stage,
+      payload.status,
+      payload.followUp,
+      payload.notes
+    );
+    setPendingStageChange(null);
+  };
+
   return (
-    <section className={CARD}>
-      {/* Header + Save button */}
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-gray-800 dark:text-white">
-          <Flag className="h-4 w-4 text-emerald-600" />
-          <h3 className="text-sm font-semibold">Progress &amp; Activity</h3>
+    <>
+      <ClientCodeModal
+        isOpen={showClientCodeModal}
+        onClose={() => {
+          setShowClientCodeModal(false);
+          setPendingStageChange(null);
+        }}
+        leadId={leadId}
+        currentClientCode={localClientCode ?? currentClientCode}
+        onSuccess={handleClientCodeSuccess}
+      />
+      
+      <section className={CARD}>
+        {/* Header + Save button */}
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-gray-800 dark:text-white">
+            <Flag className="h-4 w-4 text-emerald-600" />
+            <h3 className="text-sm font-semibold">Progress &amp; Activity</h3>
+          </div>
+          <button className={BTN} onClick={onSave} disabled={saving}>
+            {saving ? "Updating..." : "Save"}
+          </button>
         </div>
-        <button className={BTN} onClick={onSave} disabled={saving}>
-          {saving ? "Updating..." : "Save"}
-        </button>
-      </div>
 
       {/* Loading banner */}
       {saving && (
@@ -285,7 +368,7 @@ export default function LeadUnifiedUpdateCard({
           label="Pipeline stage"
           icon={<Milestone className="h-4 w-4 text-emerald-600" />}
           value={stage}
-          onChange={setStage}
+          onChange={handleStageSelect}
           options={stageOptionsForUi.map((s) => ({
             value: s,
             label: toLabel(s),
@@ -345,6 +428,7 @@ export default function LeadUnifiedUpdateCard({
         </div>
       </div>
     </section>
+    </>
   );
 }
 

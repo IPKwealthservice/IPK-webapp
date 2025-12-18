@@ -132,6 +132,7 @@ export type ClientQaItem = {
 export type LeadProfile = {
   id: string;
   leadCode?: string | null;
+  clientCode?: string | null;
   name?: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -146,6 +147,7 @@ export type LeadProfile = {
 
   gender?: "MALE" | "FEMALE" | "OTHER" | null;
   age?: number | null;
+  agingDays?: number | null;
   location?: string | null;
   // Legacy top-level occupation fields (kept for backward compat)
   profession?: "SELF_EMPLOYED" | "BUSINESS" | "EMPLOYEE" | string | null;

@@ -496,6 +496,7 @@ export default function ViewLead() {
               currentStatus={(lead.stageFilter as any) ?? (pickLeadStatus<string>(lead.status) as any)}
               currentStage={pickLeadStage(lead.clientStage as any) as any}
               pipelineStatus={lead.status as any}
+              currentClientCode={lead.clientCode}
               onSaved={refetchAll}
               onStatusChange={handleStatusChange}
             />
