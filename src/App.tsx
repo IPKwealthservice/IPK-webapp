@@ -4,7 +4,7 @@ import { ScrollToTop } from "@/components/common/ScrollToTop";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import { AuthProvider } from "@/context/AuthContex";
 
-import { ME } from "@/core/graphql/user/user.gql"; // expects { me { id email role status } }
+import { ME } from "@/core/graphql/user/user.gql";
 
 // Auth
 import SignIn from "@/pages/AuthPages/SignIn";
@@ -22,22 +22,22 @@ import LeadTable from "@/pages/Tables/BasicTables";
 // Sales (RM)
 import SalesRMDashboard from "@/pages/Dashboard/salesHome";
 import SalesEvent from "@/pages/Sales/Event_sales/Event_Rm";
-// import CallConnectPage from "@/pages/Sales/Call/CallConnectPage";
 import LeadStagesPage from "@/pages/Sales/LeadStagesPage";
 import ViewLeadPage from "@/pages/Sales/ViewLeadPage";
 import LeadProfileLanding from "@/pages/Sales/LeadProfileLanding";
-import OnboardingProcess from "./components/sales/OnboardingPage";
+import OnboardingProcess from "@/components/sales/OnboardingPage";
+
+// Admin
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import IPKUsers from "@/pages/Admin/IPKUsers";
 
-// Common/Misc
+// Common
 import Unauthorized from "@/pages/OtherPage/Unauthorized";
 import NotFound from "@/pages/OtherPage/NotFound";
 import UserProfiles from "@/pages/UserProfiles";
 import Blank from "@/pages/Blank";
-// import ChatPage from "@/pages/Sales/Support/ChatPage";
 
-//Onboarding Process
+// Onboarding Steps
 import ClientProfile from "@/components/sales/OnboardingPage/steps/ClientProfile";
 import Authentication from "@/components/sales/OnboardingPage/steps/Authentication";
 import RiskType from "@/components/sales/OnboardingPage/steps/RiskType";
@@ -48,22 +48,25 @@ import OnboardingListPage from "@/components/sales/OnboardingPage/OnboardingList
 
 type Role = "ADMIN" | "RM" | "STAFF" | "MARKETING" | "ANALYST";
 
-/** Decides the landing route based on backend role */
+/** Role-based landing */
 function RoleLanding() {
   const { data, loading, error } = useQuery(ME, { fetchPolicy: "cache-first" });
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm font-medium text-gray-600">
         Loading...
       </div>
     );
+  }
+
   if (error || !data?.me) return <Navigate to="/signin" replace />;
 
   const role = data.me.role as Role;
+
   if (role === "RM") return <Navigate to="/sales/dashboard" replace />;
   if (role === "MARKETING") return <Navigate to="/marketing/dashboard" replace />;
-  if (role === "ADMIN") return <Navigate to="/admin/dashboard" replace />; // adjust if you want a true Admin home
+  if (role === "ADMIN") return <Navigate to="/admin/dashboard" replace />;
 
   return <Navigate to="/unauthorized" replace />;
 }
@@ -74,12 +77,13 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
+
           {/* Public */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
-          {/* Private area with shared App layout */}
+          {/* Private App Layout */}
           <Route
             path="/"
             element={
@@ -88,16 +92,15 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            {/* role-based landing */}
             <Route index element={<RoleLanding />} />
 
-            {/* Admin-only */}
+            {/* Admin */}
             <Route element={<ProtectedRoute allow={["ADMIN"]} />}>
               <Route path="admin/dashboard" element={<AdminDashboard />} />
               <Route path="admin/users" element={<IPKUsers />} />
             </Route>
 
-            {/* Marketing-only */}
+            {/* Marketing */}
             <Route element={<ProtectedRoute allow={["MARKETING", "ADMIN"]} />}>
               <Route path="marketing/dashboard" element={<DigitalHome />} />
               <Route path="marketing/calendar" element={<MarketingEvent />} />
@@ -105,52 +108,71 @@ export default function App() {
               <Route path="marketing/overall-leads" element={<LeadTable />} />
             </Route>
 
-            {/* Sales (RM)-only */}
+            {/* Sales (RM) */}
             <Route element={<ProtectedRoute allow={["RM", "ADMIN"]} />}>
+              <Route path="sales/dashboard" element={<SalesRMDashboard />} />
+              <Route path="sales/assigned" element={<Navigate to="/sales/stages" replace />} />
+              <Route path="sales/stages" element={<LeadStagesPage />} />
+              <Route path="sales/leads" element={<LeadProfileLanding />} />
+              <Route path="sales/leads/:id" element={<ViewLeadPage />} />
+              <Route path="sales/events" element={<SalesEvent />} />
 
-            {/* Core Sales */}
-            <Route path="sales/dashboard" element={<SalesRMDashboard />} />
-            <Route path="sales/assigned" element={<Navigate to="/sales/stages" replace />} />
-            <Route path="sales/stages" element={<LeadStagesPage />} />
-            <Route path="sales/leads" element={<LeadProfileLanding />} />
-            <Route path="sales/leads/:id" element={<ViewLeadPage />} />
-            <Route path="sales/events" element={<SalesEvent />} />
+              {/* ================= ONBOARDING MODULE ================= */}
+              <Route path="sales/onboarding" element={<Outlet />}>
 
-  {/* ================= ONBOARDING MODULE ================= */}
-<Route
-  path="sales/onboarding"
-  element={
-    <ProtectedRoute allow={["RM", "ADMIN"]}>
-      <Outlet />
-    </ProtectedRoute>
-  }
->
-  {/* Onboarding list */}
-  <Route index element={<OnboardingListPage />} />
+                {/* List page */}
+                <Route index element={<OnboardingListPage />} />
 
-  {/* Onboarding process */}
-  <Route path="process" element={<OnboardingProcess />}>
-    <Route index element={<ClientProfile />} />
-    <Route path="clientprofile" element={<ClientProfile />} />
-    <Route path="authentication" element={<Authentication />} />
-    <Route path="questionaire" element={<RiskType />} />
-    <Route path="suitability" element={<Suitability />} />
-    <Route path="agreement" element={<Agreement />} />
-    <Route path="e-sign" element={<ESign />} />
-          </Route>
-        </Route>
-      </Route>
-    </Route>
+                {/* Process */}
+                <Route path="process" element={<OnboardingProcess />}>
+                  <Route index element={<ClientProfile />} />
+                  <Route path="client-profile" element={<ClientProfile />} />
+                  <Route path="authentication" element={<Authentication />} />
+                  <Route path="risk-type" element={<RiskType />} />
+                  <Route path="suitability" element={<Suitability />} />
+                  <Route path="agreement" element={<Agreement />} />
+                  <Route path="e-sign" element={<ESign />} />
+                </Route>
+
+              </Route>
+              {/* ====================================================== */}
+
+            </Route>
 
             {/* Common */}
             <Route path="profile" element={<UserProfiles />} />
             <Route path="blank" element={<Blank />} />
 
+          </Route>
 
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
+
         </Routes>
       </Router>
     </AuthProvider>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
