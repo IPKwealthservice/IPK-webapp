@@ -1,7 +1,7 @@
 import React from "react";
-import HeaderSteps from "./components/HeaderSteps";
-import OnboardingProcess from "./OnboardingProcess";
-import "./styles/media.css";
+import HeaderSteps from "../components/sales/OnboardingPage/components/HeaderSteps";
+import OnboardingProcess from "../components/sales/OnboardingPage/OnboardingProcess";
+import "./media.css";
 
 export default function OnboardingPage() {
   return (

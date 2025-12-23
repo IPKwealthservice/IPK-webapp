@@ -24,6 +24,7 @@ export default function FileUpload() {
   };
 
   return (
+        <div className="mobile-padding tablet-padding desktop-padding">
     <div className="flex flex-col items-center mb-8">
       {/* PHOTO CIRCLE */}
       <div className="relative w-32 h-32 flex items-center justify-center rounded-full border-4 border-indigo-600 bg-gray-100">
@@ -81,6 +82,7 @@ export default function FileUpload() {
           Remove
         </button>
       </div>
+    </div>
     </div>
   );
 }

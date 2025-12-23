@@ -1,0 +1,37 @@
+/* ================= MOBILE ================= */
+@media (max-width: 640px) {
+  .mobile-padding {
+    padding: 12px;
+  }
+
+  .mobile-text {
+    font-size: 14px;
+  }
+
+  .mobile-hidden {
+    display: none;
+  }
+}
+
+/* ================= TABLET ================= */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-padding {
+    padding: 20px;
+  }
+
+  .tablet-grid-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================= DESKTOP ================= */
+@media (min-width: 1025px) {
+  .desktop-padding {
+    padding: 32px;
+  }
+
+  .desktop-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

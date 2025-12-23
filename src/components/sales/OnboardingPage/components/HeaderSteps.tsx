@@ -11,7 +11,7 @@ const steps = [
 
 export default function HeaderSteps({ current }: { current: number }) {
   return (
-    /* ✅ Sticky Header */
+    <div className="mobile-padding tablet-padding desktop-padding">
     <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-4">
         {/* ✅ Mobile scroll + Desktop center */}
@@ -52,6 +52,7 @@ export default function HeaderSteps({ current }: { current: number }) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

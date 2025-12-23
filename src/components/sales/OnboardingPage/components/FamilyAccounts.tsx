@@ -1,5 +1,6 @@
 export default function FamilyAccounts({ accounts, add, update, remove }: any) {
   return (
+    <div className="mobile-padding tablet-padding desktop-padding">
     <div>
       <label className="text-gray-700 font-medium">Family Accounts</label>
 
@@ -27,6 +28,7 @@ export default function FamilyAccounts({ accounts, add, update, remove }: any) {
       >
         + Add Account
       </button>
+    </div>
     </div>
   );
 }

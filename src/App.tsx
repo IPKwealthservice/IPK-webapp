@@ -25,7 +25,7 @@ import SalesEvent from "@/pages/Sales/Event_sales/Event_Rm";
 import LeadStagesPage from "@/pages/Sales/LeadStagesPage";
 import ViewLeadPage from "@/pages/Sales/ViewLeadPage";
 import LeadProfileLanding from "@/pages/Sales/LeadProfileLanding";
-import OnboardingProcess from "@/components/sales/OnboardingPage";
+import OnboardingProcess from "@/styles";
 
 // Admin
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
@@ -45,6 +45,7 @@ import Suitability from "@/components/sales/OnboardingPage/steps/Suitability";
 import Agreement from "@/components/sales/OnboardingPage/steps/Agreement";
 import ESign from "@/components/sales/OnboardingPage/steps/ESign";
 import OnboardingListPage from "@/components/sales/OnboardingPage/OnboardingListPage";
+import OnboardingPage from "@/styles";
 
 type Role = "ADMIN" | "RM" | "STAFF" | "MARKETING" | "ANALYST";
 

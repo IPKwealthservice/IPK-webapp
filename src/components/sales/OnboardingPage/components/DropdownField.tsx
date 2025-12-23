@@ -2,6 +2,7 @@ import React from "react";
 
 export default function DropdownField({ label, value, options, onChange }: any) {
   return (
+    <div className="mobile-padding tablet-padding desktop-padding">
     <div className="flex flex-col gap-1">
       <label className="text-sm text-gray-700">{label}</label>
       <select
@@ -16,6 +17,7 @@ export default function DropdownField({ label, value, options, onChange }: any) 
           </option>
         ))}
       </select>
+    </div>
     </div>
   );
 }
