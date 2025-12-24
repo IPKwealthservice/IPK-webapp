@@ -9,7 +9,10 @@ const steps = [
   { id: 6, label: "E-Sign", path: "/sales/onboarding/e-sign" },
 ];
 
-export default function HeaderSteps({ current }: { current: number }) {
+export default function HeaderSteps({ current, show = true, }: 
+                                    { current: number; show?: boolean; }) 
+{
+  if (!show) return null;
   return (
     <div className="mobile-padding tablet-padding desktop-padding">
     <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
@@ -21,7 +24,6 @@ export default function HeaderSteps({ current }: { current: number }) {
               const isActive = current === step.id;
               const isCompleted = step.id < current;
               const isLast = index === steps.length - 1;
-
               return (
                 <Link
   key={step.id}

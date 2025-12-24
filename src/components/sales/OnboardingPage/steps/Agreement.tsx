@@ -1,6 +1,9 @@
 import OnboardingHeader from "../OnboardingHeader";
 import HeaderSteps from "../components/HeaderSteps";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@apollo/client";
+import { ACCEPT_ONBOARDING_AGREEMENT } from "@/graphql/onboardingAgreement.gql";
+
 
 export default function Agreement() {
   const navigate = useNavigate();

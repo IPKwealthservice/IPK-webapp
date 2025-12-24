@@ -11,7 +11,6 @@ import PreviewModal from "../components/PreviewModal";
 import SuccessPopup from "../components/SuccessPopup";
 import HeaderSteps from "../components/HeaderSteps";
 
-
 /* ================= SECTION HEADER ================= */
 const SectionHeader = ({
   title,
@@ -29,7 +28,7 @@ const SectionHeader = ({
 );
 
 /* ================= MAIN PAGE ================= */
-export default function OnboardingProcess() {
+export default function ClientProfile() {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const toggleSection = (name: string) =>
     setOpenSection(openSection === name ? null : name);
@@ -94,23 +93,29 @@ export default function OnboardingProcess() {
   });
 
   const update = (field: string, value: any) =>
-    setForm((p: any) => ({ ...p, [field]: value }));
+    setForm((prev: any) => ({ ...prev, [field]: value }));
 
-  /* ================= SPECIAL LOGIC ================= */
+  /* ================= AGE LOGIC ================= */
   const calculateAge = (dob: string) => {
     update("dob", dob);
     if (!dob) return update("age", "");
-    const d = new Date(dob);
-    const t = new Date();
-    let age = t.getFullYear() - d.getFullYear();
-    if (t < new Date(d.setFullYear(t.getFullYear()))) age--;
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    if (
+      today <
+      new Date(today.getFullYear(), birth.getMonth(), birth.getDate())
+    )
+      age--;
     update("age", String(age));
   };
 
+  /* ================= ADDRESS LOGIC ================= */
   const [samePerm, setSamePerm] = useState(false);
   const syncPermanent = () =>
     samePerm && update("permAddress", form.commAddress);
 
+  /* ================= FAMILY ACCOUNTS ================= */
   const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
 
   /* ================= PREVIEW ================= */
@@ -126,6 +131,8 @@ export default function OnboardingProcess() {
   /* ================= UI ================= */
   return (
     <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+
+      {/* HEADER STEPS (ONLY FORM, NOT PREVIEW) */}
       <div className="flex justify-center mb-6">
         <HeaderSteps current={1} />
       </div>
@@ -149,7 +156,7 @@ export default function OnboardingProcess() {
             <InputField label="Occupation" value={form.occupation} onChange={(v:any)=>update("occupation",v)} />
 
             <DropdownField
-              label="Income"
+              label="Income Range"
               value={form.income}
               options={["1–2 LPA","2–5 LPA","5–10 LPA","10+ LPA"]}
               onChange={(v:any)=>update("income",v)}
@@ -157,31 +164,39 @@ export default function OnboardingProcess() {
 
             <InputField label="Company" value={form.company} onChange={(v:any)=>update("company",v)} />
             <InputField label="Designation" value={form.designation} onChange={(v:any)=>update("designation",v)} />
-            <InputField label="PAN No." value={form.pan} onChange={(v:any)=>update("pan",v)} />
-            <InputField label="Aadhaar Number" value={form.aadhaar} onChange={(v:any)=>update("aadhaar",v)} />
+            <InputField label="PAN No" value={form.pan} onChange={(v:any)=>update("pan",v)} />
+            <InputField label="Aadhaar No" value={form.aadhaar} onChange={(v:any)=>update("aadhaar",v)} />
             <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v:any)=>update("contactPersonName",v)} />
-            <InputField label="Contact Person No." value={form.contactPersonNo} onChange={(v:any)=>update("contactPersonNo",v)} />
+            <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v:any)=>update("contactPersonNo",v)} />
 
             <DropdownField
               label="Relationship"
               value={form.relationship}
-              options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Grand Son","Grand-Daughter","Grand Father","Grand Mother","Others"]}
+              options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Others"]}
               onChange={(v:any)=>update("relationship",v)}
             />
 
             {form.relationship === "Others" && (
-              <InputField label="Specify Relationship" value={form.relationshipOther} onChange={(v:any)=>update("relationshipOther",v)} />
+              <InputField
+                label="Specify Relationship"
+                value={form.relationshipOther}
+                onChange={(v:any)=>update("relationshipOther",v)}
+              />
             )}
 
             <DropdownField
               label="Client Source"
               value={form.clientSource}
-              options={["Reference","Online","YES Con","Start-up","Jubilan","Spotlight-YES","Others"]}
+              options={["Reference","Online","YES Con","Start-up","Others"]}
               onChange={(v:any)=>update("clientSource",v)}
             />
 
             {form.clientSource === "Others" && (
-              <InputField label="Specify Client Source" value={form.clientSourceOther} onChange={(v:any)=>update("clientSourceOther",v)} />
+              <InputField
+                label="Specify Client Source"
+                value={form.clientSourceOther}
+                onChange={(v:any)=>update("clientSourceOther",v)}
+              />
             )}
           </div>
 
@@ -195,7 +210,14 @@ export default function OnboardingProcess() {
                 onChange={(v:any)=>update("permAddress",v)}
               />
               <label className="flex items-center gap-2 mt-2 text-sm">
-                <input type="checkbox" checked={samePerm} onChange={(e)=>{setSamePerm(e.target.checked);syncPermanent();}} />
+                <input
+                  type="checkbox"
+                  checked={samePerm}
+                  onChange={(e) => {
+                    setSamePerm(e.target.checked);
+                    syncPermanent();
+                  }}
+                />
                 Same as communication address
               </label>
             </div>
@@ -204,8 +226,12 @@ export default function OnboardingProcess() {
           <div className="mt-6">
             <FamilyAccounts
               accounts={familyAccounts}
-              add={()=>setFamilyAccounts([...familyAccounts,""])}
-              update={(i:any,v:any)=>{const l=[...familyAccounts];l[i]=v;setFamilyAccounts(l);}}
+              add={() => setFamilyAccounts([...familyAccounts, ""])}
+              update={(i:any,v:any)=>{
+                const list=[...familyAccounts];
+                list[i]=v;
+                setFamilyAccounts(list);
+              }}
               remove={(i:any)=>setFamilyAccounts(familyAccounts.filter((_,idx)=>idx!==i))}
             />
           </div>
@@ -225,42 +251,14 @@ export default function OnboardingProcess() {
           <InputField label="Scheme Name" value={form.schemeName} onChange={(v:any)=>update("schemeName",v)} />
           <InputField label="Broker Name" value={form.brokerName} onChange={(v:any)=>update("brokerName",v)} />
           <InputField label="Nominee Name" value={form.nomineeName} onChange={(v:any)=>update("nomineeName",v)} />
-
-          <DropdownField
-            label="Nominee Relationship"
-            value={form.nomineeRelationship}
-            options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Others"]}
-            onChange={(v:any)=>update("nomineeRelationship",v)}
-          />
-
-          {form.nomineeRelationship === "Others" && (
-            <InputField label="Specify Nominee Relationship" value={form.nomineeRelationshipOther} onChange={(v:any)=>update("nomineeRelationshipOther",v)} />
-          )}
-
           <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v:any)=>update("nomineeContact",v)} />
           <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeEmail",v)} />
-          <InputField label="Nominee Aadhaar No." value={form.nomineeAadhar} onChange={(v:any)=>update("nomineeAadhar",v)} />
-          <InputField label="Nominee PAN No." value={form.nomineePan} onChange={(v:any)=>update("nomineePan",v)} />
-
-          <DropdownField
-            label="A/C Type"
-            value={form.acType}
-            options={["Resident India","NRI","HUF","PUT CTD","Minor","Joint","Others"]}
-            onChange={(v:any)=>update("acType",v)}
-          />
-
-          {form.acType === "Others" && (
-            <InputField label="Specify A/C Type" value={form.acTypeOther} onChange={(v:any)=>update("acTypeOther",v)} />
-          )}
-
-          <InputField type="date" label="A/C Opening Date" value={form.accountOpeningDate} onChange={(v:any)=>update("accountOpeningDate",v)} />
         </div>
       )}
 
-      {/* CONTACT DETAILS */}
+      {/* ================= CONTACT DETAILS ================= */}
       <SectionHeader
         title="Contact Details ➤"
-        //isOpen={openSection === "contact"}
         toggle={() => toggleSection("contact")}
       />
 
@@ -270,18 +268,17 @@ export default function OnboardingProcess() {
         </div>
       )}
 
-      {/* BILLING DETAILS */}
+      {/* ================= BILLING DETAILS ================= */}
       <SectionHeader
         title="Billing Details ➤"
-        //isOpen={openSection === "billing"}
         toggle={() => toggleSection("billing")}
       />
 
       {openSection === "billing" && (
         <>
           <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Name" value={form.billName} onChange={(v:any)=>update("billName",v)} />
-            <InputField label="GST No." value={form.gst} onChange={(v:any)=>update("gst",v)} />
+            <InputField label="Billing Name" value={form.billName} onChange={(v:any)=>update("billName",v)} />
+            <InputField label="GST No" value={form.gst} onChange={(v:any)=>update("gst",v)} />
           </div>
           <div className="mt-6">
             <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v:any)=>update("billingAddress",v)} />
@@ -289,10 +286,9 @@ export default function OnboardingProcess() {
         </>
       )}
 
-      {/* BANK DETAILS */}
+      {/* ================= BANK DETAILS ================= */}
       <SectionHeader
         title="Bank Details ➤"
-        //isOpen={openSection === "bank"}
         toggle={() => toggleSection("bank")}
       />
 
@@ -300,9 +296,9 @@ export default function OnboardingProcess() {
         <div className="mt-4 grid grid-cols-2 gap-6">
           <InputField label="Holder Name" value={form.holderName} onChange={(v:any)=>update("holderName",v)} />
           <InputField label="Bank Name" value={form.bankName} onChange={(v:any)=>update("bankName",v)} />
-          <InputField label="Acc Number" value={form.accNumber} onChange={(v:any)=>update("accNumber",v)} />
+          <InputField label="Account Number" value={form.accNumber} onChange={(v:any)=>update("accNumber",v)} />
           <InputField label="IFSC" value={form.ifsc} onChange={(v:any)=>update("ifsc",v)} />
-          <InputField label="MICR No." value={form.micr} onChange={(v:any)=>update("micr",v)} />
+          <InputField label="MICR" value={form.micr} onChange={(v:any)=>update("micr",v)} />
         </div>
       )}
 
@@ -316,13 +312,16 @@ export default function OnboardingProcess() {
         </button>
       </div>
 
-      <PreviewModal open={preview} data={form} onClose={() => setPreview(false)} onSubmit={submitForm} />
+      <PreviewModal
+        open={preview}
+        data={form}
+        onClose={() => setPreview(false)}
+        onSubmit={submitForm}
+      />
       <SuccessPopup open={success} />
     </div>
   );
 }
-
-
 
 
 

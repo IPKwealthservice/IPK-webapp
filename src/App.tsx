@@ -46,6 +46,7 @@ import Agreement from "@/components/sales/OnboardingPage/steps/Agreement";
 import ESign from "@/components/sales/OnboardingPage/steps/ESign";
 import OnboardingListPage from "@/components/sales/OnboardingPage/OnboardingListPage";
 import OnboardingPage from "@/styles";
+import "./styles/media.css";
 
 type Role = "ADMIN" | "RM" | "STAFF" | "MARKETING" | "ANALYST";
 
