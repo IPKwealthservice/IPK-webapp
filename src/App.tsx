@@ -25,7 +25,7 @@ import SalesEvent from "@/pages/Sales/Event_sales/Event_Rm";
 import LeadStagesPage from "@/pages/Sales/LeadStagesPage";
 import ViewLeadPage from "@/pages/Sales/ViewLeadPage";
 import LeadProfileLanding from "@/pages/Sales/LeadProfileLanding";
-import OnboardingProcess from "@/styles";
+import OnboardingProcess from "@/components/sales/OnboardingPage/OnboardingProcess";
 
 // Admin
 import AdminDashboard from "@/pages/Admin/AdminDashboard";

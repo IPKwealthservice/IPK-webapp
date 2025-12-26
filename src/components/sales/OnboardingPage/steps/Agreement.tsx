@@ -20,6 +20,8 @@ export default function Agreement() {
 
         <p className="text-gray-600 mb-6">
           Please read and confirm the onboarding agreement below.
+
+
         </p>
 
         <div className="border rounded-lg p-4 bg-gray-50 h-60 overflow-y-auto">
