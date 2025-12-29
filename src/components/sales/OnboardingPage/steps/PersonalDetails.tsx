@@ -52,7 +52,7 @@ export default function PersonalDetails({
 }: Props) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField label="Name" value={form.name} onChange={(v: any) => update("name", v)} />
         <InputField label="Location" value={form.location} onChange={(v: any) => update("location", v)} />
 
@@ -112,35 +112,48 @@ export default function PersonalDetails({
         )}
       </div>
 
-      {/* Address Fields */}
-      <div className="grid grid-cols-2 gap-6">
-        <TextAreaField
-          label="Communication Address"
-          value={form.commAddress}
-          onChange={(v: any) => update("commAddress", v)}
-        />
+      {/* ================= ADDRESS ================= */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <TextAreaField
+    label="Communication Address"
+    value={form.commAddress}
+    onChange={(v: any) => update("commAddress", v)}
+  />
 
-        <div>
-          <TextAreaField
-            label="Permanent Address"
-            value={form.permAddress}
-            onChange={(v: any) => update("permAddress", v)}
-          />
+  <div className="flex flex-col">
+    <TextAreaField
+      label="Permanent Address"
+      value={form.permAddress}
+      onChange={(v: any) => update("permAddress", v)}
+    />
 
-          <div className="flex items-center mt-2 gap-2">
-            <input type="checkbox" onChange={copyCommToPermanent} />
-            <span className="text-sm text-gray-700">Same as communication address</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Family Accounts */}
-      <FamilyAccounts
-        accounts={familyAccounts}
-        add={addFamily}
-        update={updateFamily}
-        remove={removeFamily}
+    <label className="flex items-center gap-2 mt-2 text-sm text-gray-700">
+      <input
+        type="checkbox"
+        className="accent-blue-600"
+        onChange={copyCommToPermanent}
       />
-    </div>
+      Same as communication address
+    </label>
+  </div>
+</div>
+
+{/* ✅ SEPARATOR */}
+<div className="border-t my-8" />
+
+{/* ================= FAMILY ACCOUNTS (FULL WIDTH) ================= */}
+<div className="w-full space-y-3">
+  <h3 className="text-sm font-medium text-gray-800">
+    Family Accounts
+  </h3>
+
+  <FamilyAccounts
+    accounts={familyAccounts}
+    add={addFamily}
+    update={updateFamily}
+    remove={removeFamily}
+  />
+</div>
+</div>
   );
 }

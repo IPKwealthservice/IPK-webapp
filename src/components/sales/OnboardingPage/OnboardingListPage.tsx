@@ -54,33 +54,18 @@ function PreviewModal({
   if (!lead) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-lg">
         <h3 className="text-lg font-semibold mb-4">
           Client Profile Preview
         </h3>
 
         <div className="space-y-3 text-sm">
-          <div>
-            <span className="text-gray-500">Lead ID:</span>{" "}
-            <span className="font-medium">{lead.id}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Name:</span>{" "}
-            <span className="font-medium">{lead.name}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Mobile:</span>{" "}
-            <span className="font-medium">{lead.mobile}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Source:</span>{" "}
-            <span className="font-medium">{lead.source}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Status:</span>{" "}
-            <span className="font-medium">Completed</span>
-          </div>
+          <div><span className="text-gray-500">Lead ID:</span> <span className="font-medium">{lead.id}</span></div>
+          <div><span className="text-gray-500">Name:</span> <span className="font-medium">{lead.name}</span></div>
+          <div><span className="text-gray-500">Mobile:</span> <span className="font-medium">{lead.mobile}</span></div>
+          <div><span className="text-gray-500">Source:</span> <span className="font-medium">{lead.source}</span></div>
+          <div><span className="text-gray-500">Status:</span> <span className="font-medium">Completed</span></div>
         </div>
 
         <div className="flex justify-end mt-6">
@@ -100,7 +85,7 @@ function PreviewModal({
 
 function TableHeader() {
   return (
-    <thead className="bg-gray-50 border-b">
+    <thead className="bg-gray-50 border-b hidden sm:table-header-group">
       <tr className="text-xs font-semibold text-gray-500 uppercase">
         <th className="px-4 py-3 w-1/6 text-left">Lead ID</th>
         <th className="px-4 py-3 w-1/6 text-left">Name</th>
@@ -126,20 +111,16 @@ function LeadRow({
 }) {
   return (
     <tr className="border-b last:border-0 hover:bg-gray-50">
-      <td className="px-4 py-4 font-medium text-left">
-        {lead.id}
-      </td>
+      <td className="px-4 py-3 font-medium text-left whitespace-nowrap">{lead.id}</td>
 
-      <td className="px-4 py-4 text-left">
+      <td className="px-4 py-3 text-left">
         <div className="font-medium">{lead.name}</div>
         <div className="text-xs text-gray-400">{lead.source}</div>
       </td>
 
-      <td className="px-4 py-4 text-center">
-        {lead.mobile}
-      </td>
+      <td className="px-4 py-3 text-center whitespace-nowrap">{lead.mobile}</td>
 
-      <td className="px-4 py-4 text-center">
+      <td className="px-4 py-3 text-center">
         {lead.status === "COMPLETED" ? (
           <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
             Completed
@@ -149,11 +130,9 @@ function LeadRow({
         )}
       </td>
 
-      <td className="px-4 py-4 text-center text-gray-400">
-        -
-      </td>
+      <td className="px-4 py-3 text-center text-gray-400">-</td>
 
-      <td className="px-4 py-4 text-center">
+      <td className="px-4 py-3 text-center whitespace-nowrap">
         {lead.status === "COMPLETED" ? (
           <button
             onClick={onView}
@@ -193,8 +172,9 @@ function TableCard({
         {title}
       </h3>
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-        <table className="w-full table-fixed text-sm">
+      {/* ✅ RESPONSIVE WRAPPER */}
+      <div className="bg-white rounded-xl border shadow-sm overflow-x-auto">
+        <table className="w-full min-w-[720px] table-fixed text-sm">
           <TableHeader />
           <tbody>
             {leads.map((lead) => (
@@ -219,7 +199,7 @@ export default function OnboardingListPage() {
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       <h2 className="text-lg font-semibold mb-6">
         Onboarding List
       </h2>
@@ -240,7 +220,6 @@ export default function OnboardingListPage() {
         onView={(lead) => setPreviewLead(lead)}
       />
 
-      {/* Preview Modal */}
       <PreviewModal
         lead={previewLead}
         onClose={() => setPreviewLead(null)}

@@ -131,6 +131,7 @@ export default function ClientProfile() {
   /* ================= UI ================= */
   return (
     <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+      <div className="mobile-padding tablet-padding desktop-padding">
 
       {/* HEADER STEPS (ONLY FORM, NOT PREVIEW) */}
       <div className="flex justify-center mb-6">
@@ -158,7 +159,7 @@ export default function ClientProfile() {
             <DropdownField
               label="Income Range"
               value={form.income}
-              options={["1–2 LPA","2–5 LPA","5–10 LPA","10+ LPA"]}
+              options={["1–2 LPA","2–3 LPA","3–4 LPA","4–5 LPA","5–6 LPA","6–7 LPA","7–8 LPA","8–9 LPA","9–10 LPA","10+ LPA"]}
               onChange={(v:any)=>update("income",v)}
             />
 
@@ -223,7 +224,7 @@ export default function ClientProfile() {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <FamilyAccounts
               accounts={familyAccounts}
               add={() => setFamilyAccounts([...familyAccounts, ""])}
@@ -321,6 +322,7 @@ export default function ClientProfile() {
       <SuccessPopup open={success} />
 
       
+    </div>
     </div>
   );
 }
