@@ -9,12 +9,10 @@ export default function Agreement() {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
+    <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
       <div className="flex justify-center mb-6">
         <HeaderSteps current={5} />
       </div>
-
-      <div className="bg-white shadow-lg rounded-xl p-10">
 
         <h2 className="text-2xl font-semibold mb-6">Agreement</h2>
 
@@ -45,6 +43,6 @@ export default function Agreement() {
           </button>
         </div>
       </div>
-    </div>
+   // </div>
   );
 }

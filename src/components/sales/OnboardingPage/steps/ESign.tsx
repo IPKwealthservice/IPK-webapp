@@ -3,12 +3,10 @@ import HeaderSteps from "../components/HeaderSteps";
 
 export default function ESign() {
   return (
-    <div className="max-w-5xl mx-auto p-8">
+  <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
       <div className="flex justify-center mb-6">
         <HeaderSteps current={6} />
       </div>
-
-      <div className="bg-white shadow-lg rounded-xl p-10">
 
         <h2 className="text-2xl font-semibold mb-6">E-Sign</h2>
 
@@ -27,6 +25,6 @@ export default function ESign() {
         </div>
 
       </div>
-    </div>
+    //</div>
   );
 }

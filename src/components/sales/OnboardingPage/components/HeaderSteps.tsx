@@ -35,7 +35,6 @@ export default function HeaderSteps({ current }: { current: number }) {
 
   return (
     <div className="mobile-padding tablet-padding desktop-padding">
-      <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
 
           {/* ✅ FIXED MOBILE RESPONSIVE CONTAINER */}
@@ -83,6 +82,6 @@ export default function HeaderSteps({ current }: { current: number }) {
 
         </div>
       </div>
-    </div>
+   // </div>
   );
 }
