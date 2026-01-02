@@ -1,0 +1,43 @@
+.gauge-wrapper {
+  text-align: center;
+  width: 100%;
+}
+
+.gauge {
+  display: flex;
+  justify-content: center;
+}
+
+.gauge-svg {
+  width: 320px;
+  max-width: 90%;
+}
+
+.needle {
+  stroke: #111;
+  stroke-width: 2.5;
+  transition: transform 0.6s ease-in-out;
+}
+
+.label {
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .gauge-svg {
+    width: 260px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .gauge-svg {
+    width: 220px;
+  }
+
+  .label {
+    font-size: 14px;
+  }
+}

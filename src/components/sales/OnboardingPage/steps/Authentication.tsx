@@ -93,7 +93,7 @@ export default function Authentication() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+      <div className="mobile-padding tablet-padding desktop-padding">
 
       {/* Step Header */}
       <div className="flex justify-center mb-6">

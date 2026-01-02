@@ -95,20 +95,35 @@ export default function ClientProfile() {
   const update = (field: string, value: any) =>
     setForm((prev: any) => ({ ...prev, [field]: value }));
 
-  /* ================= AGE LOGIC ================= */
-  const calculateAge = (dob: string) => {
-    update("dob", dob);
-    if (!dob) return update("age", "");
-    const birth = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    if (
-      today <
-      new Date(today.getFullYear(), birth.getMonth(), birth.getDate())
-    )
-      age--;
-    update("age", String(age));
-  };
+const handleDobChange = (dob: string) => {
+  setForm((prev: any) => ({
+    ...prev,
+    dob,
+  }));
+
+  if (!dob) {
+    setForm((prev: any) => ({
+      ...prev,
+      age: "",
+    }));
+    return;
+  }
+
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  setForm((prev: any) => ({
+    ...prev,
+    age: age.toString(),
+  }));
+};
 
   /* ================= ADDRESS LOGIC ================= */
   const [samePerm, setSamePerm] = useState(false);
@@ -130,7 +145,6 @@ export default function ClientProfile() {
 
   /* ================= UI ================= */
   return (
-    <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
       <div className="mobile-padding tablet-padding desktop-padding">
 
       {/* HEADER STEPS (ONLY FORM, NOT PREVIEW) */}
@@ -142,7 +156,7 @@ export default function ClientProfile() {
 
       {/* ================= PERSONAL DETAILS ================= */}
       <SectionHeader
-        title="Personal Details ➤"
+        title="Personal Info ➤"
         toggle={() => toggleSection("personal")}
       />
 
@@ -152,8 +166,8 @@ export default function ClientProfile() {
             <InputField label="Name" value={form.name} onChange={(v:any)=>update("name",v)} />
             <InputField label="Location" value={form.location} onChange={(v:any)=>update("location",v)} />
             <InputField label="Gender" value={form.gender} onChange={(v:any)=>update("gender",v)} />
-            <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
-            <InputField label="Age" readOnly value={form.age} />
+            <InputField label="Date of Birth" type="date" value={form.dob} onChange={(e: any) => handleDobChange(e.target.value)}/>
+            <InputField label="Age" value={form.age} readOnly />
             <InputField label="Occupation" value={form.occupation} onChange={(v:any)=>update("occupation",v)} />
 
             <DropdownField
@@ -161,7 +175,7 @@ export default function ClientProfile() {
               value={form.income}
               options={["1–2 LPA","2–3 LPA","3–4 LPA","4–5 LPA","5–6 LPA","6–7 LPA","7–8 LPA","8–9 LPA","9–10 LPA","10+ LPA"]}
               onChange={(v:any)=>update("income",v)}
-            />
+            />0
 
             <InputField label="Company" value={form.company} onChange={(v:any)=>update("company",v)} />
             <InputField label="Designation" value={form.designation} onChange={(v:any)=>update("designation",v)} />
@@ -241,7 +255,7 @@ export default function ClientProfile() {
 
       {/* ================= DEMAT ACCOUNT ================= */}
       <SectionHeader
-        title="Demat Account ➤"
+        title="Demat Info ➤"
         toggle={() => toggleSection("demat")}
       />
 
@@ -259,7 +273,7 @@ export default function ClientProfile() {
 
       {/* ================= CONTACT DETAILS ================= */}
       <SectionHeader
-        title="Contact Details ➤"
+        title="Contact Info ➤"
         toggle={() => toggleSection("contact")}
       />
 
@@ -271,7 +285,7 @@ export default function ClientProfile() {
 
       {/* ================= BILLING DETAILS ================= */}
       <SectionHeader
-        title="Billing Details ➤"
+        title="Billing Info ➤"
         toggle={() => toggleSection("billing")}
       />
 
@@ -289,7 +303,7 @@ export default function ClientProfile() {
 
       {/* ================= BANK DETAILS ================= */}
       <SectionHeader
-        title="Bank Details ➤"
+        title="Bank Info ➤"
         toggle={() => toggleSection("bank")}
       />
 
@@ -323,7 +337,7 @@ export default function ClientProfile() {
 
       
     </div>
-    </div>
+    //</div>
   );
 }
 

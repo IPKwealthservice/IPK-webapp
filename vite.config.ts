@@ -1,4 +1,3 @@
-// vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
@@ -7,7 +6,11 @@ import { fileURLToPath, URL } from "node:url";
 export default defineConfig({
   plugins: [
     react(),
-    svgr({ svgrOptions: { icon: true } }),
+    svgr({
+      svgrOptions: {
+        icon: true,
+      },
+    }),
   ],
   resolve: {
     alias: {
@@ -17,11 +20,13 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // All frontend requests to /graphql will be proxied to the API
       "/graphql": {
         target: "http://localhost:3333",
         changeOrigin: true,
-        secure: false,
+      },
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
       },
     },
   },

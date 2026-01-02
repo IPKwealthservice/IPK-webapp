@@ -15,18 +15,10 @@ const QUESTIONS: Question[] = [
   {
     id: 1,
     question: "What is your current net worth like?",
-    options: [" 1–10 crores", "10–20 crores", "20–25 crores", "25 crores and above"],
+    options: [" Below 1 crore", "1–10 crores", "10–25 crores", "25 crores and above"],
   },
   {
     id: 2,
-    question: "How much do you want to contribute each month?",
-    options: [
-      "Monthly Contribution / Initial Investment < 10%",
-      "Monthly Contribution / Initial Investment >= 10%",
-    ],
-  },
-  {
-    id: 3,
     question: "What is the primary reason you are investing your funds?",
     options: [
       "Long-term capital growth",
@@ -36,7 +28,7 @@ const QUESTIONS: Question[] = [
     ],
   },
   {
-    id: 4,
+    id: 3,
     question:
       "Which of the following best describes your current stage of life?",
     options: [
@@ -48,30 +40,19 @@ const QUESTIONS: Question[] = [
     ],
   },
   {
-    id: 5,
-    question:
-      "What would you estimate your net worth to be, that is total assests excluding the family, home after liabilities?",
-    options: [
-      "Below 1 crore",
-      "1–5 crore",
-      "5–10 crore",
-      "10 crore and above",
-    ],
-  },
-  {
-    id: 6,
+    id: 4,
     question:
       "When will you need to start withdrawing funds from this account?",
     options: [" 1 year", "2–5 years", "5–10 years", "More than 10 years from now"],
   },
   {
-    id: 7,
+    id: 5,
     question:
       "How would you characterize your willingness to accept investment risk in order to achieve your investment objectives?",
     options: ["Low", "Average", "High", "Below Average", "Above Average"],
   },
   {
-    id: 8,
+    id: 6,
     question: "How familiar are you with investment matters?",
     options: [
       "Not familiar",
@@ -81,7 +62,7 @@ const QUESTIONS: Question[] = [
     ],
   },
   {
-    id: 9,
+    id: 7,
     question:
       "What is your level of reliance on the income generated from the portfolio to meet your needs?",
     options: [
@@ -92,7 +73,7 @@ const QUESTIONS: Question[] = [
     ],
   },
   {
-    id: 10,
+    id: 8,
     question:
       "When considering your investments and making investments decisions, do you think about the impact of possible losses or possible gains?",
     options: [
@@ -102,21 +83,56 @@ const QUESTIONS: Question[] = [
       "I always consider possible gains",
     ],
   },
+  {
+    id: 9,
+    question:
+      "What is the largest indicative drawdown you could tolerate if a financial crisis struck?",
+    options: [
+      "Less than 10%",
+      "No more than 30%",
+      "50% or more",
+      "No more than 20%",
+      "No more than 40%",
+    ],
+  },
+  {
+    id: 10,
+    question:
+      "How familiar are you with different types of investments?",
+    options: [
+      "Liquid Funds FD, PPF",
+      "Debt mutual Funds, Bonds",
+      "Shares, Equality Oriented Funds",
+      "Alternate Assests",
+    ],
+  },
+  {
+    id: 11,
+    question:
+      "If your investments makes 10% losses next year, will you?",
+    options: [
+      "Sell your investments and put the proceeds in fixed deposits",
+      "Sell some investments and continue to hold the rest",
+      "Do nothing",
+      "Take advantage of the correction and invest some more money",
+    ],
+  },
 ];
 
-/* ================= OPTION SCORE MAP ================= */
+/* ================= OPTION SCORE MAP (UPDATED ONLY) ================= */
 
 const OPTION_SCORES: Record<number, number[]> = {
-  1: [1, 2, 3, 4],
-  2: [1, 3],
-  3: [4, 2, 3, 1],
-  4: [1, 2, 3, 4, 3],
-  5: [1, 2, 3, 4],
-  6: [1, 2, 3, 4],
-  7: [1, 3, 5, 2, 4],
-  8: [1, 4, 2, 3],
-  9: [4, 3, 2, 1],
-  10: [1, 2, 3, 4],
+   1: [2, 3, 4, 5],
+  2: [5, 2, 4, 3],
+  3: [5, 2, 5, 4, 4],
+  4: [1, 3, 4, 5],
+  5: [1, 2, 5, 3, 4],
+  6: [1, 5, 3, 4],
+  7: [5, 3, 4, 4],
+  8: [2, 5, 2, 1],
+  9: [1, 3, 5, 3, 4],
+  10: [1, 4, 3, 5],
+  11: [1, 3, 4, 5],
 };
 
 /* ================= COMPONENT ================= */
@@ -141,7 +157,7 @@ export default function RiskType() {
       }
     });
 
-    const percentage = Math.min(100, Math.round((totalScore / 40) * 100));
+    const percentage = Math.min(100, Math.round((totalScore / 55) * 100));
     setRiskValue(percentage);
 
     if (percentage <= 33) setRiskLabel("Conservative");
@@ -154,7 +170,8 @@ export default function RiskType() {
   const needleRotation = -90 + (riskValue * 180) / 100;
 
   return (
-    <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+<div className="mobile-padding tablet-padding desktop-padding">
+    
       <div className="flex justify-center mb-6">
         <HeaderSteps current={showResult ? 4 : 3} />
       </div>
@@ -227,7 +244,7 @@ export default function RiskType() {
           </div>
 
           <p className="mt-6 text-lg font-semibold">{riskLabel} Investor</p>
-        </div>
+        </div> 
       )}
     </div>
   );
