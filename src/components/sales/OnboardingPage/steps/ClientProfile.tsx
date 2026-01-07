@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import ContactDetails from "../steps/ContactDetails";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 
 // COMPONENTS
 import InputField from "../components/InputField";
@@ -95,34 +99,32 @@ export default function ClientProfile() {
   const update = (field: string, value: any) =>
     setForm((prev: any) => ({ ...prev, [field]: value }));
 
-const handleDobChange = (dob: string) => {
-  setForm((prev: any) => ({
-    ...prev,
-    dob,
-  }));
-
-  if (!dob) {
-    setForm((prev: any) => ({
-      ...prev,
-      age: "",
-    }));
+const handleDobChange = (value: any) => {
+  if (!value) {
+    update("dob", "");
+    update("age", "");
     return;
   }
 
-  const birthDate = new Date(dob);
+  const birthDate = value.toDate();
   const today = new Date();
 
-  let age = today.getFullYear() - birthDate.getFullYear();
+  if (birthDate > today) {
+    alert("Date of birth cannot be in the future");
+    update("dob", "");
+    update("age", "");
+    return;
+  }
 
+  let age = today.getFullYear() - birthDate.getFullYear();
   const m = today.getMonth() - birthDate.getMonth();
+
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
 
-  setForm((prev: any) => ({
-    ...prev,
-    age: age.toString(),
-  }));
+  update("dob", value.format("YYYY-MM-DD")); // ✅ internal format
+  update("age", age);
 };
 
   /* ================= ADDRESS LOGIC ================= */
@@ -133,6 +135,7 @@ const handleDobChange = (dob: string) => {
   /* ================= FAMILY ACCOUNTS ================= */
   const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
 
+  
   /* ================= PREVIEW ================= */
   const [preview, setPreview] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -166,8 +169,48 @@ const handleDobChange = (dob: string) => {
             <InputField label="Name" value={form.name} onChange={(v:any)=>update("name",v)} />
             <InputField label="Location" value={form.location} onChange={(v:any)=>update("location",v)} />
             <InputField label="Gender" value={form.gender} onChange={(v:any)=>update("gender",v)} />
-            <InputField label="Date of Birth" type="date" value={form.dob} onChange={(e: any) => handleDobChange(e.target.value)}/>
-            <InputField label="Age" value={form.age} readOnly />
+           <div className="flex flex-col gap-1">
+  <label className="text-sm text-gray-700">
+    Date of Birth
+  </label>
+
+  <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <DatePicker
+      value={form.dob ? dayjs(form.dob) : null}
+      onChange={handleDobChange}
+      format="DD/MM/YYYY"
+      disableFuture
+      slotProps={{
+        textField: {
+          fullWidth: true,
+          size: "small",
+          sx: {
+            "& .MuiPickersOutlinedInput-root": {
+              height: "42px",
+              borderRadius: "0.375rem",
+              backgroundColor: "#ffffff",
+            },
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#e5e7eb",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#d1d5db",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#6366f1",
+            },
+            "& input": {
+              padding: "8px 12px",
+              fontSize: "14px",
+            },
+          },
+        },
+      }}
+    />
+  </LocalizationProvider>
+</div>
+
+<InputField label="Age" value={form.age} readOnly />
             <InputField label="Occupation" value={form.occupation} onChange={(v:any)=>update("occupation",v)} />
 
             <DropdownField
@@ -175,7 +218,7 @@ const handleDobChange = (dob: string) => {
               value={form.income}
               options={["1–2 LPA","2–3 LPA","3–4 LPA","4–5 LPA","5–6 LPA","6–7 LPA","7–8 LPA","8–9 LPA","9–10 LPA","10+ LPA"]}
               onChange={(v:any)=>update("income",v)}
-            />0
+            />
 
             <InputField label="Company" value={form.company} onChange={(v:any)=>update("company",v)} />
             <InputField label="Designation" value={form.designation} onChange={(v:any)=>update("designation",v)} />

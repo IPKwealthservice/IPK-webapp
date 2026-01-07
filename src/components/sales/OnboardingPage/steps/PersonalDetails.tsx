@@ -3,10 +3,15 @@ import InputField from "../components/InputField";
 import TextAreaField from "../components/TextAreaField";
 import DropdownField from "../components/DropdownField";
 import FamilyAccounts from "../components/FamilyAccounts";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 
 interface Props {
   form: any;
   update: (field: string, value: any) => void;
+  handleDobChange: (value: any) => void;
   calculateAge: (dob: string) => void;
   familyAccounts: string[];
   addFamily: () => void;
@@ -43,6 +48,7 @@ const clientSourceOptions = [
 export default function PersonalDetails({
   form,
   update,
+  handleDobChange,
   calculateAge,
   familyAccounts,
   addFamily,
@@ -52,13 +58,59 @@ export default function PersonalDetails({
 }: Props) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField label="Name" value={form.name} onChange={(v: any) => update("name", v)} />
         <InputField label="Location" value={form.location} onChange={(v: any) => update("location", v)} />
 
         <InputField label="Gender" value={form.gender} onChange={(v: any) => update("gender", v)} />
 
-        <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+  <DatePicker
+    label="Date of Birth"
+    value={form.dob ? dayjs(form.dob) : null}
+    onChange={handleDobChange}
+    format="DD/MM/YYYY"
+    disableFuture
+    slotProps={{
+      textField: {
+        fullWidth: true,
+        size: "small",
+        sx: {
+          // ✅ MATCH HEIGHT
+          "& .MuiPickersOutlinedInput-root": {
+            height: "42px",
+            padding: "0",
+            borderRadius: "0.375rem", // rounded-md
+            backgroundColor: "#ffffff",
+          },
+
+          // ✅ MATCH BORDER COLOR
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#e5e7eb", // tailwind gray-300
+          },
+
+          // ✅ HOVER
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#d1d5db",
+          },
+
+          // ✅ FOCUS
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#6366f1", // indigo
+            borderWidth: "1px",
+          },
+
+          // ✅ TEXT ALIGNMENT
+          "& input": {
+            padding: "8px 12px",
+            fontSize: "14px",
+          },
+        },
+      },
+    }}
+  />
+</LocalizationProvider>
+
         <InputField label="Age" value={form.age} readOnly />
 
         <InputField label="Occupation" value={form.occupation} onChange={(v: any) => update("occupation", v)} />
