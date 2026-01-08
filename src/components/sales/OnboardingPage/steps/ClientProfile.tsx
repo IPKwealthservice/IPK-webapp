@@ -136,6 +136,11 @@ const handleDobChange = (value: any) => {
   const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
 
   
+
+
+
+
+  
   /* ================= PREVIEW ================= */
   const [preview, setPreview] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -308,23 +313,57 @@ const handleDobChange = (value: any) => {
           <InputField label="Client Code" value={form.clientCode} onChange={(v:any)=>update("clientCode",v)} />
           <InputField label="Scheme Name" value={form.schemeName} onChange={(v:any)=>update("schemeName",v)} />
           <InputField label="Broker Name" value={form.brokerName} onChange={(v:any)=>update("brokerName",v)} />
-          <InputField label="Nominee Name" value={form.nomineeName} onChange={(v:any)=>update("nomineeName",v)} />
+          <InputField label="Nominee Relationship" value={form.nomineeName} onChange={(v:any)=>update("nomineeName",v)} />
+          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeRelationship",v)} />
           <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v:any)=>update("nomineeContact",v)} />
           <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeEmail",v)} />
+          <InputField label="Nominee Aadhar" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeAadhar",v)} />
+          <InputField label="Nominee PAN" value={form.nomineeEmail} onChange={(v:any)=>update("nomineePan",v)} />
+          <InputField label="A/C Type" value={form.nomineeEmail} onChange={(v:any)=>update("a/cType",v)} />
+          <InputField label="A/C Opening Date" value={form.nomineeEmail} onChange={(v:any)=>update("a/cOpeningDate",v)} />
         </div>
       )}
 
       {/* ================= CONTACT DETAILS ================= */}
-      <SectionHeader
-        title="Contact Info ➤"
-        toggle={() => toggleSection("contact")}
-      />
+      {/* =============== CONTACT DETAILS =============== */}
+<SectionHeader
+  title="Contact Info ➤"
+  toggle={() => toggleSection("contact")}
+/>
 
-      {openSection === "contact" && (
-        <div className="mt-4">
-          <ContactDetails form={form} update={update} />
-        </div>
-      )}
+{openSection === "contact" && (
+  <div className="mt-4 grid grid-cols-2 gap-6">
+    <InputField
+      label="Mobile No"
+      value={form.mobile}
+      onChange={(v: any) => update("mobile", v)}
+    />
+
+    <InputField
+      label="WhatsApp"
+      value={form.whatsapp}
+      onChange={(v: any) => update("whatsapp", v)}
+    />
+
+    <InputField
+      label="Language"
+      value={form.language}
+      onChange={(v: any) => update("language", v)}
+    />
+
+    <InputField
+      label="Email"
+      value={form.email}
+      onChange={(v: any) => update("email", v)}
+    />
+
+    <InputField
+      label="Trade Confirmation No"
+      value={form.tradeConfirmationNo}
+      onChange={(v: any) => update("tradeConfirmationNo", v)}
+    />
+  </div>
+)}
 
       {/* ================= BILLING DETAILS ================= */}
       <SectionHeader
