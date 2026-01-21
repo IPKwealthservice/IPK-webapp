@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import ContactDetails from "../steps/ContactDetails";
+//import ContactDetails from "../steps/ContactDetails";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 
 // COMPONENTS
 import InputField from "../components/InputField";
@@ -38,7 +39,7 @@ export default function ClientProfile() {
     setOpenSection(openSection === name ? null : name);
 
   /* ================= FORM STATE ================= */
-  const [form, setForm] = useState<any>({
+ const [form, setForm] = useState<Record<string, string>>({
     // PERSONAL
     name: "",
     commAddress: "",
@@ -96,10 +97,10 @@ export default function ClientProfile() {
     micr: "",
   });
 
-  const update = (field: string, value: any) =>
-    setForm((prev: any) => ({ ...prev, [field]: value }));
+  const update = (field: string, value: unknown) =>
+    setForm((prev: Record<string, string>) => ({ ...prev, [field]: String(value ?? "") }));
 
-const handleDobChange = (value: any) => {
+const handleDobChange = (value: Dayjs | null) => {
   if (!value) {
     update("dob", "");
     update("age", "");
@@ -123,7 +124,7 @@ const handleDobChange = (value: any) => {
     age--;
   }
 
-  update("dob", value.format("YYYY-MM-DD")); // ✅ internal format
+  update("dob", value.format("YYYY-MM-DD"));
   update("age", age);
 };
 
@@ -135,12 +136,6 @@ const handleDobChange = (value: any) => {
   /* ================= FAMILY ACCOUNTS ================= */
   const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
 
-  
-
-
-
-
-  
   /* ================= PREVIEW ================= */
   const [preview, setPreview] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -171,9 +166,9 @@ const handleDobChange = (value: any) => {
       {openSection === "personal" && (
         <>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField label="Name" value={form.name} onChange={(v:any)=>update("name",v)} />
-            <InputField label="Location" value={form.location} onChange={(v:any)=>update("location",v)} />
-            <InputField label="Gender" value={form.gender} onChange={(v:any)=>update("gender",v)} />
+            <InputField label="Name" value={form.name} onChange={(v:unknown)=>update("name",v)} />
+            <InputField label="Location" value={form.location} onChange={(v:unknown)=>update("location",v)} />
+            <InputField label="Gender" value={form.gender} onChange={(v:unknown)=>update("gender",v)} />
            <div className="flex flex-col gap-1">
   <label className="text-sm text-gray-700">
     Date of Birth
@@ -216,34 +211,34 @@ const handleDobChange = (value: any) => {
 </div>
 
 <InputField label="Age" value={form.age} readOnly />
-            <InputField label="Occupation" value={form.occupation} onChange={(v:any)=>update("occupation",v)} />
+            <InputField label="Occupation" value={form.occupation} onChange={(v:unknown)=>update("occupation",v)} />
 
             <DropdownField
               label="Income Range"
               value={form.income}
               options={["1–2 LPA","2–3 LPA","3–4 LPA","4–5 LPA","5–6 LPA","6–7 LPA","7–8 LPA","8–9 LPA","9–10 LPA","10+ LPA"]}
-              onChange={(v:any)=>update("income",v)}
+              onChange={(v:unknown)=>update("income",v)}
             />
 
-            <InputField label="Company" value={form.company} onChange={(v:any)=>update("company",v)} />
-            <InputField label="Designation" value={form.designation} onChange={(v:any)=>update("designation",v)} />
-            <InputField label="PAN No" value={form.pan} onChange={(v:any)=>update("pan",v)} />
-            <InputField label="Aadhaar No" value={form.aadhaar} onChange={(v:any)=>update("aadhaar",v)} />
-            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v:any)=>update("contactPersonName",v)} />
-            <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v:any)=>update("contactPersonNo",v)} />
+            <InputField label="Company" value={form.company} onChange={(v:unknown)=>update("company",v)} />
+            <InputField label="Designation" value={form.designation} onChange={(v:unknown)=>update("designation",v)} />
+            <InputField label="PAN No" value={form.pan} onChange={(v:unknown)=>update("pan",v)} />
+            <InputField label="Aadhaar No" value={form.aadhaar} onChange={(v:unknown)=>update("aadhaar",v)} />
+            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v:unknown)=>update("contactPersonName",v)} />
+            <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v:unknown)=>update("contactPersonNo",v)} />
 
             <DropdownField
               label="Relationship"
               value={form.relationship}
               options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Others"]}
-              onChange={(v:any)=>update("relationship",v)}
+              onChange={(v:unknown)=>update("relationship",v)}
             />
 
             {form.relationship === "Others" && (
               <InputField
                 label="Specify Relationship"
                 value={form.relationshipOther}
-                onChange={(v:any)=>update("relationshipOther",v)}
+                onChange={(v:unknown)=>update("relationshipOther",v)}
               />
             )}
 
@@ -251,26 +246,26 @@ const handleDobChange = (value: any) => {
               label="Client Source"
               value={form.clientSource}
               options={["Reference","Online","YES Con","Start-up","Others"]}
-              onChange={(v:any)=>update("clientSource",v)}
+              onChange={(v:unknown)=>update("clientSource",v)}
             />
 
             {form.clientSource === "Others" && (
               <InputField
                 label="Specify Client Source"
                 value={form.clientSourceOther}
-                onChange={(v:any)=>update("clientSourceOther",v)}
+                onChange={(v:unknown)=>update("clientSourceOther",v)}
               />
             )}
           </div>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TextAreaField label="Communication Address" value={form.commAddress} onChange={(v:any)=>update("commAddress",v)} />
+            <TextAreaField label="Communication Address" value={form.commAddress} onChange={(v:unknown)=>update("commAddress",v)} />
             <div>
               <TextAreaField
                 label="Permanent Address"
                 readOnly={samePerm}
                 value={samePerm ? form.commAddress : form.permAddress}
-                onChange={(v:any)=>update("permAddress",v)}
+                onChange={(v:unknown)=>update("permAddress",v)}
               />
               <label className="flex items-center gap-2 mt-2 text-sm">
                 <input
@@ -290,12 +285,14 @@ const handleDobChange = (value: any) => {
             <FamilyAccounts
               accounts={familyAccounts}
               add={() => setFamilyAccounts([...familyAccounts, ""])}
-              update={(i:any,v:any)=>{
-                const list=[...familyAccounts];
-                list[i]=v;
-                setFamilyAccounts(list);
-              }}
-              remove={(i:any)=>setFamilyAccounts(familyAccounts.filter((_,idx)=>idx!==i))}
+              update={(i: number, v: string) => {
+  const list = [...familyAccounts];
+  list[i] = v;
+  setFamilyAccounts(list);
+}}
+remove={(i: number) =>
+  setFamilyAccounts(familyAccounts.filter((_, idx) => idx !== i))
+}
             />
           </div>
         </>
@@ -309,18 +306,18 @@ const handleDobChange = (value: any) => {
 
       {openSection === "demat" && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField label="DP ID" value={form.dpId} onChange={(v:any)=>update("dpId",v)} />
-          <InputField label="Client Code" value={form.clientCode} onChange={(v:any)=>update("clientCode",v)} />
-          <InputField label="Scheme Name" value={form.schemeName} onChange={(v:any)=>update("schemeName",v)} />
-          <InputField label="Broker Name" value={form.brokerName} onChange={(v:any)=>update("brokerName",v)} />
-          <InputField label="Nominee Relationship" value={form.nomineeName} onChange={(v:any)=>update("nomineeName",v)} />
-          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeRelationship",v)} />
-          <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v:any)=>update("nomineeContact",v)} />
-          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeEmail",v)} />
-          <InputField label="Nominee Aadhar" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeAadhar",v)} />
-          <InputField label="Nominee PAN" value={form.nomineeEmail} onChange={(v:any)=>update("nomineePan",v)} />
-          <InputField label="A/C Type" value={form.nomineeEmail} onChange={(v:any)=>update("a/cType",v)} />
-          <InputField label="A/C Opening Date" value={form.nomineeEmail} onChange={(v:any)=>update("a/cOpeningDate",v)} />
+          <InputField label="DP ID" value={form.dpId} onChange={(v:unknown)=>update("dpId",v)} />
+          <InputField label="Client Code" value={form.clientCode} onChange={(v:unknown)=>update("clientCode",v)} />
+          <InputField label="Scheme Name" value={form.schemeName} onChange={(v:unknown)=>update("schemeName",v)} />
+          <InputField label="Broker Name" value={form.brokerName} onChange={(v:unknown)=>update("brokerName",v)} />
+          <InputField label="Nominee Name" value={form.nomineeName} onChange={(v:unknown)=>update("nomineeName",v)} />
+          <InputField label="Nominee Relationship" value={form.nomineeRelationship} onChange={(v:unknown)=>update("nomineeRelationship",v)} />
+          <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v:unknown)=>update("nomineeContact",v)} />
+          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:unknown)=>update("nomineeEmail",v)} />
+          <InputField label="Nominee Aadhar" value={form.nomineeAadhar} onChange={(v:unknown)=>update("nomineeAadhar",v)} />
+          <InputField label="Nominee PAN" value={form.nomineePan} onChange={(v:unknown)=>update("nomineePan",v)} />
+          <InputField label="A/C Type" value={form.acType} onChange={(v:unknown)=>update("acType",v)} />
+          <InputField label="A/C Opening Date" value={form.acOpeningDate} onChange={(v:unknown)=>update("acOpeningDate",v)} />
         </div>
       )}
 
@@ -336,31 +333,31 @@ const handleDobChange = (value: any) => {
     <InputField
       label="Mobile No"
       value={form.mobile}
-      onChange={(v: any) => update("mobile", v)}
+      onChange={(v:unknown) => update("mobile", v)}
     />
 
     <InputField
       label="WhatsApp"
       value={form.whatsapp}
-      onChange={(v: any) => update("whatsapp", v)}
+      onChange={(v: unknown) => update("whatsapp", v)}
     />
 
     <InputField
       label="Language"
       value={form.language}
-      onChange={(v: any) => update("language", v)}
+      onChange={(v: unknown) => update("language", v)}
     />
 
     <InputField
       label="Email"
       value={form.email}
-      onChange={(v: any) => update("email", v)}
+      onChange={(v: unknown) => update("email", v)}
     />
 
     <InputField
       label="Trade Confirmation No"
       value={form.tradeConfirmationNo}
-      onChange={(v: any) => update("tradeConfirmationNo", v)}
+      onChange={(v: unknown) => update("tradeConfirmationNo", v)}
     />
   </div>
 )}
@@ -374,11 +371,11 @@ const handleDobChange = (value: any) => {
       {openSection === "billing" && (
         <>
           <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Billing Name" value={form.billName} onChange={(v:any)=>update("billName",v)} />
-            <InputField label="GST No" value={form.gst} onChange={(v:any)=>update("gst",v)} />
+            <InputField label="Billing Name" value={form.billName} onChange={(v:unknown)=>update("billName",v)} />
+            <InputField label="GST No" value={form.gst} onChange={(v:unknown)=>update("gst",v)} />
           </div>
           <div className="mt-6">
-            <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v:any)=>update("billingAddress",v)} />
+            <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v:unknown)=>update("billingAddress",v)} />
           </div>
         </>
       )}
@@ -391,11 +388,11 @@ const handleDobChange = (value: any) => {
 
       {openSection === "bank" && (
         <div className="mt-4 grid grid-cols-2 gap-6">
-          <InputField label="Holder Name" value={form.holderName} onChange={(v:any)=>update("holderName",v)} />
-          <InputField label="Bank Name" value={form.bankName} onChange={(v:any)=>update("bankName",v)} />
-          <InputField label="Account Number" value={form.accNumber} onChange={(v:any)=>update("accNumber",v)} />
-          <InputField label="IFSC" value={form.ifsc} onChange={(v:any)=>update("ifsc",v)} />
-          <InputField label="MICR" value={form.micr} onChange={(v:any)=>update("micr",v)} />
+          <InputField label="Holder Name" value={form.holderName} onChange={(v:unknown)=>update("holderName",v)} />
+          <InputField label="Bank Name" value={form.bankName} onChange={(v:unknown)=>update("bankName",v)} />
+          <InputField label="Account Number" value={form.accNumber} onChange={(v:unknown)=>update("accNumber",v)} />
+          <InputField label="IFSC" value={form.ifsc} onChange={(v:unknown)=>update("ifsc",v)} />
+          <InputField label="MICR" value={form.micr} onChange={(v:unknown)=>update("micr",v)} />
         </div>
       )}
 

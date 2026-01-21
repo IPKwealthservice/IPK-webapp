@@ -2,7 +2,7 @@ import React from "react";
 
 interface Props {
   open: boolean;
-  data: any;
+  data: Record<string, unknown>;
   onClose: () => void;
   onSubmit: () => void;
 }
@@ -10,14 +10,18 @@ interface Props {
 export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
   if (!open) return null;
 
-  const Row = ({ label, value }: { label: string; value: any }) => (
+  const Row = ({ label, value }: { label: string; value: unknown }) => ( 
     <div className="flex justify-between border-b py-1">
       <span className="font-medium text-gray-700">{label}</span>
-      <span className="text-gray-900">{value || "-"}</span>
+      <span className="text-gray-900">
+        {value !== undefined && value !== null && value !== ""
+  ? String(value)
+  : "-"}
+      </span>
     </div>
   );
 
-  const Section = ({ title, children }: any) => (
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="mb-6 bg-gray-50 p-4 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-3 text-indigo-700">{title}</h2>
       {children}
@@ -27,7 +31,6 @@ export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-xl p-6 shadow-xl overflow-y-auto max-h-[90vh]">
-        
         <h1 className="text-2xl font-semibold text-indigo-700 mb-4 text-center">
           Preview Details
         </h1>
@@ -36,7 +39,10 @@ export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
         <Section title="Client Profile">
           <Row label="Name" value={data.name} />
           <Row label="Communication Address" value={data.commAddress} />
-          <Row label="Permanent Address" value={data.permAddress} />
+          <Row
+            label="Permanent Address"
+            value={data.permAddress ?? data.permanentAddress ?? data.perm_address}
+          />
           <Row label="Location" value={data.location} />
           <Row label="Gender" value={data.gender} />
           <Row label="DOB" value={data.dob} />
@@ -60,13 +66,22 @@ export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
           <Row label="Scheme Name" value={data.schemeName} />
           <Row label="Broker Name" value={data.brokerName} />
           <Row label="Nominee Name" value={data.nomineeName} />
-          <Row label="Nominee Relationship" value={data.nomineeRelation} />
+          <Row
+            label="Nominee Relationship"
+            value={data.nomineeRelation ?? data.nomineeRelationship ?? data.nominee_relation}
+          />
           <Row label="Nominee Contact" value={data.nomineeContact} />
           <Row label="Nominee Email" value={data.nomineeEmail} />
           <Row label="Nominee Aadhar" value={data.nomineeAadhar} />
           <Row label="Nominee PAN" value={data.nomineePan} />
-          <Row label="A/C Type" value={data.accountType} />
-          <Row label="A/C Opening Date" value={data.accountOpeningDate} />
+          <Row
+            label="A/C Type"
+            value={data.accountType ?? data.acType ?? data.account_type}
+          />
+          <Row
+            label="A/C Opening Date"
+            value={data.accountOpeningDate ?? data.acOpeningDate ?? data.account_opening_date}
+          />
         </Section>
 
         {/* CONTACT */}
@@ -75,7 +90,10 @@ export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
           <Row label="WhatsApp" value={data.whatsapp} />
           <Row label="Language" value={data.language} />
           <Row label="Email" value={data.email} />
-          <Row label="Trade Confirmation No" value={data.tradeNumber} />
+          <Row
+            label="Trade Confirmation No"
+            value={data.tradeNumber ?? data.tradeConfirmationNo ?? data.trade_confirmation_no}
+          />
         </Section>
 
         {/* BILLING */}
