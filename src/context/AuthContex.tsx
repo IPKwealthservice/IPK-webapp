@@ -175,11 +175,18 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
     // 🔴 IMPORTANT: do NOT flip loading to false here when idToken is missing
     if (!idToken) {
       setUser(null);
+      setLoading(false); // ✅ ADDED: prevent app from staying stuck in loading state
       return;
     }
 
     setLoading(true);
     try {
+      // ✅ ADDED: force-refresh token before calling ME (prevents stale token issues)
+      try {
+        const fresh = await auth.currentUser?.getIdToken(true);
+        if (fresh) setIdToken(fresh);
+      } catch {}
+
       // detect once if backend exposes upsertSelf
       if (!upsertSupportRef.current.checked) {
         try {
@@ -223,10 +230,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
         });
       } else {
         setUser(null);
+        setIdToken(null); // ✅ ADDED: if backend returns null for ME, clear token so UI returns to sign-in cleanly
       }
     } catch (error) {
       console.error("Failed to load authenticated user", error);
       setUser(null);
+      setIdToken(null); // ✅ ADDED: on ME failure, clear token to avoid loop / stuck state
     } finally {
       // ✅ only end loading after ME completes (or fails)
       setLoading(false);
@@ -251,8 +260,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
       try {
         const token = await current.getIdToken(false);
         setIdToken(token);
-         console.log("🔥 Firebase ID Token:", token);
-        
+        console.log("🔥 Firebase ID Token:", token);
+
       } catch (error) {
         console.error("Failed to retrieve ID token", error);
         await signOut(auth);

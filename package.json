@@ -34,6 +34,7 @@
     "flowbite-react": "^0.12.9",
     "framer-motion": "^12.23.24",
     "graphql": "^16.11.0",
+    "jspdf": "^4.0.0",
     "lucide-react": "^0.544.0",
     "motion": "^12.23.24",
     "openai": "^5.20.1",
