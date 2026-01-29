@@ -16,7 +16,7 @@ import ConfirmLeadModal from "@/components/ui/lead/ConfirmLeadModal";
 import { validateLead } from "@/components/ui/lead/Validators";
 import Alert from "@/components/ui/alert/Alert";
 import { RemarkIcon } from "@/icons";
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 import { useRms } from "@/core/graphql/user/useRms";
 
 export default function LeadEntry() {
@@ -62,10 +62,10 @@ export default function LeadEntry() {
   const handleSave = () => {
     const missing: string[] = [];
     if (!lead.firstName.trim()) missing.push("First Name");
-    if (!lead.lastName.trim())  missing.push("Last Name");
-    if (!lead.phone.trim())     missing.push("Phone");
+    if (!lead.lastName.trim()) missing.push("Last Name");
+    if (!lead.phone.trim()) missing.push("Phone");
     if (!lead.leadSource.trim()) missing.push("Lead Source");
-    if (!phoneOk)               missing.push("Phone (invalid format)");
+    if (!phoneOk) missing.push("Phone (invalid format)");
     if (missing.length) {
       setFormError(`Please fill the following required fields correctly: ${missing.join(", ")}.`);
       return;
@@ -266,8 +266,8 @@ export default function LeadEntry() {
       <BulkImportModal
         isOpen={bulkOpen}
         onClose={() => setBulkOpen(false)}
-        onImported={() => {}}
-        /* IMPORTANT: do NOT pass rowsFromForm here, so the drop box & mapping show */
+        onImported={() => { }}
+      /* IMPORTANT: do NOT pass rowsFromForm here, so the drop box & mapping show */
       />
     </div>
   );

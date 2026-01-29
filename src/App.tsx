@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-
 import { useQuery } from "@apollo/client";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
-import { AuthProvider } from "@/context/AuthContex";
+import { AuthProvider } from "@/context/AuthProvider";
 
 import { ME } from "@/core/graphql/user/user.gql";
 
@@ -52,7 +52,7 @@ type Role = "ADMIN" | "RM" | "STAFF" | "MARKETING" | "ANALYST";
 
 /** Role-based landing */
 function RoleLanding() {
-  const { data, loading, error } = useQuery(ME, { fetchPolicy: "cache-first" });
+  const { data, loading, error } = useQuery(ME, { fetchPolicy: "network-only" });
 
   if (loading) {
     return (
@@ -62,14 +62,19 @@ function RoleLanding() {
     );
   }
 
-  if (error || !data?.me) return <Navigate to="/signin" replace />;
+  if (error || !data?.me) {
+    console.error("❌ RoleLanding: ME query failed or returned null", { error, data });
+    return <Navigate to="/signin" replace />;
+  }
 
   const role = data.me.role as Role;
+  console.log("✅ RoleLanding: Redirecting user with role", role);
 
   if (role === "RM") return <Navigate to="/sales/dashboard" replace />;
   if (role === "MARKETING") return <Navigate to="/marketing/dashboard" replace />;
   if (role === "ADMIN") return <Navigate to="/admin/dashboard" replace />;
 
+  console.warn("⚠️ RoleLanding: Unknown role", role);
   return <Navigate to="/unauthorized" replace />;
 }
 

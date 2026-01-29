@@ -19,7 +19,7 @@ import {
   UPDATE_LEAD_REMARK,
   LEAD_DETAIL_WITH_TIMELINE,
 } from "../gql/view_lead.gql";
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 import {
   STATUS_OPTIONS,
   LeadStageFilter,
@@ -37,6 +37,7 @@ type Props = {
   /** existing pipeline status if you still use it elsewhere (not used here) */
   pipelineStatus?: LeadStageFilter | string | null;
   onSaved?: () => void;
+  onStatusChange?: (status: string) => void;
 };
 
 const CARD =
@@ -51,6 +52,7 @@ export default function LeadUnifiedUpdateCard({
   currentStatus,
   currentStage,
   onSaved,
+  onStatusChange,
 }: Props) {
   const { user } = useAuth();
 
@@ -184,8 +186,8 @@ export default function LeadUnifiedUpdateCard({
 
       const successMsg = nextFollowUpAt
         ? `Saved. Next follow-up: ${new Date(
-            nextFollowUpAt
-          ).toLocaleString()}`
+          nextFollowUpAt
+        ).toLocaleString()}`
         : "Saved. Timeline and remark updated.";
 
       toast.success(successMsg);
@@ -204,7 +206,7 @@ export default function LeadUnifiedUpdateCard({
         console.error("Network errors:", (e as any).networkError.result.errors);
         toast.error(
           (e as any).networkError.result.errors[0]?.message ??
-            "Network error saving lead"
+          "Network error saving lead"
         );
       } else {
         toast.error(e.message || "Failed to save");
@@ -334,9 +336,8 @@ export default function LeadUnifiedUpdateCard({
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className={`${INPUT} w-full resize-y ${
-                saving ? "opacity-80" : ""
-              }`}
+              className={`${INPUT} w-full resize-y ${saving ? "opacity-80" : ""
+                }`}
               placeholder="Add context, commitments, objections, etc."
               disabled={saving}
             />
@@ -381,9 +382,8 @@ function FancySelect({
       <Listbox value={selected?.value} onChange={onChange} disabled={disabled}>
         <div className="relative">
           <Listbox.Button
-            className={`flex w-full items-center justify-between rounded-xl border border-zinc-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-800 shadow-sm transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white ${
-              disabled ? "cursor-not-allowed" : "cursor-pointer"
-            }`}
+            className={`flex w-full items-center justify-between rounded-xl border border-zinc-300 bg-white px-3 py-2 text-left text-sm font-medium text-gray-800 shadow-sm transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white ${disabled ? "cursor-not-allowed" : "cursor-pointer"
+              }`}
           >
             <span className="flex items-center gap-2">
               {icon}
@@ -404,8 +404,7 @@ function FancySelect({
                   key={opt.value}
                   value={opt.value}
                   className={({ active, selected: isSel }) =>
-                    `flex items-center justify-between px-3 py-2 text-sm transition ${
-                      active ? "bg-emerald-50 text-emerald-700" : "text-gray-800 dark:text-white"
+                    `flex items-center justify-between px-3 py-2 text-sm transition ${active ? "bg-emerald-50 text-emerald-700" : "text-gray-800 dark:text-white"
                     } ${isSel ? "font-semibold" : "font-medium"}`
                   }
                 >

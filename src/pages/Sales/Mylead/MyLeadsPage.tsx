@@ -9,7 +9,7 @@ import type { Lead } from "@/components/sales/myleads/interface/type";
 import { LeadStage, LeadStatus } from "@/components/sales/myleads/interface/type";
 import { STAGE_SEQUENCE } from "@/components/sales/myleads/stageMeta";
 import { MY_ASSIGNED_LEADS, LEADS_PAGED } from "@/core/graphql/lead/lead.gql";
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 
 const DEFAULT_PAGE_SIZE = 10;
 

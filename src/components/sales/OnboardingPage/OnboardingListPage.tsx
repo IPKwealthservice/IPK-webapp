@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useQuery } from "@apollo/client";
+import { GET_NEW_ONBOARDING_LEADS, GET_COMPLETED_ONBOARDING_LEADS } from "@/graphql/onboardingList.gql";
 
 /* ================= TYPES ================= */
 
@@ -12,35 +13,6 @@ type Lead = {
   mobile: string;
   status: LeadStatus;
 };
-
-/* ================= MOCK DATA ================= */
-
-const newLeads: Lead[] = [
-  {
-    id: "IPK25110061",
-    name: "Karthik Madhu",
-    source: "Walk-in",
-    mobile: "9748271564",
-    status: "NEW",
-  },
-  {
-    id: "IPK25110055",
-    name: "Kishoreganesh Kumar",
-    source: "Referral",
-    mobile: "9597423583",
-    status: "NEW",
-  },
-];
-
-const completedLeads: Lead[] = [
-  {
-    id: "IPK25110021",
-    name: "Arun Kumar",
-    source: "Facebook Ads",
-    mobile: "9876543210",
-    status: "COMPLETED",
-  },
-];
 
 /* ================= PREVIEW MODAL ================= */
 
@@ -198,6 +170,14 @@ export default function OnboardingListPage() {
   const navigate = useNavigate();
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
 
+  const { data: newData, loading: newLoading } = useQuery(GET_NEW_ONBOARDING_LEADS);
+  const { data: completedData, loading: completedLoading } = useQuery(GET_COMPLETED_ONBOARDING_LEADS);
+
+  if (newLoading || completedLoading) return <div className="p-8">Loading leads...</div>;
+
+  const newLeads = newData?.onboardingNewLeads || [];
+  const completedLeads = completedData?.onboardingCompletedLeads || [];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       <h2 className="text-lg font-semibold mb-6">
@@ -207,16 +187,17 @@ export default function OnboardingListPage() {
       <TableCard
         title="New Onboard List"
         leads={newLeads}
-        onOnboard={() =>
-          navigate("/sales/onboarding/process/client-profile")
-        }
-        onView={() => {}}
+        onOnboard={(lead) => {
+          localStorage.setItem("onboarding_lead_id", lead.id);
+          navigate("/sales/onboarding/process/client-profile");
+        }}
+        onView={() => { }}
       />
 
       <TableCard
         title="Onboarding Completed"
         leads={completedLeads}
-        onOnboard={() => {}}
+        onOnboard={() => { }}
         onView={(lead) => setPreviewLead(lead)}
       />
 

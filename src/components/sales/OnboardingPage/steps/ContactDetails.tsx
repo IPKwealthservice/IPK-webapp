@@ -63,8 +63,8 @@ export default function ContactDetails({ form, update }: Props) {
 
         <InputField
           label="Trade Confirmation Number"
-          value={form.tradeConfirm}
-          onChange={(v: any) => update("tradeConfirm", v)}
+          value={form.tradeConfirmationNo}
+          onChange={(v: any) => update("tradeConfirmationNo", v)}
         />
       </div>
 

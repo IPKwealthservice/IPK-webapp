@@ -7,7 +7,7 @@ import Input from "../../form/input/InputField";
 import Checkbox from "../../form/input/Checkbox";
 import Button from "../../ui/button/Button";
 import Alert from "../../ui/alert/Alert";
-import { useAuth } from "../../../context/AuthContex";
+import { useAuth } from "@/context/authContext";
 
 interface BannerState {
   title: string;

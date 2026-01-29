@@ -20,7 +20,7 @@ import {
   leadOptions,
   humanizeEnum,
 } from "@/components/lead/types";
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 import { useRms } from "@/core/graphql/user/useRms";
 
 /* ----------------------------- GQL shapes ----------------------------- */
@@ -450,23 +450,23 @@ export default function LeadDataTable() {
 
     const exportRows = isDormant
       ? chosen.map((r) => ({
-          "Lead Code": r.leadCode ?? "",
-          Name: r.name,
-          Phone: r.phone ?? "",
-          "Lead Source": r.source ?? "",
-          "Re-enter Count": r.reenterCount ?? 0,
-          "First Entered": r.firstSeenAt ?? "",
-          "Last Entered": r.lastSeenAt ?? "",
-        }))
+        "Lead Code": r.leadCode ?? "",
+        Name: r.name,
+        Phone: r.phone ?? "",
+        "Lead Source": r.source ?? "",
+        "Re-enter Count": r.reenterCount ?? 0,
+        "First Entered": r.firstSeenAt ?? "",
+        "Last Entered": r.lastSeenAt ?? "",
+      }))
       : chosen.map((r) => ({
-          "Lead Code": r.leadCode ?? "",
-          Name: r.name,
-          Phone: r.phone ?? "",
-          "Lead Source": r.source ?? "",
-          "Assigned RM": r.assignedRm ?? "",
-          "Entered Date": r.createdAt ?? "",
-          Status: r.status ?? "",
-        }));
+        "Lead Code": r.leadCode ?? "",
+        Name: r.name,
+        Phone: r.phone ?? "",
+        "Lead Source": r.source ?? "",
+        "Assigned RM": r.assignedRm ?? "",
+        "Entered Date": r.createdAt ?? "",
+        Status: r.status ?? "",
+      }));
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(exportRows);
@@ -512,8 +512,8 @@ export default function LeadDataTable() {
             {mode === "dormant"
               ? "Dormant"
               : mode === "unassigned"
-              ? "Unassigned"
-              : "All"}
+                ? "Unassigned"
+                : "All"}
             )
           </h2>
         </div>
@@ -545,7 +545,7 @@ export default function LeadDataTable() {
             onReset={handleReset}
           />
 
-                    <button
+          <button
             type="button"
             onClick={() => setFilterOpen(true)}
             className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/5"
@@ -601,28 +601,28 @@ export default function LeadDataTable() {
                 {visibleRows.map((row) => {
                   const id = rowKey(row);
                   return (
-              <LeadTableRow
-                  key={id}
-                  row={row}
-                  showAdvancedCols={showAdvancedCols}
-                  canAssignRm={isAdmin}
-                  rmOptions={assignableRmOptions}
-                  rmLoading={rmsLoading}
-                  assigning={updatingLeadId === row.id}
-                  onAssignRm={(leadId: string, rmId: string | null) => {
-                    if (!isAdmin) return;
-                    const r = rows.find((x) => x.id === leadId);
-                    const leadName = r?.name ?? "Selected lead";
-                    const rmName = rmId
-                      ? assignableRmOptions.find((o) => o.value === rmId)?.label ?? "selected RM"
-                      : "Auto assign";
-                    setConfirmAssign({ leadId, rmId, rmName, leadName });
-                  }}
-                  isSelected={selected.has(id)}
-                  onToggle={toggleOne}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                />
+                    <LeadTableRow
+                      key={id}
+                      row={row}
+                      showAdvancedCols={showAdvancedCols}
+                      canAssignRm={isAdmin}
+                      rmOptions={assignableRmOptions}
+                      rmLoading={rmsLoading}
+                      assigning={updatingLeadId === row.id}
+                      onAssignRm={(leadId: string, rmId: string | null) => {
+                        if (!isAdmin) return;
+                        const r = rows.find((x) => x.id === leadId);
+                        const leadName = r?.name ?? "Selected lead";
+                        const rmName = rmId
+                          ? assignableRmOptions.find((o) => o.value === rmId)?.label ?? "selected RM"
+                          : "Auto assign";
+                        setConfirmAssign({ leadId, rmId, rmName, leadName });
+                      }}
+                      isSelected={selected.has(id)}
+                      onToggle={toggleOne}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   );
                 })}
                 {visibleRows.length === 0 && (

@@ -2,14 +2,21 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDSh9ccZviLr1VIfhVD261jyK9_0si0f4g",
-  authDomain: "ipkwealth-crm.firebaseapp.com",
-  projectId: "ipkwealth-crm",
-  storageBucket: "ipkwealth-crm.firebasestorage.app",
-  messagingSenderId: "865119744232",
-  appId: "1:865119744232:web:866da3f3b582b4f49a595d",
-  measurementId: "G-NES6XWW4YC"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
+
+// Developer Warning for placeholder API Key
+if (firebaseConfig.apiKey === "YOUR_API_KEY_HERE" || !firebaseConfig.apiKey) {
+  console.error(
+    "🔥 [Firebase Init]: VITE_FIREBASE_API_KEY is missing or set to a placeholder in your .env file."
+  );
+}
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

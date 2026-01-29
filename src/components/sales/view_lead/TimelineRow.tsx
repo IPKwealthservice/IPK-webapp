@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { STAGE_META } from "@/components/sales/myleads/stageMeta";
 import { formatEventTimestamp, humanize } from "./interface/utils";
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 import type { TimelineEvent } from "./interface/types";
 
 type Props = { event: TimelineEvent };

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const steps = [
@@ -35,21 +35,21 @@ export default function HeaderSteps({ current }: { current: number }) {
 
   return (
     <div className="mobile-padding tablet-padding desktop-padding">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
 
-          {/* ✅ FIXED MOBILE RESPONSIVE CONTAINER */}
-          <div className="flex overflow-x-auto md:overflow-visible md:justify-center scrollbar-hide">
-            <div className="flex items-center min-w-max gap-1 pl-3 pr-3 sm:pl-0 sm:pr-0">
+        {/* ✅ FIXED MOBILE RESPONSIVE CONTAINER */}
+        <div className="flex overflow-x-auto md:overflow-visible md:justify-center scrollbar-hide">
+          <div className="flex items-center min-w-max gap-1 pl-3 pr-3 sm:pl-0 sm:pr-0">
 
-              {steps.map((step) => {
-                const isActive = current === step.id;
-                const isCompleted = step.id < current;
+            {steps.map((step) => {
+              const isActive = current === step.id;
+              const isCompleted = step.id < current;
 
-                return (
-                  <Link
-                    key={step.id}
-                    to={step.path}
-                    className={`
+              return (
+                <Link
+                  key={step.id}
+                  to={step.path}
+                  className={`
                       relative flex items-center justify-center
                       h-9 sm:h-10 md:h-12
                       px-4 sm:px-6 md:px-8
@@ -58,30 +58,29 @@ export default function HeaderSteps({ current }: { current: number }) {
 
                       ${isActive && "bg-indigo-700 text-white shadow-lg"}
                       ${isCompleted && "bg-indigo-500 text-white"}
-                      ${
-                        !isActive && !isCompleted &&
-                        "bg-indigo-100 text-indigo-900"
-                      }
+                      ${!isActive && !isCompleted &&
+                    "bg-indigo-100 text-indigo-900"
+                    }
 
                       hover:shadow-indigo-500/40 hover:shadow-xl
                     `}
-                    style={{
-                      clipPath:
-                        "polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%, 8% 50%)",
-                    }}
-                  >
-                    <span className="whitespace-nowrap">
-                      {step.label}
-                    </span>
-                  </Link>
-                );
-              })}
+                  style={{
+                    clipPath:
+                      "polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%, 8% 50%)",
+                  }}
+                >
+                  <span className="whitespace-nowrap">
+                    {step.label}
+                  </span>
+                </Link>
+              );
+            })}
 
-            </div>
           </div>
-
         </div>
+
       </div>
-   // </div>
+    </div>
+    // </div>
   );
 }

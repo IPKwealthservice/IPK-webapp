@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { Role, useAuth } from "@/context/AuthContex";
+import { Role, useAuth } from "@/context/authContext";
 
 type Props = {
   children?: ReactNode;

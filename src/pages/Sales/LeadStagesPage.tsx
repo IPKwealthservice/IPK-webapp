@@ -3,7 +3,7 @@ import { Download, RefreshCcw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 
-import { useAuth } from '@/context/AuthContex';
+import { useAuth } from '@/context/authContext';
 import ComponentCard from '@/components/common/ComponentCard';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import PageMeta from '@/components/common/PageMeta';
@@ -366,11 +366,10 @@ export default function LeadStagesPage() {
               setMode('STAGE');
               setSelectedStage('ALL');
             }}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold ${
-              mode === 'STAGE'
+            className={`rounded-lg px-3 py-1 text-xs font-semibold ${mode === 'STAGE'
                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
                 : 'text-gray-600 hover:bg-gray-50 dark:text-white/70 dark:hover:bg-white/[0.06]'
-            }`}
+              }`}
           >
             By stage
           </button>
@@ -380,11 +379,10 @@ export default function LeadStagesPage() {
               setMode('STATUS');
               setSelectedStage('ALL');
             }}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold ${
-              mode === 'STATUS'
+            className={`rounded-lg px-3 py-1 text-xs font-semibold ${mode === 'STATUS'
                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
                 : 'text-gray-600 hover:bg-gray-50 dark:text-white/70 dark:hover:bg-white/[0.06]'
-            }`}
+              }`}
           >
             By status
           </button>
@@ -400,11 +398,10 @@ export default function LeadStagesPage() {
               key={card.id}
               type="button"
               onClick={() => setSelectedStage(card.id)}
-              className={`flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-gray-200 bg-white p-3 text-left shadow-sm transition duration-200 ease-out hover:bg-gray-50 hover:shadow-md active:scale-[0.99] dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/[0.06] ${
-                isActive
+              className={`flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-gray-200 bg-white p-3 text-left shadow-sm transition duration-200 ease-out hover:bg-gray-50 hover:shadow-md active:scale-[0.99] dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/[0.06] ${isActive
                   ? 'border-emerald-300 ring-2 ring-emerald-300 shadow-lg shadow-emerald-200/60 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-500/10 dark:to-transparent'
                   : ''
-              }`}
+                }`}
               aria-pressed={isActive}
             >
               {card.helper && (
@@ -420,11 +417,10 @@ export default function LeadStagesPage() {
               </h3>
               {typeof card.count === 'number' && (
                 <span
-                  className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold transition ${
-                    isActive
+                  className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold transition ${isActive
                       ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-200'
                       : card.badgeClass
-                  }`}
+                    }`}
                 >
                   {card.count} lead{card.count === 1 ? '' : 's'}
                 </span>

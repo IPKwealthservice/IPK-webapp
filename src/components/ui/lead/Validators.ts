@@ -24,6 +24,9 @@ export type LeadShape = {
   remark?: string;
   assignedRmId?: string;
   assignedRmName?: string;
+  permAddress?: string;
+  acOpeningDate?: string;
+  tradeConfirmationNo?: string;
 };
 
 export type ValidationResult = {

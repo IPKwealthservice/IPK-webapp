@@ -1,4 +1,15 @@
 import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useMutation, gql } from "@apollo/client";
+
+const UPSERTONBOARDING_MUTATION = gql`
+  mutation UpsertOnboarding($input: SaveOnboardingInput!) {
+    upsertOnboarding(input: $input) {
+      id
+      status
+    }
+  }
+`;
 //import ContactDetails from "../steps/ContactDetails";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -39,7 +50,7 @@ export default function ClientProfile() {
     setOpenSection(openSection === name ? null : name);
 
   /* ================= FORM STATE ================= */
- const [form, setForm] = useState<Record<string, string>>({
+  const [form, setForm] = useState<Record<string, string>>({
     // PERSONAL
     name: "",
     commAddress: "",
@@ -66,7 +77,7 @@ export default function ClientProfile() {
     whatsapp: "",
     language: "",
     email: "",
-    tradeNumber: "",
+    tradeConfirmationNo: "",
 
     // DEMAT
     dpId: "",
@@ -82,7 +93,7 @@ export default function ClientProfile() {
     nomineePan: "",
     acType: "",
     acTypeOther: "",
-    accountOpeningDate: "",
+    acOpeningDate: "",
 
     // BILLING
     billName: "",
@@ -100,33 +111,33 @@ export default function ClientProfile() {
   const update = (field: string, value: unknown) =>
     setForm((prev: Record<string, string>) => ({ ...prev, [field]: String(value ?? "") }));
 
-const handleDobChange = (value: Dayjs | null) => {
-  if (!value) {
-    update("dob", "");
-    update("age", "");
-    return;
-  }
+  const handleDobChange = (value: Dayjs | null) => {
+    if (!value) {
+      update("dob", "");
+      update("age", "");
+      return;
+    }
 
-  const birthDate = value.toDate();
-  const today = new Date();
+    const birthDate = value.toDate();
+    const today = new Date();
 
-  if (birthDate > today) {
-    alert("Date of birth cannot be in the future");
-    update("dob", "");
-    update("age", "");
-    return;
-  }
+    if (birthDate > today) {
+      alert("Date of birth cannot be in the future");
+      update("dob", "");
+      update("age", "");
+      return;
+    }
 
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
 
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
 
-  update("dob", value.format("YYYY-MM-DD"));
-  update("age", age);
-};
+    update("dob", value.format("YYYY-MM-DD"));
+    update("age", age);
+  };
 
   /* ================= ADDRESS LOGIC ================= */
   const [samePerm, setSamePerm] = useState(false);
@@ -136,19 +147,44 @@ const handleDobChange = (value: Dayjs | null) => {
   /* ================= FAMILY ACCOUNTS ================= */
   const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
 
-  /* ================= PREVIEW ================= */
+  /* ================= SAVING DATA ================= */
+  const leadId = localStorage.getItem("onboarding_lead_id");
+  const [upsertOnboarding] = useMutation(UPSERTONBOARDING_MUTATION);
+
   const [preview, setPreview] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const submitForm = () => {
-    setPreview(false);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 1500);
+  const submitForm = async () => {
+    try {
+      setPreview(false);
+
+      if (!leadId) {
+        alert("Missing Lead ID in URL. Cannot save.");
+        return;
+      }
+
+      await upsertOnboarding({
+        variables: {
+          input: {
+            ...form,
+            leadId,
+            age: form.age ? parseInt(form.age) : null
+          }
+        }
+      });
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 1500);
+    } catch (error: any) {
+      console.error("❌ Failed to save onboarding:", error);
+      const msg = error.graphQLErrors?.[0]?.message || error.message || "Unknown error";
+      alert(`Error saving data: ${msg}`);
+    }
   };
 
   /* ================= UI ================= */
   return (
-      <div className="mobile-padding tablet-padding desktop-padding">
+    <div className="mobile-padding tablet-padding desktop-padding">
 
       {/* HEADER STEPS (ONLY FORM, NOT PREVIEW) */}
       <div className="flex justify-center mb-6">
@@ -166,106 +202,106 @@ const handleDobChange = (value: Dayjs | null) => {
       {openSection === "personal" && (
         <>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField label="Name" value={form.name} onChange={(v:unknown)=>update("name",v)} />
-            <InputField label="Location" value={form.location} onChange={(v:unknown)=>update("location",v)} />
-            <InputField label="Gender" value={form.gender} onChange={(v:unknown)=>update("gender",v)} />
-           <div className="flex flex-col gap-1">
-  <label className="text-sm text-gray-700">
-    Date of Birth
-  </label>
+            <InputField label="Name" value={form.name} onChange={(v: unknown) => update("name", v)} />
+            <InputField label="Location" value={form.location} onChange={(v: unknown) => update("location", v)} />
+            <InputField label="Gender" value={form.gender} onChange={(v: unknown) => update("gender", v)} />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm text-gray-700">
+                Date of Birth
+              </label>
 
-  <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <DatePicker
-      value={form.dob ? dayjs(form.dob) : null}
-      onChange={handleDobChange}
-      format="DD/MM/YYYY"
-      disableFuture
-      slotProps={{
-        textField: {
-          fullWidth: true,
-          size: "small",
-          sx: {
-            "& .MuiPickersOutlinedInput-root": {
-              height: "42px",
-              borderRadius: "0.375rem",
-              backgroundColor: "#ffffff",
-            },
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#e5e7eb",
-            },
-            "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#d1d5db",
-            },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              borderColor: "#6366f1",
-            },
-            "& input": {
-              padding: "8px 12px",
-              fontSize: "14px",
-            },
-          },
-        },
-      }}
-    />
-  </LocalizationProvider>
-</div>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  value={form.dob ? dayjs(form.dob) : null}
+                  onChange={handleDobChange}
+                  format="DD/MM/YYYY"
+                  disableFuture
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: "small",
+                      sx: {
+                        "& .MuiPickersOutlinedInput-root": {
+                          height: "42px",
+                          borderRadius: "0.375rem",
+                          backgroundColor: "#ffffff",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#e5e7eb",
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#d1d5db",
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#6366f1",
+                        },
+                        "& input": {
+                          padding: "8px 12px",
+                          fontSize: "14px",
+                        },
+                      },
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </div>
 
-<InputField label="Age" value={form.age} readOnly />
-            <InputField label="Occupation" value={form.occupation} onChange={(v:unknown)=>update("occupation",v)} />
+            <InputField label="Age" value={form.age} readOnly />
+            <InputField label="Occupation" value={form.occupation} onChange={(v: unknown) => update("occupation", v)} />
 
             <DropdownField
               label="Income Range"
               value={form.income}
-              options={["1–2 LPA","2–3 LPA","3–4 LPA","4–5 LPA","5–6 LPA","6–7 LPA","7–8 LPA","8–9 LPA","9–10 LPA","10+ LPA"]}
-              onChange={(v:unknown)=>update("income",v)}
+              options={["1–2 LPA", "2–3 LPA", "3–4 LPA", "4–5 LPA", "5–6 LPA", "6–7 LPA", "7–8 LPA", "8–9 LPA", "9–10 LPA", "10+ LPA"]}
+              onChange={(v: unknown) => update("income", v)}
             />
 
-            <InputField label="Company" value={form.company} onChange={(v:unknown)=>update("company",v)} />
-            <InputField label="Designation" value={form.designation} onChange={(v:unknown)=>update("designation",v)} />
-            <InputField label="PAN No" value={form.pan} onChange={(v:unknown)=>update("pan",v)} />
-            <InputField label="Aadhaar No" value={form.aadhaar} onChange={(v:unknown)=>update("aadhaar",v)} />
-            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v:unknown)=>update("contactPersonName",v)} />
-            <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v:unknown)=>update("contactPersonNo",v)} />
+            <InputField label="Company" value={form.company} onChange={(v: unknown) => update("company", v)} />
+            <InputField label="Designation" value={form.designation} onChange={(v: unknown) => update("designation", v)} />
+            <InputField label="PAN No" value={form.pan} onChange={(v: unknown) => update("pan", v)} />
+            <InputField label="Aadhaar No" value={form.aadhaar} onChange={(v: unknown) => update("aadhaar", v)} />
+            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v: unknown) => update("contactPersonName", v)} />
+            <InputField label="Contact Person No" value={form.contactPersonNo} onChange={(v: unknown) => update("contactPersonNo", v)} />
 
             <DropdownField
               label="Relationship"
               value={form.relationship}
-              options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Others"]}
-              onChange={(v:unknown)=>update("relationship",v)}
+              options={["Spouse", "Son", "Daughter", "Father", "Mother", "Brother", "Sister", "Others"]}
+              onChange={(v: unknown) => update("relationship", v)}
             />
 
             {form.relationship === "Others" && (
               <InputField
                 label="Specify Relationship"
                 value={form.relationshipOther}
-                onChange={(v:unknown)=>update("relationshipOther",v)}
+                onChange={(v: unknown) => update("relationshipOther", v)}
               />
             )}
 
             <DropdownField
               label="Client Source"
               value={form.clientSource}
-              options={["Reference","Online","YES Con","Start-up","Others"]}
-              onChange={(v:unknown)=>update("clientSource",v)}
+              options={["Reference", "Online", "YES Con", "Start-up", "Others"]}
+              onChange={(v: unknown) => update("clientSource", v)}
             />
 
             {form.clientSource === "Others" && (
               <InputField
                 label="Specify Client Source"
                 value={form.clientSourceOther}
-                onChange={(v:unknown)=>update("clientSourceOther",v)}
+                onChange={(v: unknown) => update("clientSourceOther", v)}
               />
             )}
           </div>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TextAreaField label="Communication Address" value={form.commAddress} onChange={(v:unknown)=>update("commAddress",v)} />
+            <TextAreaField label="Communication Address" value={form.commAddress} onChange={(v: unknown) => update("commAddress", v)} />
             <div>
               <TextAreaField
                 label="Permanent Address"
                 readOnly={samePerm}
                 value={samePerm ? form.commAddress : form.permAddress}
-                onChange={(v:unknown)=>update("permAddress",v)}
+                onChange={(v: unknown) => update("permAddress", v)}
               />
               <label className="flex items-center gap-2 mt-2 text-sm">
                 <input
@@ -286,13 +322,13 @@ const handleDobChange = (value: Dayjs | null) => {
               accounts={familyAccounts}
               add={() => setFamilyAccounts([...familyAccounts, ""])}
               update={(i: number, v: string) => {
-  const list = [...familyAccounts];
-  list[i] = v;
-  setFamilyAccounts(list);
-}}
-remove={(i: number) =>
-  setFamilyAccounts(familyAccounts.filter((_, idx) => idx !== i))
-}
+                const list = [...familyAccounts];
+                list[i] = v;
+                setFamilyAccounts(list);
+              }}
+              remove={(i: number) =>
+                setFamilyAccounts(familyAccounts.filter((_, idx) => idx !== i))
+              }
             />
           </div>
         </>
@@ -306,61 +342,61 @@ remove={(i: number) =>
 
       {openSection === "demat" && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField label="DP ID" value={form.dpId} onChange={(v:unknown)=>update("dpId",v)} />
-          <InputField label="Client Code" value={form.clientCode} onChange={(v:unknown)=>update("clientCode",v)} />
-          <InputField label="Scheme Name" value={form.schemeName} onChange={(v:unknown)=>update("schemeName",v)} />
-          <InputField label="Broker Name" value={form.brokerName} onChange={(v:unknown)=>update("brokerName",v)} />
-          <InputField label="Nominee Name" value={form.nomineeName} onChange={(v:unknown)=>update("nomineeName",v)} />
-          <InputField label="Nominee Relationship" value={form.nomineeRelationship} onChange={(v:unknown)=>update("nomineeRelationship",v)} />
-          <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v:unknown)=>update("nomineeContact",v)} />
-          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:unknown)=>update("nomineeEmail",v)} />
-          <InputField label="Nominee Aadhar" value={form.nomineeAadhar} onChange={(v:unknown)=>update("nomineeAadhar",v)} />
-          <InputField label="Nominee PAN" value={form.nomineePan} onChange={(v:unknown)=>update("nomineePan",v)} />
-          <InputField label="A/C Type" value={form.acType} onChange={(v:unknown)=>update("acType",v)} />
-          <InputField label="A/C Opening Date" value={form.acOpeningDate} onChange={(v:unknown)=>update("acOpeningDate",v)} />
+          <InputField label="DP ID" value={form.dpId} onChange={(v: unknown) => update("dpId", v)} />
+          <InputField label="Client Code" value={form.clientCode} onChange={(v: unknown) => update("clientCode", v)} />
+          <InputField label="Scheme Name" value={form.schemeName} onChange={(v: unknown) => update("schemeName", v)} />
+          <InputField label="Broker Name" value={form.brokerName} onChange={(v: unknown) => update("brokerName", v)} />
+          <InputField label="Nominee Name" value={form.nomineeName} onChange={(v: unknown) => update("nomineeName", v)} />
+          <InputField label="Nominee Relationship" value={form.nomineeRelationship} onChange={(v: unknown) => update("nomineeRelationship", v)} />
+          <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v: unknown) => update("nomineeContact", v)} />
+          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v: unknown) => update("nomineeEmail", v)} />
+          <InputField label="Nominee Aadhar" value={form.nomineeAadhar} onChange={(v: unknown) => update("nomineeAadhar", v)} />
+          <InputField label="Nominee PAN" value={form.nomineePan} onChange={(v: unknown) => update("nomineePan", v)} />
+          <InputField label="A/C Type" value={form.acType} onChange={(v: unknown) => update("acType", v)} />
+          <InputField label="A/C Opening Date" value={form.acOpeningDate} onChange={(v: unknown) => update("acOpeningDate", v)} />
         </div>
       )}
 
       {/* ================= CONTACT DETAILS ================= */}
       {/* =============== CONTACT DETAILS =============== */}
-<SectionHeader
-  title="Contact Info ➤"
-  toggle={() => toggleSection("contact")}
-/>
+      <SectionHeader
+        title="Contact Info ➤"
+        toggle={() => toggleSection("contact")}
+      />
 
-{openSection === "contact" && (
-  <div className="mt-4 grid grid-cols-2 gap-6">
-    <InputField
-      label="Mobile No"
-      value={form.mobile}
-      onChange={(v:unknown) => update("mobile", v)}
-    />
+      {openSection === "contact" && (
+        <div className="mt-4 grid grid-cols-2 gap-6">
+          <InputField
+            label="Mobile No"
+            value={form.mobile}
+            onChange={(v: unknown) => update("mobile", v)}
+          />
 
-    <InputField
-      label="WhatsApp"
-      value={form.whatsapp}
-      onChange={(v: unknown) => update("whatsapp", v)}
-    />
+          <InputField
+            label="WhatsApp"
+            value={form.whatsapp}
+            onChange={(v: unknown) => update("whatsapp", v)}
+          />
 
-    <InputField
-      label="Language"
-      value={form.language}
-      onChange={(v: unknown) => update("language", v)}
-    />
+          <InputField
+            label="Language"
+            value={form.language}
+            onChange={(v: unknown) => update("language", v)}
+          />
 
-    <InputField
-      label="Email"
-      value={form.email}
-      onChange={(v: unknown) => update("email", v)}
-    />
+          <InputField
+            label="Email"
+            value={form.email}
+            onChange={(v: unknown) => update("email", v)}
+          />
 
-    <InputField
-      label="Trade Confirmation No"
-      value={form.tradeConfirmationNo}
-      onChange={(v: unknown) => update("tradeConfirmationNo", v)}
-    />
-  </div>
-)}
+          <InputField
+            label="Trade Confirmation No"
+            value={form.tradeConfirmationNo}
+            onChange={(v: unknown) => update("tradeConfirmationNo", v)}
+          />
+        </div>
+      )}
 
       {/* ================= BILLING DETAILS ================= */}
       <SectionHeader
@@ -371,11 +407,11 @@ remove={(i: number) =>
       {openSection === "billing" && (
         <>
           <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Billing Name" value={form.billName} onChange={(v:unknown)=>update("billName",v)} />
-            <InputField label="GST No" value={form.gst} onChange={(v:unknown)=>update("gst",v)} />
+            <InputField label="Billing Name" value={form.billName} onChange={(v: unknown) => update("billName", v)} />
+            <InputField label="GST No" value={form.gst} onChange={(v: unknown) => update("gst", v)} />
           </div>
           <div className="mt-6">
-            <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v:unknown)=>update("billingAddress",v)} />
+            <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v: unknown) => update("billingAddress", v)} />
           </div>
         </>
       )}
@@ -388,11 +424,11 @@ remove={(i: number) =>
 
       {openSection === "bank" && (
         <div className="mt-4 grid grid-cols-2 gap-6">
-          <InputField label="Holder Name" value={form.holderName} onChange={(v:unknown)=>update("holderName",v)} />
-          <InputField label="Bank Name" value={form.bankName} onChange={(v:unknown)=>update("bankName",v)} />
-          <InputField label="Account Number" value={form.accNumber} onChange={(v:unknown)=>update("accNumber",v)} />
-          <InputField label="IFSC" value={form.ifsc} onChange={(v:unknown)=>update("ifsc",v)} />
-          <InputField label="MICR" value={form.micr} onChange={(v:unknown)=>update("micr",v)} />
+          <InputField label="Holder Name" value={form.holderName} onChange={(v: unknown) => update("holderName", v)} />
+          <InputField label="Bank Name" value={form.bankName} onChange={(v: unknown) => update("bankName", v)} />
+          <InputField label="Account Number" value={form.accNumber} onChange={(v: unknown) => update("accNumber", v)} />
+          <InputField label="IFSC" value={form.ifsc} onChange={(v: unknown) => update("ifsc", v)} />
+          <InputField label="MICR" value={form.micr} onChange={(v: unknown) => update("micr", v)} />
         </div>
       )}
 
@@ -414,7 +450,7 @@ remove={(i: number) =>
       />
       <SuccessPopup open={success} />
 
-      
+
     </div>
     //</div>
   );

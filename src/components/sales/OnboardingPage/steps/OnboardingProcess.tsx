@@ -1,5 +1,16 @@
 import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useMutation, gql } from "@apollo/client";
 import ContactDetails from "./ContactDetails";
+
+const UPSERTONBOARDING_MUTATION = gql`
+  mutation UpsertOnboarding($input: SaveOnboardingInput!) {
+    upsertOnboarding(input: $input) {
+      id
+      status
+    }
+  }
+`;
 
 // COMPONENTS
 import InputField from "../components/InputField";
@@ -112,14 +123,41 @@ export default function OnboardingProcess() {
 
   const [familyAccounts, setFamilyAccounts] = useState<string[]>([""]);
 
-  /* ================= PREVIEW ================= */
+  /* ================= SAVING DATA ================= */
+  const urlLeadId = localStorage.getItem("onboarding_lead_id");
+  const [upsertOnboarding, { loading: saving }] = useMutation(UPSERTONBOARDING_MUTATION);
+
   const [preview, setPreview] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const submitForm = () => {
-    setPreview(false);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 1500);
+  const submitForm = async () => {
+    try {
+      setPreview(false);
+
+      const leadId = form.leadId || urlLeadId;
+
+      if (!leadId) {
+        alert("Missing Lead ID. Cannot save.");
+        return;
+      }
+
+      await upsertOnboarding({
+        variables: {
+          input: {
+            ...form,
+            leadId,
+            age: form.age ? parseInt(form.age) : null
+          }
+        }
+      });
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 1500);
+    } catch (error: any) {
+      console.error("❌ Failed to save onboarding:", error);
+      const msg = error.graphQLErrors?.[0]?.message || error.message || "Unknown error";
+      alert(`Error saving data: ${msg}`);
+    }
   };
 
   /* ================= UI ================= */
@@ -140,61 +178,61 @@ export default function OnboardingProcess() {
       {openSection === "personal" && (
         <>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField label="Name" value={form.name} onChange={(v:any)=>update("name",v)} />
-            <InputField label="Location" value={form.location} onChange={(v:any)=>update("location",v)} />
-            <InputField label="Gender" value={form.gender} onChange={(v:any)=>update("gender",v)} />
+            <InputField label="Name" value={form.name} onChange={(v: any) => update("name", v)} />
+            <InputField label="Location" value={form.location} onChange={(v: any) => update("location", v)} />
+            <InputField label="Gender" value={form.gender} onChange={(v: any) => update("gender", v)} />
             <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
             <InputField label="Age" readOnly value={form.age} />
-            <InputField label="Occupation" value={form.occupation} onChange={(v:any)=>update("occupation",v)} />
+            <InputField label="Occupation" value={form.occupation} onChange={(v: any) => update("occupation", v)} />
 
             <DropdownField
               label="Income"
               value={form.income}
-              options={["1–2 LPA","2–5 LPA","5–10 LPA","10+ LPA"]}
-              onChange={(v:any)=>update("income",v)}
+              options={["1–2 LPA", "2–5 LPA", "5–10 LPA", "10+ LPA"]}
+              onChange={(v: any) => update("income", v)}
             />
 
-            <InputField label="Company" value={form.company} onChange={(v:any)=>update("company",v)} />
-            <InputField label="Designation" value={form.designation} onChange={(v:any)=>update("designation",v)} />
-            <InputField label="PAN No." value={form.pan} onChange={(v:any)=>update("pan",v)} />
-            <InputField label="Aadhaar Number" value={form.aadhaar} onChange={(v:any)=>update("aadhaar",v)} />
-            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v:any)=>update("contactPersonName",v)} />
-            <InputField label="Contact Person No." value={form.contactPersonNo} onChange={(v:any)=>update("contactPersonNo",v)} />
+            <InputField label="Company" value={form.company} onChange={(v: any) => update("company", v)} />
+            <InputField label="Designation" value={form.designation} onChange={(v: any) => update("designation", v)} />
+            <InputField label="PAN No." value={form.pan} onChange={(v: any) => update("pan", v)} />
+            <InputField label="Aadhaar Number" value={form.aadhaar} onChange={(v: any) => update("aadhaar", v)} />
+            <InputField label="Contact Person Name" value={form.contactPersonName} onChange={(v: any) => update("contactPersonName", v)} />
+            <InputField label="Contact Person No." value={form.contactPersonNo} onChange={(v: any) => update("contactPersonNo", v)} />
 
             <DropdownField
               label="Relationship"
               value={form.relationship}
-              options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Grand Son","Grand-Daughter","Grand Father","Grand Mother","Others"]}
-              onChange={(v:any)=>update("relationship",v)}
+              options={["Spouse", "Son", "Daughter", "Father", "Mother", "Brother", "Sister", "Grand Son", "Grand-Daughter", "Grand Father", "Grand Mother", "Others"]}
+              onChange={(v: any) => update("relationship", v)}
             />
 
             {form.relationship === "Others" && (
-              <InputField label="Specify Relationship" value={form.relationshipOther} onChange={(v:any)=>update("relationshipOther",v)} />
+              <InputField label="Specify Relationship" value={form.relationshipOther} onChange={(v: any) => update("relationshipOther", v)} />
             )}
 
             <DropdownField
               label="Client Source"
               value={form.clientSource}
-              options={["Reference","Online","YES Con","Start-up","Jubilan","Spotlight-YES","Others"]}
-              onChange={(v:any)=>update("clientSource",v)}
+              options={["Reference", "Online", "YES Con", "Start-up", "Jubilan", "Spotlight-YES", "Others"]}
+              onChange={(v: any) => update("clientSource", v)}
             />
 
             {form.clientSource === "Others" && (
-              <InputField label="Specify Client Source" value={form.clientSourceOther} onChange={(v:any)=>update("clientSourceOther",v)} />
+              <InputField label="Specify Client Source" value={form.clientSourceOther} onChange={(v: any) => update("clientSourceOther", v)} />
             )}
           </div>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <TextAreaField label="Communication Address" value={form.commAddress} onChange={(v:any)=>update("commAddress",v)} />
+            <TextAreaField label="Communication Address" value={form.commAddress} onChange={(v: any) => update("commAddress", v)} />
             <div>
               <TextAreaField
                 label="Permanent Address"
                 readOnly={samePerm}
                 value={samePerm ? form.commAddress : form.permAddress}
-                onChange={(v:any)=>update("permAddress",v)}
+                onChange={(v: any) => update("permAddress", v)}
               />
               <label className="flex items-center gap-2 mt-2 text-sm">
-                <input type="checkbox" checked={samePerm} onChange={(e)=>{setSamePerm(e.target.checked);syncPermanent();}} />
+                <input type="checkbox" checked={samePerm} onChange={(e) => { setSamePerm(e.target.checked); syncPermanent(); }} />
                 Same as communication address
               </label>
             </div>
@@ -203,9 +241,9 @@ export default function OnboardingProcess() {
           <div className="mt-6">
             <FamilyAccounts
               accounts={familyAccounts}
-              add={()=>setFamilyAccounts([...familyAccounts,""])}
-              update={(i:any,v:any)=>{const l=[...familyAccounts];l[i]=v;setFamilyAccounts(l);}}
-              remove={(i:any)=>setFamilyAccounts(familyAccounts.filter((_,idx)=>idx!==i))}
+              add={() => setFamilyAccounts([...familyAccounts, ""])}
+              update={(i: any, v: any) => { const l = [...familyAccounts]; l[i] = v; setFamilyAccounts(l); }}
+              remove={(i: any) => setFamilyAccounts(familyAccounts.filter((_, idx) => idx !== i))}
             />
           </div>
         </>
@@ -219,40 +257,40 @@ export default function OnboardingProcess() {
 
       {openSection === "demat" && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField label="DP ID" value={form.dpId} onChange={(v:any)=>update("dpId",v)} />
-          <InputField label="Client Code" value={form.clientCode} onChange={(v:any)=>update("clientCode",v)} />
-          <InputField label="Scheme Name" value={form.schemeName} onChange={(v:any)=>update("schemeName",v)} />
-          <InputField label="Broker Name" value={form.brokerName} onChange={(v:any)=>update("brokerName",v)} />
-          <InputField label="Nominee Name" value={form.nomineeName} onChange={(v:any)=>update("nomineeName",v)} />
+          <InputField label="DP ID" value={form.dpId} onChange={(v: any) => update("dpId", v)} />
+          <InputField label="Client Code" value={form.clientCode} onChange={(v: any) => update("clientCode", v)} />
+          <InputField label="Scheme Name" value={form.schemeName} onChange={(v: any) => update("schemeName", v)} />
+          <InputField label="Broker Name" value={form.brokerName} onChange={(v: any) => update("brokerName", v)} />
+          <InputField label="Nominee Name" value={form.nomineeName} onChange={(v: any) => update("nomineeName", v)} />
 
           <DropdownField
             label="Nominee Relationship"
             value={form.nomineeRelationship}
-            options={["Spouse","Son","Daughter","Father","Mother","Brother","Sister","Others"]}
-            onChange={(v:any)=>update("nomineeRelationship",v)}
+            options={["Spouse", "Son", "Daughter", "Father", "Mother", "Brother", "Sister", "Others"]}
+            onChange={(v: any) => update("nomineeRelationship", v)}
           />
 
           {form.nomineeRelationship === "Others" && (
-            <InputField label="Specify Nominee Relationship" value={form.nomineeRelationshipOther} onChange={(v:any)=>update("nomineeRelationshipOther",v)} />
+            <InputField label="Specify Nominee Relationship" value={form.nomineeRelationshipOther} onChange={(v: any) => update("nomineeRelationshipOther", v)} />
           )}
 
-          <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v:any)=>update("nomineeContact",v)} />
-          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v:any)=>update("nomineeEmail",v)} />
-          <InputField label="Nominee Aadhaar No." value={form.nomineeAadhar} onChange={(v:any)=>update("nomineeAadhar",v)} />
-          <InputField label="Nominee PAN No." value={form.nomineePan} onChange={(v:any)=>update("nomineePan",v)} />
+          <InputField label="Nominee Contact" value={form.nomineeContact} onChange={(v: any) => update("nomineeContact", v)} />
+          <InputField label="Nominee Email" value={form.nomineeEmail} onChange={(v: any) => update("nomineeEmail", v)} />
+          <InputField label="Nominee Aadhaar No." value={form.nomineeAadhar} onChange={(v: any) => update("nomineeAadhar", v)} />
+          <InputField label="Nominee PAN No." value={form.nomineePan} onChange={(v: any) => update("nomineePan", v)} />
 
           <DropdownField
             label="A/C Type"
             value={form.acType}
-            options={["Resident India","NRI","HUF","PUT CTD","Minor","Joint","Others"]}
-            onChange={(v:any)=>update("acType",v)}
+            options={["Resident India", "NRI", "HUF", "PUT CTD", "Minor", "Joint", "Others"]}
+            onChange={(v: any) => update("acType", v)}
           />
 
           {form.acType === "Others" && (
-            <InputField label="Specify A/C Type" value={form.acTypeOther} onChange={(v:any)=>update("acTypeOther",v)} />
+            <InputField label="Specify A/C Type" value={form.acTypeOther} onChange={(v: any) => update("acTypeOther", v)} />
           )}
 
-          <InputField type="date" label="A/C Opening Date" value={form.accountOpeningDate} onChange={(v:any)=>update("accountOpeningDate",v)} />
+          <InputField type="date" label="A/C Opening Date" value={form.accountOpeningDate} onChange={(v: any) => update("accountOpeningDate", v)} />
         </div>
       )}
 
@@ -279,11 +317,11 @@ export default function OnboardingProcess() {
       {openSection === "billing" && (
         <>
           <div className="mt-4 grid grid-cols-2 gap-6">
-            <InputField label="Name" value={form.billName} onChange={(v:any)=>update("billName",v)} />
-            <InputField label="GST No." value={form.gst} onChange={(v:any)=>update("gst",v)} />
+            <InputField label="Name" value={form.billName} onChange={(v: any) => update("billName", v)} />
+            <InputField label="GST No." value={form.gst} onChange={(v: any) => update("gst", v)} />
           </div>
           <div className="mt-6">
-            <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v:any)=>update("billingAddress",v)} />
+            <TextAreaField label="Billing Address" value={form.billingAddress} onChange={(v: any) => update("billingAddress", v)} />
           </div>
         </>
       )}
@@ -297,11 +335,11 @@ export default function OnboardingProcess() {
 
       {openSection === "bank" && (
         <div className="mt-4 grid grid-cols-2 gap-6">
-          <InputField label="Holder Name" value={form.holderName} onChange={(v:any)=>update("holderName",v)} />
-          <InputField label="Bank Name" value={form.bankName} onChange={(v:any)=>update("bankName",v)} />
-          <InputField label="Acc Number" value={form.accNumber} onChange={(v:any)=>update("accNumber",v)} />
-          <InputField label="IFSC" value={form.ifsc} onChange={(v:any)=>update("ifsc",v)} />
-          <InputField label="MICR No." value={form.micr} onChange={(v:any)=>update("micr",v)} />
+          <InputField label="Holder Name" value={form.holderName} onChange={(v: any) => update("holderName", v)} />
+          <InputField label="Bank Name" value={form.bankName} onChange={(v: any) => update("bankName", v)} />
+          <InputField label="Acc Number" value={form.accNumber} onChange={(v: any) => update("accNumber", v)} />
+          <InputField label="IFSC" value={form.ifsc} onChange={(v: any) => update("ifsc", v)} />
+          <InputField label="MICR No." value={form.micr} onChange={(v: any) => update("micr", v)} />
         </div>
       )}
 

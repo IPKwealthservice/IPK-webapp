@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { Loader2, AlertCircle, Users } from "lucide-react";
 import { toast } from "react-toastify";
 
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 import {
   LEAD_DETAIL_WITH_TIMELINE,
   UPDATE_LEAD_STATUS,
@@ -99,38 +99,38 @@ export default function ViewLead() {
 
     const fromHistory: RemarkEntry[] = Array.isArray(lead?.history)
       ? lead.history
-          .filter((entry) => (entry?.type ?? "").toUpperCase() === "REMARK_UPDATED" && entry?.text)
-          .map((entry, idx) => {
-            const createdAt = entry?.at ?? (entry as any)?.createdAt ?? new Date().toISOString();
-            const author =
-              entry?.authorName ??
-              (entry as any)?.byName ??
-              (entry as any)?.author ??
-              (entry as any)?.by ??
-              fallbackAuthor;
-            return {
-              id: entry?.id ?? `timeline-remark-${idx}`,
-              text: entry?.text ?? "",
-              author,
-              authorId: entry?.authorId ?? ((entry as any)?.by as string | undefined),
-              createdAt,
-              updatedAt: (entry as any)?.updatedAt ?? createdAt,
-              associatedInteractionId: entry?.id ?? undefined,
-            };
-          })
+        .filter((entry) => (entry?.type ?? "").toUpperCase() === "REMARK_UPDATED" && entry?.text)
+        .map((entry, idx) => {
+          const createdAt = entry?.at ?? (entry as any)?.createdAt ?? new Date().toISOString();
+          const author =
+            entry?.authorName ??
+            (entry as any)?.byName ??
+            (entry as any)?.author ??
+            (entry as any)?.by ??
+            fallbackAuthor;
+          return {
+            id: entry?.id ?? `timeline-remark-${idx}`,
+            text: entry?.text ?? "",
+            author,
+            authorId: entry?.authorId ?? ((entry as any)?.by as string | undefined),
+            createdAt,
+            updatedAt: (entry as any)?.updatedAt ?? createdAt,
+            associatedInteractionId: entry?.id ?? undefined,
+          };
+        })
       : [];
     if (fromHistory.length > 0) return fromHistory;
 
     const fromLeadRemarks: RemarkEntry[] =
       Array.isArray(lead?.remarks) && lead.remarks.length > 0
         ? lead.remarks.map((remark, idx) => ({
-            id: `lead-remark-${idx}`,
-            text: remark?.text ?? "",
-            author: remark?.author ?? fallbackAuthor,
-            authorId: (remark as any)?.authorId ?? undefined,
-            createdAt: remark?.createdAt ?? new Date().toISOString(),
-            updatedAt: remark?.createdAt ?? undefined,
-          }))
+          id: `lead-remark-${idx}`,
+          text: remark?.text ?? "",
+          author: remark?.author ?? fallbackAuthor,
+          authorId: (remark as any)?.authorId ?? undefined,
+          createdAt: remark?.createdAt ?? new Date().toISOString(),
+          updatedAt: remark?.createdAt ?? undefined,
+        }))
         : [];
 
     return fromLeadRemarks;
@@ -479,75 +479,75 @@ export default function ViewLead() {
 
   return (
     <>
-    <div className="space-y-6">
-      <LeadProfileHeader
-        lead={lead}
-        loading={loading}
-        isAdmin={isAdmin}
-        canEditProfile={canEditProfile}
-        onProfileRefresh={refetchAll}
-      />
+      <div className="space-y-6">
+        <LeadProfileHeader
+          lead={lead}
+          loading={loading}
+          isAdmin={isAdmin}
+          canEditProfile={canEditProfile}
+          onProfileRefresh={refetchAll}
+        />
 
-      <div className="flex flex-col gap-6 lg:gap-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <div className="h-full min-h-0">
-            <LeadUnifiedUpdateCard
-              leadId={leadId}
-              currentStatus={(lead.stageFilter as any) ?? (pickLeadStatus<string>(lead.status) as any)}
-              currentStage={pickLeadStage(lead.clientStage as any) as any}
-              pipelineStatus={lead.status as any}
-              onSaved={refetchAll}
-              onStatusChange={handleStatusChange}
-            />
-          </div>
-          <div className="h-full min-h-0 space-y-6">
-            <LeadRemarkHistory
-              remarks={remarkHistory}
-              isLoading={loadingInteractionHistory}
-              title="Lead Interaction History"
-              subtitle="Lead notes and remarks with editors and timestamps"
-            />
-            <TimelineList events={events} />
+        <div className="flex flex-col gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="h-full min-h-0">
+              <LeadUnifiedUpdateCard
+                leadId={leadId}
+                currentStatus={(lead.stageFilter as any) ?? (pickLeadStatus<string>(lead.status) as any)}
+                currentStage={pickLeadStage(lead.clientStage as any) as any}
+                pipelineStatus={lead.status as any}
+                onSaved={refetchAll}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
+            <div className="h-full min-h-0 space-y-6">
+              <LeadRemarkHistory
+                remarks={remarkHistory}
+                isLoading={loadingInteractionHistory}
+                title="Lead Interaction History"
+                subtitle="Lead notes and remarks with editors and timestamps"
+              />
+              <TimelineList events={events} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    {/* Floating trigger (desktop) */}
-    <div className="fixed right-6 top-28 z-[60] hidden md:block">
-      <button
-        onClick={() => setRmDrawerOpen(true)}
-        className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-white/80 dark:ring-white/10"
-        title="View all my leads"
-      >
-        <Users className="h-4 w-4 text-brand-600" />
-        <span>My Leads</span>
-      </button>
-    </div>
+      {/* Floating trigger (desktop) */}
+      <div className="fixed right-6 top-28 z-[60] hidden md:block">
+        <button
+          onClick={() => setRmDrawerOpen(true)}
+          className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow ring-1 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-white/80 dark:ring-white/10"
+          title="View all my leads"
+        >
+          <Users className="h-4 w-4 text-brand-600" />
+          <span>My Leads</span>
+        </button>
+      </div>
 
-    {/* Floating trigger (mobile / tablet) */}
-    <div className="fixed bottom-6 right-4 z-[60] md:hidden">
-      <button
-        onClick={() => setRmDrawerOpen(true)}
-        className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg ring-1 ring-brand-700/20"
-        title="My Leads"
-        aria-label="Open my leads"
-      >
-        <Users className="h-5 w-5 text-white" />
-        <span className="sr-only">My Leads</span>
-      </button>
-    </div>
+      {/* Floating trigger (mobile / tablet) */}
+      <div className="fixed bottom-6 right-4 z-[60] md:hidden">
+        <button
+          onClick={() => setRmDrawerOpen(true)}
+          className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg ring-1 ring-brand-700/20"
+          title="My Leads"
+          aria-label="Open my leads"
+        >
+          <Users className="h-5 w-5 text-white" />
+          <span className="sr-only">My Leads</span>
+        </button>
+      </div>
 
-    {/* Right-side drawer */}
-    <RmLeadsDrawer
-      isOpen={isRmDrawerOpen}
-      onClose={() => setRmDrawerOpen(false)}
-      onPick={(l) => {
-        setRmDrawerOpen(false);
-        if (l.id) {
-          navigate(`/sales/leads/${l.id}`, { state: { lead: { id: l.id, leadCode: l.leadCode, name: l.name } } });
-        }
-      }}
-    />
+      {/* Right-side drawer */}
+      <RmLeadsDrawer
+        isOpen={isRmDrawerOpen}
+        onClose={() => setRmDrawerOpen(false)}
+        onPick={(l) => {
+          setRmDrawerOpen(false);
+          if (l.id) {
+            navigate(`/sales/leads/${l.id}`, { state: { lead: { id: l.id, leadCode: l.leadCode, name: l.name } } });
+          }
+        }}
+      />
     </>
   );
 }

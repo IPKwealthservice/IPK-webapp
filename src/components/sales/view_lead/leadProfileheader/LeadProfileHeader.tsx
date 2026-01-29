@@ -35,7 +35,7 @@ import type { LeadEditModalValues } from "../../editLead/LeadEditModal";
 import LeadEditModal from "../../editLead/LeadEditModal";
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 import { ADD_LEAD_PHONE } from "../gql/view_lead.gql";
 import { HoverPreviewCard, RemarkBioModal } from "./HoverRemark";
 
@@ -273,13 +273,13 @@ export default function LeadProfileHeader({
     let whatsappPhone: string | undefined;
     const phoneDrafts: any[] = Array.isArray(lead.phones)
       ? lead.phones.map((p) => ({
-          id: p.id,
-          number: p.number,
-          label: p.label,
-          isPrimary: p.isPrimary,
-          isWhatsapp: p.isWhatsapp,
-          normalized: p.normalized,
-        }))
+        id: p.id,
+        number: p.number,
+        label: p.label,
+        isPrimary: p.isPrimary,
+        isWhatsapp: p.isWhatsapp,
+        normalized: p.normalized,
+      }))
       : [];
 
     if (Array.isArray(lead.phones) && lead.phones.length > 0) {
@@ -322,14 +322,14 @@ export default function LeadProfileHeader({
       companyName: (occ0?.companyName as any) ?? lead.companyName ?? "",
       occupations: occ0
         ? [
-            {
-              profession: (occ0?.profession as any) ?? undefined,
-              designation: (occ0?.designation as any) ?? undefined,
-              companyName: (occ0?.companyName as any) ?? undefined,
-              startedAt: (occ0 as any)?.startedAt ?? undefined,
-              endedAt: (occ0 as any)?.endedAt ?? undefined,
-            },
-          ]
+          {
+            profession: (occ0?.profession as any) ?? undefined,
+            designation: (occ0?.designation as any) ?? undefined,
+            companyName: (occ0?.companyName as any) ?? undefined,
+            startedAt: (occ0 as any)?.startedAt ?? undefined,
+            endedAt: (occ0 as any)?.endedAt ?? undefined,
+          },
+        ]
         : undefined,
       product: lead.product ?? "",
       investmentRange: lead.investmentRange ?? "",
@@ -338,10 +338,10 @@ export default function LeadProfileHeader({
       remark: lead.remark ?? "",
       remarks: Array.isArray(lead.remarks)
         ? lead.remarks.map((r) => ({
-            text: r?.text ?? "",
-            author: r?.author ?? "",
-            createdAt: r?.createdAt ?? new Date().toISOString(),
-          }))
+          text: r?.text ?? "",
+          author: r?.author ?? "",
+          createdAt: r?.createdAt ?? new Date().toISOString(),
+        }))
         : undefined,
       referralName: lead.referralName ?? "",
       leadSourceOther: lead.leadSourceOther ?? "",
@@ -620,11 +620,11 @@ export default function LeadProfileHeader({
               )}
             </div>
 
-          {/* Occupation moved below alt numbers */}
-          <div className="rounded-2xl bg-white/70 p-4 text-xs dark:bg-white/[0.03]">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
-              Occupation
-            </p>
+            {/* Occupation moved below alt numbers */}
+            <div className="rounded-2xl bg-white/70 p-4 text-xs dark:bg-white/[0.03]">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-white/60">
+                Occupation
+              </p>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 <div>
                   <p className="text-[11px] text-gray-500 dark:text-white/60">Profession</p>

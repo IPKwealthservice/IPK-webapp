@@ -20,7 +20,7 @@ import { leadOptions, valueToLabel } from "@/components/lead/types";
 import type { Lead } from "@/components/sales/myleads/interface/type";
 import { LeadStage, LeadStatus } from "@/components/sales/myleads/interface/type";
 import { STAGE_META, STAGE_SEQUENCE } from "@/components/sales/myleads/stageMeta";
-import { useAuth } from "@/context/AuthContex";
+import { useAuth } from "@/context/authContext";
 
 type ExportFormat = "csv" | "xlsx";
 

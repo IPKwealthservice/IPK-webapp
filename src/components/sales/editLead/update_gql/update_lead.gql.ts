@@ -39,6 +39,9 @@ mutation UpdateLeadDetails($input: UpdateLeadDetailsInput!) {
     age
     bioText
     nextActionDueAt
+    permAddress
+    acOpeningDate
+    tradeNumber
   }
 }
 `;
