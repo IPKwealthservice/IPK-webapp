@@ -1,3 +1,5 @@
+import InputField from "./InputField";
+
 interface Props {
   list: string[];
   setList: (list: string[]) => void;

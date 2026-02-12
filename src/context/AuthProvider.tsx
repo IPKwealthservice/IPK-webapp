@@ -14,8 +14,10 @@ import {
 import { setContext } from "@apollo/client/link/context";
 import { FirebaseError } from "firebase/app";
 import {
+    GithubAuthProvider,
     onIdTokenChanged,
     signInWithEmailAndPassword,
+    signInWithPopup,
     signOut,
     User as FirebaseUser,
 } from "firebase/auth";
@@ -310,6 +312,36 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
         }
     };
 
+    const loginWithGithub = async (): Promise<LoginResult> => {
+        try {
+            const provider = new GithubAuthProvider();
+            await signInWithPopup(auth, provider);
+            return { success: true };
+        } catch (error) {
+            console.error("GitHub Login failed", error);
+
+            if (error instanceof FirebaseError) {
+                const info = AUTH_ERROR_MESSAGES[error.code] ?? DEFAULT_LOGIN_ERROR;
+                return {
+                    success: false,
+                    code: error.code,
+                    title: info.title,
+                    message: info.message,
+                    target: info.target,
+                    fieldMessage: info.fieldMessage,
+                    variant: info.variant ?? "error",
+                };
+            }
+
+            return {
+                success: false,
+                title: DEFAULT_LOGIN_ERROR.title,
+                message: DEFAULT_LOGIN_ERROR.message,
+                variant: "error",
+            };
+        }
+    };
+
     const logout = async () => {
         setLoading(true);
         try {
@@ -330,6 +362,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
                 loading,
                 idToken,
                 login,
+                loginWithGithub,
                 logout,
                 refresh: loadProfile,
             }}

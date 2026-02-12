@@ -30,6 +30,7 @@ export type AuthContextType = {
     loading: boolean;
     idToken: string | null;
     login: (email: string, password: string) => Promise<LoginResult>;
+    loginWithGithub: () => Promise<LoginResult>;
     logout: () => Promise<void>;
     refresh: () => Promise<void>;
 };

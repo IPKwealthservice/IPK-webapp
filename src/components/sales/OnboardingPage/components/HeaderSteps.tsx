@@ -35,11 +35,11 @@ export default function HeaderSteps({ current }: { current: number }) {
 
   return (
     <div className="mobile-padding tablet-padding desktop-padding">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3">
+      <div className="max-w-6xl mx-auto px-2 sm:px-4 py-3">
 
         {/* ✅ FIXED MOBILE RESPONSIVE CONTAINER */}
         <div className="flex overflow-x-auto md:overflow-visible md:justify-center scrollbar-hide">
-          <div className="flex items-center min-w-max gap-1 pl-3 pr-3 sm:pl-0 sm:pr-0">
+          <div className="flex items-center min-w-max gap-3 pl-3 pr-3 sm:pl-0 sm:pr-0">
 
             {steps.map((step) => {
               const isActive = current === step.id;
@@ -51,9 +51,9 @@ export default function HeaderSteps({ current }: { current: number }) {
                   to={step.path}
                   className={`
                       relative flex items-center justify-center
-                      h-9 sm:h-10 md:h-12
-                      px-4 sm:px-6 md:px-8
-                      text-xs sm:text-sm font-semibold
+                      h-12 sm:h-14 md:h-16
+                      px-8 sm:px-10 md:px-12
+                      text-base sm:text-lg font-semibold
                       transition-all duration-300 select-none
 
                       ${isActive && "bg-indigo-700 text-white shadow-lg"}
@@ -81,6 +81,5 @@ export default function HeaderSteps({ current }: { current: number }) {
 
       </div>
     </div>
-    // </div>
   );
 }

@@ -55,9 +55,10 @@ export default function DematAccount({ form, update }: Props) {
         onChange={(v: any) => update("schemeName", v)}
       />
 
-      <InputField
+      <DropdownField
         label="Broker Name"
         value={form.brokerName}
+        options={["Motilal Oswal", "Aditya Birla"]}
         onChange={(v: any) => update("brokerName", v)}
       />
 

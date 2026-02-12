@@ -1,5 +1,5 @@
-import InputField from "../components/InputField";
-import WhatsappList from "../components/WhatsappList";
+import InputField from "./InputField";
+import WhatsappList from "./WhatsappList";
 
 interface Props {
   form: any;

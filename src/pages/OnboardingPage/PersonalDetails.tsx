@@ -1,7 +1,7 @@
-import InputField from "../components/InputField";
-import TextAreaField from "../components/TextAreaField";
-import DropdownField from "../components/DropdownField";
-import FamilyAccounts from "../components/FamilyAccounts";
+import InputField from "./InputField";
+import TextAreaField from "./TextAreaField";
+import DropdownField from "./DropdownField";
+import FamilyAccounts from "./FamilyAccounts";
 
 const RELATIONSHIP_OPTIONS = [
   "Spouse",
@@ -18,12 +18,13 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 const CLIENT_SOURCE_OPTIONS = [
-  "Reference",
-  "Online",
-  "YES Con",
-  "Start-up",
-  "Jubilan",
-  "Spotlight-YES",
+  "REFERENCE",
+  "ONLINE",
+  "YES CON",
+  "START-UP",
+  "JUBILAN",
+  "SPOTLIGHT-YES",
+  "OTHERS",
 ];
 
 interface Props {
@@ -60,10 +61,15 @@ export default function PersonalDetails({
         <InputField label="Name" value={form.name} onChange={(v) => update("name", v)} />
         <InputField label="Location" value={form.location} onChange={(v) => update("location", v)} />
 
-        <InputField label="Gender" value={form.gender} onChange={(v) => update("gender", v)} />
+        <DropdownField
+          label="Gender"
+          value={form.gender}
+          options={["Male", "Female"]}
+          onChange={(v: any) => update("gender", v)}
+        />
 
         <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
-        <InputField label="Age" value={form.age} readOnly onChange={() => {}} />
+        <InputField label="Age" value={form.age} readOnly onChange={() => { }} />
 
         <InputField label="Occupation" value={form.occupation} onChange={(v) => update("occupation", v)} />
 

@@ -4,10 +4,12 @@ export const GET_NEW_ONBOARDING_LEADS = gql`
   query GetNewOnboardingLeads {
     onboardingNewLeads {
       id
-      name
+      firstName
+      lastName
       mobile
       source
       status
+      clientCode
     }
   }
 `;
@@ -16,10 +18,12 @@ export const GET_COMPLETED_ONBOARDING_LEADS = gql`
   query GetCompletedOnboardingLeads {
     onboardingCompletedLeads {
       id
-      name
+      firstName
+      lastName
       mobile
       source
       status
+      clientCode
     }
   }
 `;

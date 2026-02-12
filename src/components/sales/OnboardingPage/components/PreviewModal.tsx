@@ -10,13 +10,13 @@ interface Props {
 export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
   if (!open) return null;
 
-  const Row = ({ label, value }: { label: string; value: unknown }) => ( 
+  const Row = ({ label, value }: { label: string; value: unknown }) => (
     <div className="flex justify-between border-b py-1">
       <span className="font-medium text-gray-700">{label}</span>
       <span className="text-gray-900">
         {value !== undefined && value !== null && value !== ""
-  ? String(value)
-  : "-"}
+          ? String(value)
+          : "-"}
       </span>
     </div>
   );
@@ -37,7 +37,8 @@ export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
 
         {/* PERSONAL DETAILS */}
         <Section title="Client Profile">
-          <Row label="Name" value={data.name} />
+          <Row label="First Name" value={data.firstName} />
+          <Row label="Last Name" value={data.lastName} />
           <Row label="Communication Address" value={data.commAddress} />
           <Row
             label="Permanent Address"

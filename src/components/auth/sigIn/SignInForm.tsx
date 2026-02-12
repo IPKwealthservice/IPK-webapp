@@ -24,8 +24,26 @@ export default function SignInForm() {
   const [banner, setBanner] = useState<BannerState | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
-  const { login } = useAuth();
+  const { login, loginWithGithub } = useAuth();
   const navigate = useNavigate();
+
+  const handleGithubLogin = async () => {
+    setBusy(true);
+    setBanner(null);
+    const result = await loginWithGithub();
+    setBusy(false);
+
+    if (result.success) {
+      navigate("/", { replace: true, state: { loginSuccess: true } });
+      return;
+    }
+
+    setBanner({
+      title: result.title,
+      message: result.message,
+      variant: result.variant,
+    });
+  };
 
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);

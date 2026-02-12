@@ -1,5 +1,5 @@
-import InputField from "../components/InputField";
-import TextAreaField from "../components/TextAreaField";
+import InputField from "./InputField";
+import TextAreaField from "./TextAreaField";
 
 interface Props {
   form: any;

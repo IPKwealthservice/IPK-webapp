@@ -1,4 +1,4 @@
-import InputField from "../components/InputField";
+import InputField from "./InputField";
 
 interface Props {
   form: any;

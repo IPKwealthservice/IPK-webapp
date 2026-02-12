@@ -2,15 +2,15 @@ import React, { useState } from "react";
 
 import Header from "./Header";
 
-import PersonalDetails from "./sections/PersonalDetails";
-import DematDetails from "./sections/DematDetails";
-import ContactDetails from "./sections/ContactDetails";
-import BillingDetails from "./sections/BillingDetails";
-import BankDetails from "./sections/BankDetails";
+import PersonalDetails from "./PersonalDetails";
+import DematDetails from "./DematDetailSection";
+import ContactDetails from "./ContactDetails";
+import BillingDetails from "./BillingDetails";
+import BankDetails from "./BankDetails";
 
-import PreviewModal from "./components/PreviewModal";
-import SuccessPopup from "./components/SuccessPopup";
-import FileUpload from "./components/FileUpload";
+import PreviewModal from "./PreviewModal";
+import SuccessPopup from "./SuccessPopup";
+import FileUpload from "./FileUpload";
 
 export default function OnboardingProcess() {
   // ------------------------------------

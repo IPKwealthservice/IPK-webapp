@@ -3,6 +3,8 @@ import { useQuery } from "@apollo/client";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import { AuthProvider } from "@/context/AuthProvider";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { ME } from "@/core/graphql/user/user.gql";
 
@@ -157,6 +159,7 @@ export default function App() {
 
         </Routes>
       </Router>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={true} />
     </AuthProvider>
   );
 }

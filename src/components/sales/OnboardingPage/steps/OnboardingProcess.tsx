@@ -180,7 +180,12 @@ export default function OnboardingProcess() {
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField label="Name" value={form.name} onChange={(v: any) => update("name", v)} />
             <InputField label="Location" value={form.location} onChange={(v: any) => update("location", v)} />
-            <InputField label="Gender" value={form.gender} onChange={(v: any) => update("gender", v)} />
+            <DropdownField
+              label="Gender"
+              value={form.gender}
+              options={["Male", "Female"]}
+              onChange={(v: any) => update("gender", v)}
+            />
             <InputField type="date" label="DOB" value={form.dob} onChange={calculateAge} />
             <InputField label="Age" readOnly value={form.age} />
             <InputField label="Occupation" value={form.occupation} onChange={(v: any) => update("occupation", v)} />
@@ -213,11 +218,11 @@ export default function OnboardingProcess() {
             <DropdownField
               label="Client Source"
               value={form.clientSource}
-              options={["Reference", "Online", "YES Con", "Start-up", "Jubilan", "Spotlight-YES", "Others"]}
+              options={["REFERENCE", "ONLINE", "YES CON", "START-UP", "JUBILAN", "SPOTLIGHT-YES", "OTHERS"]}
               onChange={(v: any) => update("clientSource", v)}
             />
 
-            {form.clientSource === "Others" && (
+            {form.clientSource === "OTHERS" && (
               <InputField label="Specify Client Source" value={form.clientSourceOther} onChange={(v: any) => update("clientSourceOther", v)} />
             )}
           </div>
@@ -260,7 +265,12 @@ export default function OnboardingProcess() {
           <InputField label="DP ID" value={form.dpId} onChange={(v: any) => update("dpId", v)} />
           <InputField label="Client Code" value={form.clientCode} onChange={(v: any) => update("clientCode", v)} />
           <InputField label="Scheme Name" value={form.schemeName} onChange={(v: any) => update("schemeName", v)} />
-          <InputField label="Broker Name" value={form.brokerName} onChange={(v: any) => update("brokerName", v)} />
+          <DropdownField
+            label="Broker Name"
+            value={form.brokerName}
+            options={["Motilal Oswal", "Aditya Birla"]}
+            onChange={(v: any) => update("brokerName", v)}
+          />
           <InputField label="Nominee Name" value={form.nomineeName} onChange={(v: any) => update("nomineeName", v)} />
 
           <DropdownField
