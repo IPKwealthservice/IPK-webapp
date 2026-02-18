@@ -1,9 +1,19 @@
-import React, { useRef, useState } from "react";
 import { Pencil, User } from "lucide-react";
+import React, { useRef, useState } from "react";
 
-export default function FileUpload() {
+interface FileUploadProps {
+  onFileSelect?: (base64: string) => void;
+  value?: string;
+}
+
+export default function FileUpload({ onFileSelect, value }: FileUploadProps) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string>("");
+  const [preview, setPreview] = useState<string>(value || "");
+  
+  // React to value change from parent
+  React.useEffect(() => {
+    if (value) setPreview(value);
+  }, [value]);
 
   const chooseImage = () => {
     fileRef.current?.click();
@@ -12,7 +22,17 @@ export default function FileUpload() {
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setPreview(URL.createObjectURL(file));
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+
+      // Convert to Base64 for backend
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (onFileSelect && reader.result) {
+           onFileSelect(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -21,6 +41,7 @@ export default function FileUpload() {
     if (fileRef.current) {
       fileRef.current.value = "";
     }
+    if (onFileSelect) onFileSelect("");
   };
 
   return (

@@ -32,6 +32,15 @@ const ACCOUNT_TYPE_OPTIONS = [
     "Others",
 ];
 
+const SCHEME_OPTIONS = [
+    "IAP",
+    "SIP",
+    "NON IAP",
+    "SEMI SIP",
+    "MINI IAP",
+    "PROBATIONARY PORTFOLIO",
+];
+
 export default function DematDetails({ form, update }: Props) {
     return (
         <section className="mt-10">
@@ -53,9 +62,10 @@ export default function DematDetails({ form, update }: Props) {
                     onChange={(v) => update("clientCode", v)}
                 />
 
-                <InputField
+                <DropdownField
                     label="Scheme Name"
                     value={form.schemeName}
+                    options={SCHEME_OPTIONS}
                     onChange={(v) => update("schemeName", v)}
                 />
 

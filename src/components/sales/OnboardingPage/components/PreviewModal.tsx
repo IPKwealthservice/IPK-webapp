@@ -108,6 +108,7 @@ export default function PreviewModal({ open, data, onClose, onSubmit }: Props) {
         <Section title="Bank Details">
           <Row label="Holder Name" value={data.holderName} />
           <Row label="Bank Name" value={data.bankName} />
+          <Row label="Branch" value={data.branch} />
           <Row label="Account Number" value={data.accNumber} />
           <Row label="IFSC" value={data.ifsc} />
           <Row label="MICR No" value={data.micr} />

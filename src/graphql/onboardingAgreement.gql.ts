@@ -31,12 +31,14 @@ export const GET_ONBOARDING_PROFILE = gql`
       tradeNumber
       nomineeName
       nomineeRelationship
+      nomineeRelationshipOther
       nomineeContact
       nomineeEmail
       nomineeAadhar
       nomineePan
       holderName
       bankName
+      branch
       accNumber
       ifsc
       micr
@@ -44,6 +46,17 @@ export const GET_ONBOARDING_PROFILE = gql`
       gst
       billingAddress
       agreementAccepted
+      profileImage
+      contactPersonName
+      contactPersonNo
+      relationship
+      relationshipOther
+      clientSourceOther
+      source
+      acType
+      acTypeOther
+      status
+      agreementAt
     }
   }
 `;

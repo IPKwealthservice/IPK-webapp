@@ -72,6 +72,7 @@ export default function OnboardingProcess() {
     accNumber: "",
     ifsc: "",
     micr: "",
+    branch: "",
   });
 
   const update = (field: string, value: any) => {

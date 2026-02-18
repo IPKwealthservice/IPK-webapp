@@ -32,6 +32,15 @@ const accountTypeOptions = [
   "Others",
 ];
 
+const schemeOptions = [
+  "IAP",
+  "SIP",
+  "NON IAP",
+  "SEMI SIP",
+  "MINI IAP",
+  "PROBATIONARY PORTFOLIO",
+];
+
 export default function DematAccount({ form, update }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -49,9 +58,10 @@ export default function DematAccount({ form, update }: Props) {
         onChange={(v: any) => update("clientCode", v)}
       />
 
-      <InputField
+      <DropdownField
         label="Scheme Name"
         value={form.schemeName}
+        options={schemeOptions}
         onChange={(v: any) => update("schemeName", v)}
       />
 

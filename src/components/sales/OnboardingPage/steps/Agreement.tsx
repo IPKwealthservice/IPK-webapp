@@ -123,8 +123,8 @@ In event of client’s death / disability, services shall be terminated or provi
 
 15. Adherence to grievance redressal timelines:
 Investment Advisor shall be responsible to resolve the grievances within the timelines specified under SEBI circulars. In case of any query or grievance, client shall contact through following medium:
-Tel No.: +91 
-Mail id: 
+Tel No.: +91 9688105880
+Mail id: vijipriya@ipkwealth.com
 
 16. Indemnity: 
 Client acknowledges that the Investment Advisor’s, investment recommendations involve degree of risk. Client acknowledges that all investment activity in Client’s Account shall be at his/her own risk, which can result in loss of Client's investment capital, annual income, and/or tax benefits.
@@ -162,7 +162,12 @@ export default function Agreement() {
   const { data, loading } = useQuery(GET_ONBOARDING_PROFILE, {
     variables: { leadId },
     skip: !leadId,
+    fetchPolicy: "network-only",
   });
+
+  console.log("Agreement Lead ID:", leadId);
+  console.log("Agreement Data:", data);
+  console.log("Agreement Loading:", loading);
 
   const [upsertOnboarding] = useMutation(UPSERT_ONBOARDING_PROFILE);
 
@@ -170,8 +175,41 @@ export default function Agreement() {
 
   const [agreed, setAgreed] = useState(false);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
-  const [showPdf, setShowPdf] = useState(false);
   const agreementRef = useRef<HTMLDivElement | null>(null);
+
+  // Signature State
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
+  const [signatureError, setSignatureError] = useState<string | null>(null);
+
+  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setSignatureError(null);
+
+    if (!file) return;
+
+    // Validate format
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      setSignatureError("Invalid file format. Please upload JPG, JPEG, or PNG.");
+      return;
+    }
+
+    // Validate size (2MB = 2 * 1024 * 1024 bytes)
+    if (file.size > 2 * 1024 * 1024) {
+      setSignatureError("File size exceeds 2MB limit.");
+      return;
+    }
+
+    setSignatureFile(file);
+    setSignaturePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveSignature = () => {
+    setSignatureFile(null);
+    setSignaturePreview(null);
+    setSignatureError(null);
+  };
 
   const agreementData = useMemo(() => {
     const today = new Date();
@@ -181,21 +219,41 @@ export default function Agreement() {
       year: 'numeric'
     });
 
+    const clientName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "N/A";
+    const address = profile?.permAddress || profile?.commAddress || "N/A";
+    const pan = profile?.pan || "N/A";
+    const aadhaar = profile?.aadhaar || "N/A";
+    const broker = profile?.brokerName || "N/A"; // Was "IPK Wealth"
+    const clientCode = profile?.clientCode || "N/A"; // Was "PENDING"
+    const dpId = profile?.dpId || "N/A"; // Was "PENDING"
+
+    const requiredChecks = [
+      { key: "Client Name", value: clientName },
+      { key: "Address", value: address },
+      { key: "PAN Number", value: pan },
+      { key: "AADHAR Number", value: aadhaar },
+      { key: "DP ID", value: dpId },
+      { key: "Broker Name", value: broker },
+      { key: "Trading Code", value: clientCode },
+    ];
+
+    const missing = requiredChecks.filter(item => item.value === "N/A" || !item.value).map(item => item.key);
+
     return {
       date: dateStr,
       client: {
-        name: profile?.name || "N/A",
-        pan: profile?.pan || "N/A",
-        aadhaar: profile?.aadhaar || "N/A",
+        name: clientName,
+        pan: pan,
+        aadhaar: aadhaar,
         mobile: profile?.mobile || "N/A",
         email: profile?.email || "N/A",
-        address: profile?.permAddress || profile?.commAddress || "N/A",
+        address: address,
         location: profile?.location || "N/A",
       },
       account: {
-        broker: profile?.brokerName || "IPK Wealth",
-        clientCode: profile?.clientCode || "PENDING",
-        dpId: profile?.dpId || "PENDING",
+        broker: broker,
+        clientCode: clientCode,
+        dpId: dpId,
         scheme: profile?.schemeName || "N/A",
       },
       nominee: {
@@ -204,8 +262,9 @@ export default function Agreement() {
         contact: profile?.nomineeContact || "N/A",
       },
       billing: {
-        name: profile?.billName || profile?.name || "N/A",
-      }
+        name: profile?.billName || clientName,
+      },
+      missingFields: missing
     };
   }, [profile]);
 
@@ -239,14 +298,14 @@ export default function Agreement() {
     let text = AGREEMENT_TEXT;
     const replacements: Record<string, string> = {
       "{{DATE}}": agreementData.date,
-      "{{CLIENT_NAME}}": agreementData.client.name,
-      "{{PAN}}": agreementData.client.pan,
-      "{{AADHAAR}}": agreementData.client.aadhaar,
-      "{{ADDRESS}}": agreementData.client.address,
+      "{{CLIENT_NAME}}": agreementData.client.name === "N/A" ? ":::MISSING_CLIENT_NAME:::" : agreementData.client.name,
+      "{{PAN}}": agreementData.client.pan === "N/A" ? ":::MISSING_PAN:::" : agreementData.client.pan,
+      "{{AADHAAR}}": agreementData.client.aadhaar === "N/A" ? ":::MISSING_AADHAAR:::" : agreementData.client.aadhaar,
+      "{{ADDRESS}}": agreementData.client.address === "N/A" ? ":::MISSING_ADDRESS:::" : agreementData.client.address,
       "{{LOCATION}}": agreementData.client.location,
-      "{{BROKER}}": agreementData.account.broker,
-      "{{CLIENT_CODE}}": agreementData.account.clientCode,
-      "{{DP_ID}}": agreementData.account.dpId,
+      "{{BROKER}}": agreementData.account.broker === "N/A" ? ":::MISSING_BROKER_NAME:::" : agreementData.account.broker,
+      "{{CLIENT_CODE}}": agreementData.account.clientCode === "N/A" ? ":::MISSING_TRADING_CODE:::" : agreementData.account.clientCode,
+      "{{DP_ID}}": agreementData.account.dpId === "N/A" ? ":::MISSING_DP_ID:::" : agreementData.account.dpId,
       "{{NOMINEE_NAME}}": agreementData.nominee.name,
       "{{NOMINEE_RELATION}}": agreementData.nominee.relationship,
       "{{NOMINEE_CONTACT}}": agreementData.nominee.contact,
@@ -264,6 +323,21 @@ export default function Agreement() {
       const isHeader = i === 0 || para.toUpperCase() === para && para.length < 50;
       const isListItem = para.trim().startsWith("•") || /^[0-9]+\./.test(para.trim()) || para.trim().startsWith("(a)");
 
+      const renderWithHighlights = (text: string) => {
+        const parts = text.split(/(:::MISSING_[A-Z_]+:::)/g);
+        return parts.map((part, idx) => {
+          if (part.startsWith(":::MISSING_")) {
+            const label = part.replace(":::MISSING_", "").replace(":::", "").replace(/_/g, " ");
+            return (
+              <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 border border-red-200 mx-1">
+                ⚠️ MISSING: {label}
+              </span>
+            );
+          }
+          return part;
+        });
+      };
+
       return (
         <p
           key={i}
@@ -273,13 +347,14 @@ export default function Agreement() {
             ${isListItem ? "pl-4" : ""}
           `}
         >
-          {para}
+          {renderWithHighlights(para)}
         </p>
       );
     });
   }, [agreementData]);
 
-  const canProceed = agreed && (hasScrolledToEnd || showPdf);
+  const isMissingFields = agreementData.missingFields.length > 0;
+  const canProceed = agreed && hasScrolledToEnd && !!signatureFile && !signatureError && !isMissingFields;
 
   if (loading) {
     return (
@@ -305,12 +380,6 @@ export default function Agreement() {
               <p className="text-indigo-200 text-xs mt-1">Please review the terms of service below</p>
             </div>
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => setShowPdf(!showPdf)}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-semibold backdrop-blur-sm transition-all border border-white/20"
-              >
-                {showPdf ? "View Formatted Version" : "Original PDF"}
-              </button>
               <div className="hidden sm:block">
                 <img
                   src="/ipk-logo.jpg"
@@ -321,33 +390,124 @@ export default function Agreement() {
             </div>
           </div>
 
-          {/* Document Body */}
-          <div className="relative">
-            {showPdf ? (
-              <div className="h-[800px] bg-gray-200">
-                <iframe
-                  src="/agreements/investment agreement.pdf"
-                  title="PDF Viewer"
-                  className="w-full h-full border-0 shadow-inner"
-                />
+          {/* MISSING FIELDS WARNING */}
+          {isMissingFields && (
+            <div className="bg-red-50 border-b border-red-200 p-4 sticky top-0 z-10 flex items-start sm:items-center gap-3">
+              <div className="flex-shrink-0 text-red-500 mt-1 sm:mt-0">
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
               </div>
-            ) : (
-              <div
-                ref={agreementRef}
-                onScroll={handleScroll}
-                className="h-[800px] overflow-y-auto px-12 sm:px-24 py-20 bg-white"
-                style={{ scrollBehavior: 'smooth' }}
-              >
-                <div className="max-w-3xl mx-auto font-serif">
-                  {formattedContent}
-
-                  {/* Signature Footer Removed */}
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">
+                  Missing Required Information
+                </h3>
+                <div className="mt-1 text-xs text-red-700">
+                  The following details are missing from the profile: <b>{agreementData.missingFields.join(", ")}</b>.
+                  Please go back to the Client Profile step to update them.
                 </div>
               </div>
-            )}
+              <button
+                onClick={() => navigate("/sales/onboarding/process/client-profile")}
+                className="bg-white text-red-600 px-3 py-1 rounded border border-red-200 text-xs font-bold hover:bg-red-50"
+              >
+                Go to Profile
+              </button>
+            </div>
+          )}
+
+          {/* Document Body */}
+          <div className="relative">
+            <div
+              ref={agreementRef}
+              onScroll={handleScroll}
+              className="h-[800px] overflow-y-auto px-12 sm:px-24 py-20 bg-white"
+              style={{ scrollBehavior: 'smooth' }}
+            >
+              <div className="max-w-3xl mx-auto font-serif">
+                {formattedContent}
+
+                {/* Signatures Section */}
+                <div className="mt-12 flex flex-col sm:flex-row justify-between items-end gap-10">
+
+                  {/* Company Signature */}
+                  <div className="flex flex-col items-center pb-2">
+                    <div className="w-48 h-24 flex items-center justify-center mb-2">
+                      <img
+                        src="/images/company-seal.png"
+                        alt="Company Seal"
+                        className="max-h-full max-w-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.className = "w-48 h-24 flex items-center justify-center border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg mb-2";
+                            parent.innerHTML = '<span class="text-xs text-gray-400 font-bold">Company Seal</span>';
+                          }
+                        }}
+                      />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900 text-center">
+                      Managing Director,<br />
+                      IPK Wealth Services Private Limited
+                    </h3>
+                  </div>
+
+                  {/* Client Signature Section */}
+                  <div className="w-full max-w-sm">
+                    <div className="bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300 flex flex-col items-center justify-center text-center transition-colors hover:bg-gray-100">
+                      {signaturePreview ? (
+                        <div className="relative group">
+                          <img
+                            src={signaturePreview}
+                            alt="Client Signature"
+                            className="max-h-20 object-contain border border-gray-200 rounded-md bg-white p-1 shadow-sm"
+                          />
+                          <button
+                            onClick={handleRemoveSignature}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            title="Remove Signature"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                          <p className="text-[10px] text-green-600 font-semibold mt-1 flex items-center justify-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                            Signature Uploaded Successfully
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="w-full">
+                          <label htmlFor="signature-upload" className="cursor-pointer flex flex-col items-center gap-1">
+                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200 text-indigo-600">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                            </div>
+                            <span className="text-xs font-medium text-indigo-600 hover:text-indigo-700">Click to upload signature</span>
+                            <span className="text-[10px] text-gray-500">JPG, JPEG, PNG (Max 2MB)</span>
+                          </label>
+                          <input
+                            id="signature-upload"
+                            type="file"
+                            accept="image/jpeg, image/jpg, image/png"
+                            className="hidden"
+                            onChange={handleSignatureChange}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900 mt-2 text-center">Client Signature</h3>
+                    {signatureError && (
+                      <p className="text-xs text-red-500 font-medium mt-1 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        {signatureError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Scroll Indicator Overlay */}
-            {!hasScrolledToEnd && !showPdf && (
+            {!hasScrolledToEnd && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
                 <div className="bg-indigo-600 text-white px-6 py-2 rounded-full text-xs font-bold shadow-2xl animate-bounce flex items-center gap-2">
                   <span>Scroll down to end to agree</span>
@@ -360,26 +520,30 @@ export default function Agreement() {
           {/* Footer Actions */}
           <div className="bg-gray-50 border-t border-gray-200 p-8 sm:px-12">
             <div className="max-w-4xl mx-auto flex flex-col gap-8">
+
+
               {/* Acceptance Checkbox */}
               <div className="flex items-start gap-4 transition-all duration-300">
                 <div className="pt-0.5">
                   <input
                     type="checkbox"
-                    disabled={!hasScrolledToEnd && !showPdf}
+                    disabled={!hasScrolledToEnd}
                     checked={agreed}
                     onChange={(e) => setAgreed(e.target.checked)}
                     className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   />
                 </div>
                 <label
-                  className={`text-xs leading-relaxed select-none cursor-pointer font-medium ${hasScrolledToEnd || showPdf ? "text-gray-800" : "text-gray-400"}`}
-                  onClick={() => (hasScrolledToEnd || showPdf) && setAgreed(!agreed)}
+                  className={`text-xs leading-relaxed select-none cursor-pointer font-medium ${hasScrolledToEnd ? "text-gray-800" : "text-gray-400"}`}
+                  onClick={() => hasScrolledToEnd && setAgreed(!agreed)}
                 >
                   I hereby confirm that I have read and understood the entire **Investment Advisory Agreement**,
                   including the risk disclosures and fee structures. I authorize **IPK Wealth Services** to provide
                   discretionary advisory services as per the terms mentioned above.
                 </label>
               </div>
+
+
 
               {/* Final Button */}
               <div className="flex justify-end">

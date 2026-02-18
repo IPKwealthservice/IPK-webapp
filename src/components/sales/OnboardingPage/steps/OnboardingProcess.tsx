@@ -101,6 +101,7 @@ export default function OnboardingProcess() {
     accNumber: "",
     ifsc: "",
     micr: "",
+    branch: "",
   });
 
   const update = (field: string, value: any) =>
@@ -346,8 +347,9 @@ export default function OnboardingProcess() {
       {openSection === "bank" && (
         <div className="mt-4 grid grid-cols-2 gap-6">
           <InputField label="Holder Name" value={form.holderName} onChange={(v: any) => update("holderName", v)} />
-          <InputField label="Bank Name" value={form.bankName} onChange={(v: any) => update("bankName", v)} />
           <InputField label="Acc Number" value={form.accNumber} onChange={(v: any) => update("accNumber", v)} />
+          <InputField label="Bank Name" value={form.bankName} onChange={(v: any) => update("bankName", v)} />
+          <InputField label="Branch" value={form.branch} onChange={(v: any) => update("branch", v)} />
           <InputField label="IFSC" value={form.ifsc} onChange={(v: any) => update("ifsc", v)} />
           <InputField label="MICR No." value={form.micr} onChange={(v: any) => update("micr", v)} />
         </div>

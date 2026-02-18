@@ -55,6 +55,7 @@ export interface BillingDetailsForm {
 export interface BankDetailsForm {
   holderName: string;
   bankName: string;
+  branch: string;
   accNumber: string;
   ifsc: string;
   micr: string;

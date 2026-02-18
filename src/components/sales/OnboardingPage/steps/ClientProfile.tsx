@@ -1,7 +1,8 @@
+import { LEAD_DETAIL_WITH_TIMELINE } from "@/core/graphql/lead/lead.gql";
+import { GET_ONBOARDING_PROFILE } from "@/graphql/onboardingAgreement.gql";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GET_ONBOARDING_PROFILE } from "@/graphql/onboardingAgreement.gql";
 
 const UPSERTONBOARDING_MUTATION = gql`
   mutation UpsertOnboarding($input: SaveOnboardingInput!) {
@@ -44,6 +45,15 @@ const SectionHeader = ({
   </div>
 );
 
+const SCHEME_OPTIONS = [
+  "IAP",
+  "SIP",
+  "NON IAP",
+  "SEMI SIP",
+  "MINI IAP",
+  "PROBATIONARY PORTFOLIO",
+];
+
 /* ================= MAIN PAGE ================= */
 export default function ClientProfile() {
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -53,6 +63,7 @@ export default function ClientProfile() {
   /* ================= FORM STATE ================= */
   const [form, setForm] = useState<Record<string, string>>({
     // PERSONAL
+    profileImage: "",
     firstName: "",
     lastName: "",
     commAddress: "",
@@ -108,6 +119,7 @@ export default function ClientProfile() {
     accNumber: "",
     ifsc: "",
     micr: "",
+    branch: "",
   });
 
   const update = (field: string, value: unknown) =>
@@ -160,65 +172,74 @@ export default function ClientProfile() {
     fetchPolicy: "network-only",
   });
 
+  const { data: leadData } = useQuery(LEAD_DETAIL_WITH_TIMELINE, {
+    variables: { id: leadId },
+    skip: !leadId,
+  });
+
   useEffect(() => {
-    if (profileData?.getOnboardingByLeadId) {
-      const p = profileData.getOnboardingByLeadId;
+    const p = profileData?.getOnboardingByLeadId;
+    const l = leadData?.lead;
+
+    if (p || l) {
       setForm((prev) => ({
         ...prev,
-        firstName: p.firstName || "",
-        lastName: p.lastName || "",
-        location: p.location || "",
-        gender: p.gender || "",
-        dob: p.dob || "",
-        age: p.age?.toString() || "",
-        occupation: p.occupation || "",
-        income: p.income || "",
-        company: p.company || "",
-        designation: p.designation || "",
-        pan: p.pan || "",
-        aadhaar: p.aadhaar || "",
-        contactPersonName: p.contactPersonName || "",
-        contactPersonNo: p.contactPersonNo || "",
-        relationship: p.relationship || "",
-        relationshipOther: p.relationshipOther || "",
-        clientSource: p.source || "",
-        clientSourceOther: p.clientSourceOther || "",
-        mobile: p.mobile || "",
-        whatsapp: p.whatsapp || "",
-        language: p.language || "",
-        email: p.email || "",
-        tradeConfirmationNo: p.tradeNumber || "",
-        dpId: p.dpId || "",
-        clientCode: p.clientCode || "",
-        schemeName: p.schemeName || "",
-        brokerName: p.brokerName || "",
-        nomineeName: p.nomineeName || "",
-        nomineeRelationship: p.nomineeRelationship || "",
-        nomineeRelationshipOther: p.nomineeRelationshipOther || "",
-        nomineeContact: p.nomineeContact || "",
-        nomineeEmail: p.nomineeEmail || "",
-        nomineeAadhar: p.nomineeAadhar || "",
-        nomineePan: p.nomineePan || "",
-        acType: p.acType || "",
-        acTypeOther: p.acTypeOther || "",
-        acOpeningDate: p.accountOpeningDate || "",
-        billName: p.billName || "",
-        gst: p.gst || "",
-        billingAddress: p.billingAddress || "",
-        holderName: p.holderName || "",
-        bankName: p.bankName || "",
-        accNumber: p.accNumber || "",
-        ifsc: p.ifsc || "",
-        micr: p.micr || "",
+        profileImage: p?.profileImage || prev.profileImage || "",
+        firstName: p?.firstName || l?.firstName || "",
+        lastName: p?.lastName || l?.lastName || "",
+        location: p?.location || l?.location || "",
+        gender: p?.gender || l?.gender || "",
+        dob: p?.dob || "",
+        age: p?.age?.toString() || "",
+        occupation: p?.occupation || l?.occupations?.[0]?.profession || "",
+        income: p?.income || "",
+        company: p?.company || l?.occupations?.[0]?.companyName || "",
+        designation: p?.designation || l?.occupations?.[0]?.designation || "",
+        pan: p?.pan || "",
+        aadhaar: p?.aadhaar || "",
+        contactPersonName: p?.contactPersonName || "",
+        contactPersonNo: p?.contactPersonNo || "",
+        relationship: p?.relationship || "",
+        relationshipOther: p?.relationshipOther || "",
+        clientSource: p?.source || l?.leadSource || "",
+        clientSourceOther: p?.clientSourceOther || "",
+        mobile: p?.mobile || l?.phone || "",
+        whatsapp: p?.whatsapp || "",
+        language: p?.language || "",
+        email: p?.email || l?.email || "",
+        tradeConfirmationNo: p?.tradeNumber || "",
+        dpId: p?.dpId || "",
+        clientCode: p?.clientCode || "",
+        schemeName: p?.schemeName || "",
+        brokerName: p?.brokerName || "",
+        nomineeName: p?.nomineeName || "",
+        nomineeRelationship: p?.nomineeRelationship || "",
+        nomineeRelationshipOther: p?.nomineeRelationshipOther || "",
+        nomineeContact: p?.nomineeContact || "",
+        nomineeEmail: p?.nomineeEmail || "",
+        nomineeAadhar: p?.nomineeAadhar || "",
+        nomineePan: p?.nomineePan || "",
+        acType: p?.acType || "",
+        acTypeOther: p?.acTypeOther || "",
+        acOpeningDate: p?.accountOpeningDate || "",
+        billName: p?.billName || "",
+        gst: p?.gst || "",
+        billingAddress: p?.billingAddress || "",
+        holderName: p?.holderName || "",
+        bankName: p?.bankName || "",
+        accNumber: p?.accNumber || "",
+        ifsc: p?.ifsc || "",
+        micr: p?.micr || "",
+        branch: p?.branch || "",
+        commAddress: p?.commAddress || "",
+        permAddress: p?.permAddress || "",
       }));
 
-      if (p.permAddress && p.commAddress === p.permAddress) {
+      if (p?.permAddress && p?.commAddress === p?.permAddress) {
         setSamePerm(true);
-      } else {
-        setForm(prev => ({ ...prev, permAddress: p.permAddress || "" }));
       }
     }
-  }, [profileData]);
+  }, [profileData, leadData]);
 
   /* ================= VALIDATION ================= */
   const REQUIRED_FIELDS = [
@@ -243,6 +264,7 @@ export default function ClientProfile() {
     bankName: "Bank Name",
     accNumber: "Account Number",
     ifsc: "IFSC Code",
+    branch: "Branch",
     commAddress: "Communication Address",
     permAddress: "Permanent Address"
   };
@@ -328,6 +350,7 @@ export default function ClientProfile() {
       const input = {
         leadId,
         mobile: form.mobile,
+        profileImage: form.profileImage || null,
         // Personal
         firstName: form.firstName || null,
         lastName: form.lastName || null,
@@ -387,6 +410,7 @@ export default function ClientProfile() {
         accNumber: form.accNumber || null,
         ifsc: form.ifsc || null,
         micr: form.micr || null,
+        // branch: form.branch || null, // Backend does not support branch in SaveOnboardingInput yet
       };
 
       await upsertOnboarding({
@@ -415,7 +439,10 @@ export default function ClientProfile() {
         <HeaderSteps current={1} />
       </div>
 
-      <FileUpload />
+      <FileUpload 
+        onFileSelect={(base64) => update("profileImage", base64)} 
+        value={form.profileImage}
+      />
 
       {/* ================= PERSONAL DETAILS ================= */}
       <SectionHeader
@@ -598,7 +625,12 @@ export default function ClientProfile() {
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField label="DP ID" value={form.dpId} onChange={(v: unknown) => update("dpId", v)} />
             <InputField label="Client Code" value={form.clientCode} onChange={(v: unknown) => update("clientCode", v)} />
-            <InputField label="Scheme Name" value={form.schemeName} onChange={(v: unknown) => update("schemeName", v)} />
+            <DropdownField
+              label="Scheme Name"
+              value={form.schemeName}
+              options={SCHEME_OPTIONS}
+              onChange={(v: unknown) => update("schemeName", v)}
+            />
             <DropdownField
               label="Broker Name"
               value={form.brokerName}
@@ -612,7 +644,45 @@ export default function ClientProfile() {
             <InputField label="Nominee Aadhar" value={form.nomineeAadhar} onChange={(v: unknown) => update("nomineeAadhar", v)} />
             <InputField label="Nominee PAN" value={form.nomineePan} onChange={(v: unknown) => update("nomineePan", v)} />
             <InputField label="A/C Type" value={form.acType} onChange={(v: unknown) => update("acType", v)} />
-            <InputField label="A/C Opening Date" value={form.acOpeningDate} onChange={(v: unknown) => update("acOpeningDate", v)} />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm text-gray-700">
+                A/C Opening Date
+              </label>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  value={form.acOpeningDate ? dayjs(form.acOpeningDate) : null}
+                  onChange={(v: Dayjs | null) => update("acOpeningDate", v ? v.format("YYYY-MM-DD") : "")}
+                  format="DD/MM/YYYY"
+                  disableFuture
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: "small",
+                      sx: {
+                        "& .MuiPickersOutlinedInput-root": {
+                          height: "42px",
+                          borderRadius: "0.375rem",
+                          backgroundColor: "#ffffff",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#e5e7eb",
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#d1d5db",
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "#6366f1",
+                        },
+                        "& input": {
+                          padding: "8px 12px",
+                          fontSize: "14px",
+                        },
+                      },
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </div>
           </div>
 
           <div className="flex justify-end mt-4">
@@ -722,16 +792,17 @@ export default function ClientProfile() {
         <>
           <div className="mt-4 grid grid-cols-2 gap-6">
             <InputField label="Holder Name" value={form.holderName} onChange={(v: unknown) => update("holderName", v)} />
-            <InputField label="Bank Name" value={form.bankName} onChange={(v: unknown) => update("bankName", v)} />
             <InputField label="Account Number" value={form.accNumber} onChange={(v: unknown) => update("accNumber", v)} />
+            <InputField label="Bank Name" value={form.bankName} onChange={(v: unknown) => update("bankName", v)} />
+            <InputField label="Branch" value={form.branch} onChange={(v: unknown) => update("branch", v)} />
             <InputField label="IFSC" value={form.ifsc} onChange={(v: unknown) => update("ifsc", v)} />
-            <InputField label="MICR" value={form.micr} onChange={(v: unknown) => update("micr", v)} />
+            <InputField label="MICR No." value={form.micr} onChange={(v: unknown) => update("micr", v)} />
           </div>
 
           <div className="flex justify-end mt-4">
             <button
               onClick={() => handleSectionSave([
-                "holderName", "bankName", "accNumber", "ifsc", "micr"
+                "holderName", "accNumber", "bankName", "ifsc", "micr"
               ])}
               className="px-4 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded shadow hover:bg-indigo-700 transition-all"
             >

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import HeaderSteps from "../components/HeaderSteps";
 
 /* ================= TYPES ================= */
@@ -122,7 +123,7 @@ const QUESTIONS: Question[] = [
 /* ================= OPTION SCORE MAP (UPDATED ONLY) ================= */
 
 const OPTION_SCORES: Record<number, number[]> = {
-   1: [2, 3, 4, 5],
+  1: [2, 3, 4, 5],
   2: [5, 2, 4, 3],
   3: [5, 2, 5, 4, 4],
   4: [1, 3, 4, 5],
@@ -138,6 +139,7 @@ const OPTION_SCORES: Record<number, number[]> = {
 /* ================= COMPONENT ================= */
 
 export default function RiskType() {
+  const navigate = useNavigate();
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [riskValue, setRiskValue] = useState(50);
@@ -170,8 +172,8 @@ export default function RiskType() {
   const needleRotation = -90 + (riskValue * 180) / 100;
 
   return (
-<div className="mobile-padding tablet-padding desktop-padding">
-    
+    <div className="mobile-padding tablet-padding desktop-padding">
+
       <div className="flex justify-center mb-6">
         <HeaderSteps current={showResult ? 4 : 3} />
       </div>
@@ -198,10 +200,9 @@ export default function RiskType() {
                       type="button"
                       onClick={() => handleSelect(q.id, idx)}
                       className={`text-left px-4 py-2.5 rounded-full text-sm border transition-all
-                        ${
-                          selected
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : "bg-indigo-100 text-indigo-900 border-indigo-200 hover:bg-indigo-200"
+                        ${selected
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "bg-indigo-100 text-indigo-900 border-indigo-200 hover:bg-indigo-200"
                         }`}
                     >
                       {opt}
@@ -244,7 +245,16 @@ export default function RiskType() {
           </div>
 
           <p className="mt-6 text-lg font-semibold">{riskLabel} Investor</p>
-        </div> 
+
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => navigate("/sales/onboarding/process/agreement")}
+              className="px-8 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
