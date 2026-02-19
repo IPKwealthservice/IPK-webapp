@@ -57,6 +57,10 @@ export const GET_ONBOARDING_PROFILE = gql`
       acTypeOther
       status
       agreementAt
+      signatureUrl
+      riskScore
+      riskLabel
+      clientQa
     }
   }
 `;

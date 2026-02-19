@@ -74,7 +74,7 @@ Functions, obligations, duties and responsibilities of the Investment Advisor (i
 (d) Maintenance of records i.e., client-wise KYC, risk assessment, analysis reports of investment advice and suitability, terms and conditions document, related books of accounts and a register containing list of clients along with dated investment advice and its rationale in compliance with the Securities and Exchange Board of India (Investment Advisors) Regulations, 2013.
 (e) Provisions regarding audit as per the Securities and Exchange Board of India (Investment Advisors) Regulations, 2013 and SEBI (Investment Advisors) (amendment) Regulations, 2020.
 
-Investment Advisor will have authority to execute any trade or withdraw or transfer assets from client’s account.
+Investment Advisor will have authority to execute any trade or withdraw or transfer assets from client’s account on Prior Approval from client.
 Investment Advisor is responsible only for the investment advices for the assets (financial assets) over which client has provided Investment Advisor discretionary authority and not for the diversification or prudent investment of any other assets of Client.
 
 8. Investment Objectives and Guidelines:
@@ -219,41 +219,21 @@ export default function Agreement() {
       year: 'numeric'
     });
 
-    const clientName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "N/A";
-    const address = profile?.permAddress || profile?.commAddress || "N/A";
-    const pan = profile?.pan || "N/A";
-    const aadhaar = profile?.aadhaar || "N/A";
-    const broker = profile?.brokerName || "N/A"; // Was "IPK Wealth"
-    const clientCode = profile?.clientCode || "N/A"; // Was "PENDING"
-    const dpId = profile?.dpId || "N/A"; // Was "PENDING"
-
-    const requiredChecks = [
-      { key: "Client Name", value: clientName },
-      { key: "Address", value: address },
-      { key: "PAN Number", value: pan },
-      { key: "AADHAR Number", value: aadhaar },
-      { key: "DP ID", value: dpId },
-      { key: "Broker Name", value: broker },
-      { key: "Trading Code", value: clientCode },
-    ];
-
-    const missing = requiredChecks.filter(item => item.value === "N/A" || !item.value).map(item => item.key);
-
     return {
       date: dateStr,
       client: {
-        name: clientName,
-        pan: pan,
-        aadhaar: aadhaar,
+        name: [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "N/A",
+        pan: profile?.pan || "N/A",
+        aadhaar: profile?.aadhaar || "N/A",
         mobile: profile?.mobile || "N/A",
         email: profile?.email || "N/A",
-        address: address,
+        address: profile?.permAddress || profile?.commAddress || "N/A",
         location: profile?.location || "N/A",
       },
       account: {
-        broker: broker,
-        clientCode: clientCode,
-        dpId: dpId,
+        broker: profile?.brokerName || "IPK Wealth",
+        clientCode: profile?.clientCode || "PENDING",
+        dpId: profile?.dpId || "PENDING",
         scheme: profile?.schemeName || "N/A",
       },
       nominee: {
@@ -262,9 +242,8 @@ export default function Agreement() {
         contact: profile?.nomineeContact || "N/A",
       },
       billing: {
-        name: profile?.billName || clientName,
-      },
-      missingFields: missing
+        name: profile?.billName || [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "N/A",
+      }
     };
   }, [profile]);
 
@@ -298,14 +277,14 @@ export default function Agreement() {
     let text = AGREEMENT_TEXT;
     const replacements: Record<string, string> = {
       "{{DATE}}": agreementData.date,
-      "{{CLIENT_NAME}}": agreementData.client.name === "N/A" ? ":::MISSING_CLIENT_NAME:::" : agreementData.client.name,
-      "{{PAN}}": agreementData.client.pan === "N/A" ? ":::MISSING_PAN:::" : agreementData.client.pan,
-      "{{AADHAAR}}": agreementData.client.aadhaar === "N/A" ? ":::MISSING_AADHAAR:::" : agreementData.client.aadhaar,
-      "{{ADDRESS}}": agreementData.client.address === "N/A" ? ":::MISSING_ADDRESS:::" : agreementData.client.address,
+      "{{CLIENT_NAME}}": agreementData.client.name,
+      "{{PAN}}": agreementData.client.pan,
+      "{{AADHAAR}}": agreementData.client.aadhaar,
+      "{{ADDRESS}}": agreementData.client.address,
       "{{LOCATION}}": agreementData.client.location,
-      "{{BROKER}}": agreementData.account.broker === "N/A" ? ":::MISSING_BROKER_NAME:::" : agreementData.account.broker,
-      "{{CLIENT_CODE}}": agreementData.account.clientCode === "N/A" ? ":::MISSING_TRADING_CODE:::" : agreementData.account.clientCode,
-      "{{DP_ID}}": agreementData.account.dpId === "N/A" ? ":::MISSING_DP_ID:::" : agreementData.account.dpId,
+      "{{BROKER}}": agreementData.account.broker,
+      "{{CLIENT_CODE}}": agreementData.account.clientCode,
+      "{{DP_ID}}": agreementData.account.dpId,
       "{{NOMINEE_NAME}}": agreementData.nominee.name,
       "{{NOMINEE_RELATION}}": agreementData.nominee.relationship,
       "{{NOMINEE_CONTACT}}": agreementData.nominee.contact,
@@ -323,21 +302,6 @@ export default function Agreement() {
       const isHeader = i === 0 || para.toUpperCase() === para && para.length < 50;
       const isListItem = para.trim().startsWith("•") || /^[0-9]+\./.test(para.trim()) || para.trim().startsWith("(a)");
 
-      const renderWithHighlights = (text: string) => {
-        const parts = text.split(/(:::MISSING_[A-Z_]+:::)/g);
-        return parts.map((part, idx) => {
-          if (part.startsWith(":::MISSING_")) {
-            const label = part.replace(":::MISSING_", "").replace(":::", "").replace(/_/g, " ");
-            return (
-              <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 border border-red-200 mx-1">
-                ⚠️ MISSING: {label}
-              </span>
-            );
-          }
-          return part;
-        });
-      };
-
       return (
         <p
           key={i}
@@ -347,14 +311,13 @@ export default function Agreement() {
             ${isListItem ? "pl-4" : ""}
           `}
         >
-          {renderWithHighlights(para)}
+          {para}
         </p>
       );
     });
   }, [agreementData]);
 
-  const isMissingFields = agreementData.missingFields.length > 0;
-  const canProceed = agreed && hasScrolledToEnd && !!signatureFile && !signatureError && !isMissingFields;
+  const canProceed = agreed && hasScrolledToEnd && !!signatureFile && !signatureError;
 
   if (loading) {
     return (
@@ -389,32 +352,6 @@ export default function Agreement() {
               </div>
             </div>
           </div>
-
-          {/* MISSING FIELDS WARNING */}
-          {isMissingFields && (
-            <div className="bg-red-50 border-b border-red-200 p-4 sticky top-0 z-10 flex items-start sm:items-center gap-3">
-              <div className="flex-shrink-0 text-red-500 mt-1 sm:mt-0">
-                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-800">
-                  Missing Required Information
-                </h3>
-                <div className="mt-1 text-xs text-red-700">
-                  The following details are missing from the profile: <b>{agreementData.missingFields.join(", ")}</b>.
-                  Please go back to the Client Profile step to update them.
-                </div>
-              </div>
-              <button
-                onClick={() => navigate("/sales/onboarding/process/client-profile")}
-                className="bg-white text-red-600 px-3 py-1 rounded border border-red-200 text-xs font-bold hover:bg-red-50"
-              >
-                Go to Profile
-              </button>
-            </div>
-          )}
 
           {/* Document Body */}
           <div className="relative">

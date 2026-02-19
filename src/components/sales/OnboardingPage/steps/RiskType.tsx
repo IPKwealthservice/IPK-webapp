@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import { GET_ONBOARDING_PROFILE, UPSERT_ONBOARDING_PROFILE } from "@/graphql/onboardingAgreement.gql";
+import { useMutation, useQuery } from "@apollo/client";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HeaderSteps from "../components/HeaderSteps";
 
@@ -140,17 +142,32 @@ const OPTION_SCORES: Record<number, number[]> = {
 
 export default function RiskType() {
   const navigate = useNavigate();
+  const leadId = localStorage.getItem("onboarding_lead_id");
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showResult, setShowResult] = useState(false);
   const [riskValue, setRiskValue] = useState(50);
   const [riskLabel, setRiskLabel] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: profileData } = useQuery(GET_ONBOARDING_PROFILE, {
+    variables: { leadId },
+    skip: !leadId,
+  });
+
+  const [upsertOnboarding] = useMutation(UPSERT_ONBOARDING_PROFILE);
 
   const handleSelect = (qid: number, optionIndex: number) => {
     setAnswers((prev) => ({ ...prev, [qid]: optionIndex }));
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     let totalScore = 0;
+    const qAndA = QUESTIONS.map(q => ({
+      questionId: q.id,
+      question: q.question,
+      answerIndex: answers[q.id],
+      answer: q.options[answers[q.id] || 0]
+    }));
 
     QUESTIONS.forEach((q) => {
       const index = answers[q.id];
@@ -162,11 +179,42 @@ export default function RiskType() {
     const percentage = Math.min(100, Math.round((totalScore / 55) * 100));
     setRiskValue(percentage);
 
-    if (percentage <= 33) setRiskLabel("Conservative");
-    else if (percentage <= 66) setRiskLabel("Moderate");
-    else setRiskLabel("Aggressive");
+    let label = "";
+    if (percentage <= 33) label = "Conservative";
+    else if (percentage <= 66) label = "Moderate";
+    else label = "Aggressive";
+    
+    setRiskLabel(label);
+
+    // Save to DB
+    if (leadId) {
+      setSaving(true);
+      try {
+        const existingProfile = profileData?.getOnboardingByLeadId || {};
+        await upsertOnboarding({
+          variables: {
+            input: {
+              leadId,
+              mobile: existingProfile.mobile || "", // Required by input type
+              riskScore: percentage,
+              riskLabel: label,
+              clientQa: JSON.stringify(qAndA)
+            }
+          },
+          refetchQueries: [{ query: GET_ONBOARDING_PROFILE, variables: { leadId } }]
+        });
+      } catch (err) {
+        console.error("Failed to save risk assessment:", err);
+      } finally {
+        setSaving(false);
+      }
+    }
 
     setShowResult(true);
+  };
+
+  const handleNextStep = () => {
+    navigate("/sales/onboarding/process/suitability");
   };
 
   const needleRotation = -90 + (riskValue * 180) / 100;
@@ -216,9 +264,10 @@ export default function RiskType() {
           <div className="flex justify-end mt-8">
             <button
               onClick={handleContinue}
-              className="px-6 py-2.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+              disabled={saving}
+              className={`px-6 py-2.5 rounded-md text-white ${saving ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
-              Continue
+              {saving ? "Saving..." : "Continue"}
             </button>
           </div>
         </div>
@@ -248,7 +297,7 @@ export default function RiskType() {
 
           <div className="flex justify-center mt-8">
             <button
-              onClick={() => navigate("/sales/onboarding/process/agreement")}
+              onClick={handleNextStep}
               className="px-8 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
             >
               Next

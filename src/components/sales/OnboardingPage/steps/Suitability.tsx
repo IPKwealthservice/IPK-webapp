@@ -1,53 +1,53 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
+import { GET_ONBOARDING_PROFILE } from "../../../../graphql/onboardingAgreement.gql";
 import HeaderSteps from "../components/HeaderSteps";
 import SuitabilityGauge from "../components/SuitabilityGauge";
-import { getSuitabilityScore } from "../../../../services/suitability.service";
 
 export default function Suitability() {
   const navigate = useNavigate();
-  const [score, setScore] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+  const leadId = localStorage.getItem("onboarding_lead_id");
 
-  useEffect(() => {
-    async function fetchScore() {
-      try {
-        const res = await getSuitabilityScore();
-        setScore(res.score);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const { data, loading } = useQuery(GET_ONBOARDING_PROFILE, {
+    variables: { leadId },
+    skip: !leadId,
+  });
 
-    fetchScore();
-  }, []);
+  if (loading) return (
+    <div className="flex justify-center items-center min-h-[50vh]">
+      <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
-  if (loading) return <p>Loading suitability...</p>;
+  const profile = data?.getOnboardingByLeadId;
+  const score = profile?.riskScore || 0;
+  const riskLabel = profile?.riskLabel || "N/A";
 
   return (
     <div className="mobile-padding tablet-padding desktop-padding">
-
-      {/* ✅ HEADER STEPS */}
       <div className="flex justify-center mb-6">
         <HeaderSteps current={4} />
       </div>
 
-      {/* ✅ SUITABILITY CONTENT */}
-      <SuitabilityGauge score={score} />
+      <div className="max-w-4xl mx-auto text-center">
+        <h2 className="text-3xl font-bold text-gray-900 mb-8">Suitability Assessment</h2>
+        
+        <SuitabilityGauge score={score} />
+        
+        <div className="mt-8 p-6 bg-indigo-50 rounded-2xl inline-block">
+          <p className="text-sm text-indigo-600 font-bold uppercase tracking-wider mb-1">Your Risk Profile</p>
+          <p className="text-3xl font-black text-indigo-900">{riskLabel}</p>
+        </div>
 
-      {/* ✅ NEXT BUTTON */}
-      <div className="flex justify-end mt-10">
-        <button
-          onClick={() => navigate("/sales/onboarding/process/agreement")}
-          className="px-8 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
-        >
-          Next
-        </button>
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={() => navigate("/sales/onboarding/process/agreement")}
+            className="px-10 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-[1.02] transition-all"
+          >
+            Authorize Agreement
+          </button>
+        </div>
       </div>
-
     </div>
   );
-
 }
