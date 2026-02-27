@@ -20,37 +20,8 @@ type Lead = {
   clientCode?: string;
 };
 
-/* ================= SAMPLE DATA (FALLBACK) ================= */
-
-const SAMPLE_NEW_LEADS: Lead[] = [
-  {
-    id: "LEAD001",
-    firstName: "Ramesh",
-    lastName: "Kumar",
-    source: "Website",
-    mobile: "9876543210",
-    status: "PENDING",
-  },
-  {
-    id: "LEAD002",
-    firstName: "Suresh",
-    lastName: "Babu",
-    source: "Referral",
-    mobile: "9123456789",
-    status: "IN_PROGRESS",
-  },
-];
-
-const SAMPLE_COMPLETED_LEADS: Lead[] = [
-  {
-    id: "LEAD010",
-    firstName: "Anitha",
-    lastName: "Devi",
-    source: "Campaign",
-    mobile: "9000011111",
-    status: "COMPLETED",
-  },
-];
+/* ================= SAMPLE DATA (REMOVED) ================= */
+// Sample data has been seeded into the database to avoid "Lead not found" errors.
 
 /* ================= PREVIEW MODAL ================= */
 
@@ -99,23 +70,32 @@ function LeadsTable({
   leads,
   onOnboard,
   onView,
+  hideStatus = false,
 }: {
   leads: Lead[];
   onOnboard: (lead: Lead) => void;
   onView: (lead: Lead) => void;
+  hideStatus?: boolean;
 }) {
   return (
     <div className="bg-white rounded-xl border shadow-sm overflow-x-auto">
       <table className="w-full min-w-[900px] text-sm table-fixed">
-        {/* 🔒 Fixed column widths for perfect alignment */}
-        <colgroup><col className="w-1/6" /><col className="w-1/6" /><col className="w-1/6" /><col className="w-1/6" /><col className="w-1/6" /><col className="w-1/6" /></colgroup>
+        {/* 🔒 Dynamic column widths for perfect alignment */}
+        <colgroup>
+          <col className="w-1/6" />
+          <col className="w-1/6" />
+          <col className="w-1/6" />
+          {!hideStatus && <col className="w-1/6" />}
+          <col className="w-1/6" />
+          <col className="w-1/6" />
+        </colgroup>
 
         <thead className="bg-gray-50 border-b">
           <tr className="text-xs font-semibold text-gray-500 uppercase">
-            <th className="px-4 py-3 text-left">Id</th>
+            <th className="px-4 py-3 text-left">S.No</th>
             <th className="px-4 py-3 text-left">Name</th>
             <th className="px-4 py-3 text-center">Mobile</th>
-            <th className="px-4 py-3 text-center">Status</th>
+            {!hideStatus && <th className="px-4 py-3 text-center">Status</th>}
             <th className="px-4 py-3 text-center">Client Code</th>
             <th className="px-4 py-3 text-center">Action</th>
           </tr>
@@ -128,7 +108,7 @@ function LeadsTable({
               className="border-b last:border-0 hover:bg-gray-50"
             >
               <td className="px-4 py-3 font-medium text-left">
-                {lead.id}
+                {index + 1}
               </td>
 
               <td className="px-4 py-3 text-left">
@@ -141,21 +121,21 @@ function LeadsTable({
               <td className="px-4 py-3 text-center">
                 {lead.mobile || (lead.id.startsWith("6984") ? "9876543210" : "9000000000")}
               </td>
-
-              <td className="px-4 py-3 text-center">
-                {lead.status === "COMPLETED" ? (
-                  <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                    Completed
-                  </span>
-                ) : lead.status === "IN_PROGRESS" ? (
-                  <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                    In Progress
-                  </span>
-                ) : (
-                  <span className="text-gray-400">-</span>
-                )}
-              </td>
-
+              {!hideStatus && (
+                <td className="px-4 py-3 text-center">
+                  {lead.status === "COMPLETED" ? (
+                    <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      Completed
+                    </span>
+                  ) : lead.status === "IN_PROGRESS" ? (
+                    <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                      In Progress
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
+              )}
               <td className="px-4 py-3 text-center text-gray-500">
                 {lead.clientCode || "-"}
               </td>
@@ -194,16 +174,9 @@ export default function OnboardingListPage() {
   const { data: newData } = useQuery(GET_NEW_ONBOARDING_LEADS);
   const { data: completedData } = useQuery(GET_COMPLETED_ONBOARDING_LEADS);
 
-  // ✅ fallback logic
-  const newLeads: Lead[] =
-    newData?.onboardingNewLeads?.length > 0
-      ? newData.onboardingNewLeads
-      : SAMPLE_NEW_LEADS;
-
-  const completedLeads: Lead[] =
-    completedData?.onboardingCompletedLeads?.length > 0
-      ? completedData.onboardingCompletedLeads
-      : SAMPLE_COMPLETED_LEADS;
+  // ✅ Use data from backend
+  const newLeads: Lead[] = newData?.onboardingNewLeads || [];
+  const completedLeads: Lead[] = completedData?.onboardingCompletedLeads || [];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
@@ -219,6 +192,7 @@ export default function OnboardingListPage() {
 
         <LeadsTable
           leads={newLeads}
+          hideStatus={true}
           onOnboard={(lead) => {
             localStorage.setItem("onboarding_lead_id", lead.id);
             navigate("/sales/onboarding/process/client-profile");

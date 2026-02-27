@@ -79,3 +79,8 @@ export const ACCEPT_ONBOARDING_AGREEMENT = gql`
     acceptOnboardingAgreement(input: $input)
   }
 `;
+export const SEND_AGREEMENT_PDF = gql`
+  mutation SendAgreement($input: SendAgreementInput!) {
+    sendAgreement(input: $input)
+  }
+`;

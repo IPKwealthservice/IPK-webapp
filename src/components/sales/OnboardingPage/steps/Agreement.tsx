@@ -1,5 +1,6 @@
-import { GET_ONBOARDING_PROFILE, UPSERT_ONBOARDING_PROFILE } from "@/graphql/onboardingAgreement.gql";
+import { GET_ONBOARDING_PROFILE, SEND_AGREEMENT_PDF, UPSERT_ONBOARDING_PROFILE } from "@/graphql/onboardingAgreement.gql";
 import { useMutation, useQuery } from "@apollo/client";
+import { jsPDF } from "jspdf";
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HeaderSteps from "../components/HeaderSteps";
@@ -7,7 +8,10 @@ import HeaderSteps from "../components/HeaderSteps";
 const AGREEMENT_TEXT = `
 INVESTMENT ADVISORY AGREEMENT
 
-This Investment Advisory Agreement is made on {{DATE}} (date) between IPK WEALTH SERVICES Private Limited, which is a SEBI registered Investment Advisor having registered number INA000021386 and having its office D.NO 100 B/26, Room No 111, SCS Tower, First Floor, Sankagiri Main Road, Opposite Tiruchengode Court, Tiruchengode - 637211, Namakkal, Tamil Nadu hereinafter called the Investment Advisor
+This Investment Advisory Agreement is made on {{DATE}} (date) between IPK WEALTH SERVICES Private Limited, 
+which is a SEBI registered Investment Advisor having registered number INA000021386 and having its office 
+D.NO 100 B/26, Room No 111, SCS Tower, First Floor, Sankagiri Main Road, Opposite Tiruchengode Court, 
+Tiruchengode - 637209, Namakkal, Tamil Nadu hereinafter called the Investment Advisor
 
 AND
 
@@ -170,11 +174,13 @@ export default function Agreement() {
   console.log("Agreement Loading:", loading);
 
   const [upsertOnboarding] = useMutation(UPSERT_ONBOARDING_PROFILE);
+  const [sendAgreementPdf] = useMutation(SEND_AGREEMENT_PDF);
 
   const profile = data?.getOnboardingByLeadId;
 
   const [agreed, setAgreed] = useState(false);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const agreementRef = useRef<HTMLDivElement | null>(null);
 
   // Signature State
@@ -253,6 +259,119 @@ export default function Agreement() {
     const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 100;
     if (isAtBottom) {
       setHasScrolledToEnd(true);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      const doc = new jsPDF();
+      
+      const margin = 20;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const contentWidth = pageWidth - (2 * margin);
+      
+      doc.setFontSize(16);
+      doc.text("INVESTMENT ADVISORY AGREEMENT", pageWidth / 2, 20, { align: "center" });
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      // Use the same mapping logic as the web view
+      let text = AGREEMENT_TEXT;
+      const replacements: Record<string, string> = {
+        "{{DATE}}": agreementData.date,
+        "{{CLIENT_NAME}}": agreementData.client.name,
+        "{{PAN}}": agreementData.client.pan,
+        "{{AADHAAR}}": agreementData.client.aadhaar,
+        "{{ADDRESS}}": agreementData.client.address,
+        "{{LOCATION}}": agreementData.client.location,
+        "{{BROKER}}": agreementData.account.broker,
+        "{{CLIENT_CODE}}": agreementData.account.clientCode,
+        "{{DP_ID}}": agreementData.account.dpId,
+        "{{NOMINEE_NAME}}": agreementData.nominee.name,
+        "{{NOMINEE_RELATION}}": agreementData.nominee.relationship,
+        "{{NOMINEE_CONTACT}}": agreementData.nominee.contact,
+        "{{ADMIN_PHONE}}": "73730 41590",
+        "{{ADMIN_EMAIL}}": "ipkwealth@gmail.com",
+      };
+
+      Object.entries(replacements).forEach(([key, val]) => {
+        text = text.split(key).join(val);
+      });
+
+      const lines = doc.splitTextToSize(text, contentWidth);
+      
+      let y = 40;
+      lines.forEach((line: string) => {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(line, margin, y);
+        y += 6;
+      });
+
+      // Add space for signatures
+      if (y > 220) {
+        doc.addPage();
+        y = 30;
+      } else {
+        y += 20;
+      }
+
+      // 1. Company Seal & Signature
+      try {
+        const companySealUrl = "/images/company-seal.png";
+        doc.addImage(companySealUrl, 'PNG', margin, y, 50, 25);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("Managing Director,", margin, y + 32);
+        doc.text("IPK Wealth Services Private Limited", margin, y + 37);
+      } catch (err) {
+        console.warn("Could not add company seal to PDF", err);
+      }
+
+      // 2. Client Signature
+      if (signaturePreview) {
+        try {
+          doc.addImage(signaturePreview, 'PNG', pageWidth - margin - 50, y, 50, 25);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "bold");
+          doc.text("Client Signature", pageWidth - margin - 25, y + 32, { align: "center" });
+        } catch (err) {
+          console.warn("Could not add client signature to PDF", err);
+        }
+      }
+
+      // Save locally (This should work regardless of backend status)
+      doc.save(`Agreement_${agreementData.client.name.replace(/\s+/g, '_')}.pdf`);
+
+      // 3. Try to send to backend for Email/WhatsApp
+      if (leadId) {
+        try {
+          const pdfBase64 = doc.output('datauristring');
+          await sendAgreementPdf({
+            variables: {
+              input: {
+                leadId,
+                pdfBase64
+              }
+            }
+          });
+          alert("Agreement downloaded and sent to your registered Email and WhatsApp.");
+        } catch (sendErr) {
+          console.error("Failed to send agreement via Email/WhatsApp", sendErr);
+          alert("Agreement downloaded successfully, but we encountered an error sending the copy to your Email/WhatsApp. Please save the downloaded file.");
+        }
+      } else {
+        alert("Agreement downloaded successfully. (Note: Automatic email/WhatsApp delivery skipped as no Lead ID was found)");
+      }
+    } catch (e) {
+      console.error("PDF Generation failed", e);
+      alert("Failed to generate the PDF agreement. Please try again.");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -482,8 +601,20 @@ export default function Agreement() {
 
 
 
-              {/* Final Button */}
-              <div className="flex justify-end">
+              {/* Final Buttons */}
+              <div className="flex justify-end gap-4">
+                <button
+                  disabled={isDownloading}
+                  onClick={handleDownload}
+                  className={`
+                    px-8 py-2.5 rounded-lg border-2 border-indigo-600 text-indigo-600 font-bold text-sm uppercase tracking-wider
+                    transition-all duration-300 hover:bg-indigo-50 active:scale-95
+                    ${isDownloading ? "opacity-50 cursor-not-allowed" : ""}
+                  `}
+                >
+                  {isDownloading ? "Processing..." : "Download"}
+                </button>
+
                 <button
                   disabled={!canProceed}
                   onClick={handleNext}

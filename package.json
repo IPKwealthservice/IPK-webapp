@@ -34,7 +34,8 @@
     "flowbite-react": "^0.12.9",
     "framer-motion": "^12.23.24",
     "graphql": "^16.11.0",
-    "jspdf": "^4.0.0",
+    "html2pdf.js": "^0.14.0",
+    "jspdf": "^2.5.1",
     "lucide-react": "^0.544.0",
     "motion": "^12.23.24",
     "openai": "^5.20.1",
@@ -57,6 +58,7 @@
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@tailwindcss/postcss": "^4.0.8",
+    "@types/html2pdf.js": "^0.10.0",
     "@types/jquery": "^3.5.33",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
